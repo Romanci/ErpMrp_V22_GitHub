@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Maliyet Analizi{% endblock %}
+{% block page_title %}Maliyet Analizi{% endblock %}
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card stok">
+        <div class="stat-icon"><i class="fas fa-calculator"></i></div>
+        <div class="stat-value">{{ urunler_bomlu | length }}</div>
+        <div class="stat-label">BOM Tanımlı Ürün</div>
+        <span class="stat-change">Maliyet hesaplanabilir</span>
+    </div>
+    <div class="stat-card kritik">
+        <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="stat-value">{{ urunler_bomsuz | length }}</div>
+        <div class="stat-label">BOM Tanımsız Ürün</div>
+        <span class="stat-change">Maliyet hesaplanamaz</span>
+    </div>
+    {% set karli = urunler_bomlu | selectattr('kar_marji', 'ne', none) | selectattr('kar_marji', 'gt', 0) | list %}
+    <div class="stat-card" style="border-left:4px solid var(--color-green);">
+        <div class="stat-icon" style="background:var(--color-green);"><i class="fas fa-chart-line"></i></div>
+        <div class="stat-value" style="color:var(--color-green);">{{ karli | length }}</div>
+        <div class="stat-label">Kârlı Ürün</div>
+        <span class="stat-change positive">Satış > Maliyet</span>
+    </div>
+</div>
+
+<!-- Maliyet Tablosu -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">BOM Bazlı Maliyet Özeti</h3>
+        <span style="font-size:12px;color:var(--color-muted);">Fiyatlar ağırlıklı ortalama alış fiyatına göre</span>
+    </div>
+    <div class="table-container" style="box-shadow:none;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Ürün</th><th>Stok Kodu</th><th>Malzeme Maliyeti</th>
+                    <th>Satış Fiyatı</th><th>Kâr Marjı</th><th>BOM Satır</th><th>Detay</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for item in urunler_bomlu | sort(attribute='maliyet', reverse=True) %}
+            <tr>
+                <td><strong>{{ item.urun.urun_adi }}</strong></td>
+                <td><code>{{ item.urun.stok_kodu }}</code></td>
+                <td style="font-weight:600;">{{ '%.4f' | format(item.maliyet) }} TL</td>
+                <td>{{ '%.4f' | format(item.urun.satis_fiyati) if item.urun.satis_fiyati else '-' }}</td>
+                <td>
+                    {% if item.kar_marji is not none %}
+                        <span style="color:{% if item.kar_marji > 0 %}var(--color-green){% else %}var(--color-red){% endif %};font-weight:600;">
+                            %{{ item.kar_marji }}
+                        </span>
+                    {% else %}
+                        <span style="color:var(--color-muted);">Satış fiyatı yok</span>
+                    {% endif %}
+                </td>
+                <td>{{ item.satir_sayisi }}</td>
+                <td><a href="{{ url_for('maliyet.urun_maliyet_detay', urun_id=item.urun.id) }}" class="btn btn-ghost btn-sm">Detay</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--color-muted);">
+                BOM tanımlı ürün bulunamadı. <a href="{{ url_for('bom.bom_ekle') }}">BOM tanımla →</a>
+            </td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if urunler_bomsuz %}
+<div class="card" style="margin-top:16px;">
+    <div class="card-header">
+        <h3 class="card-title" style="color:var(--color-muted);">BOM Tanımsız Ürünler</h3>
+    </div>
+    <div style="padding:12px 20px;display:flex;flex-wrap:wrap;gap:8px;">
+        {% for u in urunler_bomsuz %}
+        <span style="background:var(--color-bg-alt);border:1px solid var(--color-border);border-radius:6px;padding:4px 10px;font-size:12px;">
+            {{ u.urun_adi }}
+            <a href="{{ url_for('bom.bom_ekle') }}" style="margin-left:6px;color:var(--color-primary);font-size:11px;">BOM Ekle</a>
+        </span>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

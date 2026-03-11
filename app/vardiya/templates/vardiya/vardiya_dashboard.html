@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Vardiya & Puantaj{% endblock %}
+{% block page_title %}Vardiya & Puantaj Yönetimi{% endblock %}
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card stok">
+        <div class="stat-icon"><i class="fas fa-clock"></i></div>
+        <div class="stat-value">{{ tanimlar|length }}</div>
+        <div class="stat-label">Vardiya Tanımı</div>
+    </div>
+    <div class="stat-card satin-alma">
+        <div class="stat-icon"><i class="fas fa-users"></i></div>
+        <div class="stat-value">{{ bugun_atamalar|length }}</div>
+        <div class="stat-label">Bugün Atanan</div>
+    </div>
+    <div class="stat-card" style="--accent:var(--sari);">
+        <div class="stat-icon"><i class="fas fa-table"></i></div>
+        <div class="stat-value" {% if bekleyen_puantaj %}style="color:var(--sari);"{% endif %}>{{ bekleyen_puantaj }}</div>
+        <div class="stat-label">Onay Bekleyen Puantaj</div>
+    </div>
+</div>
+<div class="grid grid-2" style="gap:16px;margin-top:16px;">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-calendar-day"></i> Bugünkü Vardiyalar ({{ bugun }})</h3>
+            <a href="{{ url_for('vardiya.atama_kaydet') }}" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Ata</a>
+        </div>
+        <div style="padding:12px;">
+            {% for a in bugun_atamalar %}
+            <div style="padding:8px;border-bottom:1px solid var(--gri-kenar);display:flex;align-items:center;gap:10px;">
+                {% if a.vardiya %}
+                <div style="width:10px;height:10px;border-radius:50%;background:{{ a.vardiya.renk }};flex-shrink:0;"></div>
+                <span style="font-size:13px;font-weight:500;">{{ a.personel.tam_ad if a.personel else '?' }}</span>
+                <span style="margin-left:auto;font-size:12px;color:var(--gri);">{{ a.vardiya.ad }} ({{ a.vardiya.baslangic }}-{{ a.vardiya.bitis }})</span>
+                {% endif %}
+            </div>
+            {% else %}
+            <div style="color:var(--gri);font-size:13px;padding:8px;text-align:center;">Bugün atama yok</div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-list"></i> Vardiya Tanımları</h3></div>
+        <div style="padding:12px;">
+            {% for t in tanimlar %}
+            <div style="display:flex;align-items:center;gap:12px;padding:10px;border-bottom:1px solid var(--gri-kenar);">
+                <div style="width:14px;height:14px;border-radius:50%;background:{{ t.renk }};flex-shrink:0;"></div>
+                <div style="flex:1;">
+                    <div style="font-weight:600;font-size:13px;">{{ t.ad }}</div>
+                    <div style="font-size:12px;color:var(--gri);">{{ t.baslangic }} — {{ t.bitis }}</div>
+                </div>
+            </div>
+            {% else %}
+            <div style="color:var(--gri);font-size:13px;padding:8px;">Vardiya tanımı yok</div>
+            {% endfor %}
+        </div>
+        <div style="padding:12px;border-top:1px solid var(--gri-kenar);display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            {% for url, ikon, ad in [
+                (url_for('vardiya.atama_liste'),'fa-calendar','Atama Listesi'),
+                (url_for('vardiya.puantaj_liste'),'fa-table','Puantaj'),
+                (url_for('vardiya.tanim_liste'),'fa-cog','Tanımlar'),
+            ] %}
+            <a href="{{ url }}" style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--gri-acik);border-radius:6px;text-decoration:none;color:inherit;font-size:12px;font-weight:500;">
+                <i class="fas {{ ikon }}" style="color:var(--sari);"></i> {{ ad }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

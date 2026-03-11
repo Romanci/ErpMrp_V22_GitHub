@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Yeni Fatura{% endblock %}
+{% block page_title %}{{ 'Alış' if tip == 'alis' else 'Satış' }} Faturası Oluştur{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Fatura Bilgileri</h3>
+        <a href="{{ url_for('fatura.fatura_liste') }}" class="btn btn-ghost btn-sm">← Geri</a>
+    </div>
+    <form method="POST" style="padding:24px;">
+        <input type="hidden" name="fatura_tipi" value="{{ tip }}">
+        <div class="grid grid-2">
+            <div class="form-group">
+                <label class="form-label">Fatura No</label>
+                <input type="text" name="fatura_no" class="form-input" value="{{ onerilen_no }}"
+                       placeholder="Otomatik atanır">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Para Birimi</label>
+                <select name="para_birimi" class="form-select">
+                    <option value="TL">TL</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Fatura Tarihi</label>
+                <input type="text" name="fatura_tarihi" class="datepicker form-input" placeholder="GG.AA.YYYY">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Vade Tarihi</label>
+                <input type="text" name="vade_tarihi" class="datepicker form-input" placeholder="GG.AA.YYYY">
+            </div>
+
+            {% if tip == 'alis' %}
+            <div class="form-group">
+                <label class="form-label">Tedarikçi *</label>
+                <select name="tedarikci_id" class="form-select">
+                    <option value="">Seçiniz</option>
+                    {% for t in tedarikciler %}
+                    <option value="{{ t.id }}">{{ t.unvan }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Bağlı Sipariş (opsiyonel)</label>
+                <select name="siparis_id" class="form-select">
+                    <option value="">— Yok —</option>
+                    {% for s in siparisler %}
+                    <option value="{{ s.id }}">{{ s.siparis_no }} — {{ s.tedarikci.unvan if s.tedarikci else '-' }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% else %}
+            <div class="form-group">
+                <label class="form-label">Müşteri Adı *</label>
+                <input type="text" name="musteri_adi" class="form-input" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Müşteri Vergi No</label>
+                <input type="text" name="musteri_vergi_no" class="form-input">
+            </div>
+            {% endif %}
+        </div>
+        {% if tip == 'satis' %}
+        <div class="form-group">
+            <label class="form-label">Müşteri Adresi</label>
+            <textarea name="musteri_adres" class="form-input" rows="2"></textarea>
+        </div>
+        {% endif %}
+        <div class="form-group">
+            <label class="form-label">Açıklama</label>
+            <textarea name="aciklama" class="form-input" rows="2"></textarea>
+        </div>
+        <div style="display:flex;gap:8px;">
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Oluştur</button>
+            <a href="{{ url_for('fatura.fatura_liste') }}" class="btn btn-ghost">İptal</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

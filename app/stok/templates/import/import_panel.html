@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Veri İçe Aktarma{% endblock %}
+{% block page_title %}Veri İçe Aktarma (Excel){% endblock %}
+{% block content %}
+
+<div class="card" style="margin-bottom:16px;background:rgba(245,197,24,0.05);border:1px solid rgba(245,197,24,0.2);">
+    <div style="padding:14px 20px;display:flex;align-items:flex-start;gap:12px;">
+        <i class="fas fa-info-circle" style="color:var(--sari);margin-top:2px;"></i>
+        <div style="font-size:13px;">
+            <strong>Nasıl çalışır?</strong> Önce şablonu indirin, Excel'de doldurun, ardından yükleyin.
+            Mevcut kayıtlar (stok kodu / tedarikçi kodu eşleşmesi) <strong>güncellenir</strong>, yeni kayıtlar <strong>eklenir</strong>.
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-3" style="gap:16px;">
+
+    {% for tur, baslik, ikon, renk, desc in [
+        ('urun','Ürün Aktarımı','fa-box','stok','Stok kodu, ürün adı, fiyat, kategori, min/max stok'),
+        ('tedarikci','Tedarikçi Aktarımı','fa-truck','satin-alma','Tedarikçi kodu, ünvan, vergi bilgileri, iletişim'),
+        ('personel','Personel Aktarımı','fa-users','uretim','Ad, soyad, departman, pozisyon, maaş bilgileri'),
+    ] %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas {{ ikon }}"></i> {{ baslik }}</h3>
+        </div>
+        <div style="padding:20px;">
+            <p style="font-size:12px;color:var(--gri);margin-bottom:16px;">{{ desc }}</p>
+
+            <!-- Şablon İndir -->
+            <a href="{{ url_for('import_modul.sablon_indir', tur=tur) }}" class="btn btn-ghost btn-sm" style="margin-bottom:12px;display:inline-flex;align-items:center;gap:6px;">
+                <i class="fas fa-download" style="color:var(--yesil);"></i> Şablon İndir (.xlsx)
+            </a>
+
+            <!-- Yükleme Formu -->
+            <form method="POST" action="{{ url_for('import_modul.veri_yukle', tur=tur) }}" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label class="form-label">Excel Dosyası Seç</label>
+                    <input type="file" name="dosya" class="form-input" accept=".xlsx,.xls" required
+                           style="padding:6px;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;">
+                    <i class="fas fa-upload"></i> Aktar
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+
+</div>
+
+<!-- Örnek format tabloları -->
+<div style="margin-top:20px;">
+<div class="card">
+    <div class="card-header"><h3 class="card-title"><i class="fas fa-table"></i> Şablon Sütun Açıklamaları</h3></div>
+    <div style="padding:16px;overflow-x:auto;">
+        <table class="data-table" style="font-size:12px;">
+            <thead><tr><th>Tür</th><th>Zorunlu Sütunlar</th><th>Opsiyonel Sütunlar</th><th>Not</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><strong>Ürün</strong></td>
+                    <td>stok_kodu*, urun_adi*, birim*</td>
+                    <td>kategori_adi, min_stok, max_stok, alis_fiyati, satis_fiyati, kdv_orani, barkod</td>
+                    <td>Aynı stok_kodu varsa güncellenir</td>
+                </tr>
+                <tr>
+                    <td><strong>Tedarikçi</strong></td>
+                    <td>tedarikci_kodu*, unvan*</td>
+                    <td>vergi_no, vergi_dairesi, adres, sehir, telefon, email, yetkili_kisi, odeme_vadesi, para_birimi</td>
+                    <td>Aynı tedarikci_kodu varsa güncellenir</td>
+                </tr>
+                <tr>
+                    <td><strong>Personel</strong></td>
+                    <td>ad*, soyad*</td>
+                    <td>tc_no, departman, pozisyon, telefon, email, maas, ise_giris_tarihi, dogum_tarihi, cinsiyet</td>
+                    <td>Tarih: GG.AA.YYYY | Her satır yeni kayıt oluşturur</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</div>
+
+{% endblock %}

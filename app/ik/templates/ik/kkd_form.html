@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}KKD Tanım{% endblock %}
+{% block page_title %}{% if kkd.id %}{{ kkd.ad }} — Düzenle{% else %}Yeni KKD / Kıyafet Tanımı{% endif %}{% endblock %}
+{% block content %}
+<form method="POST" style="max-width:560px;">
+<div class="card">
+    <div class="card-header"><h3 class="card-title"><i class="fas fa-hard-hat"></i> Tanım Bilgileri</h3></div>
+    <div style="padding:20px;">
+        <div class="grid grid-2" style="gap:10px;">
+            <div class="form-group">
+                <label class="form-label">Kod *</label>
+                <input type="text" name="kod" class="form-input" value="{{ kkd.kod or '' }}" required placeholder="BARET, ISK001...">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tür</label>
+                <select name="tur" class="form-select">
+                    <option value="kkd" {% if kkd.tur=='kkd' %}selected{% endif %}>KKD</option>
+                    <option value="kiyafet" {% if kkd.tur=='kiyafet' %}selected{% endif %}>İş Kıyafeti</option>
+                    <option value="ekipman" {% if kkd.tur=='ekipman' %}selected{% endif %}>Ekipman</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Ad *</label>
+            <input type="text" name="ad" class="form-input" value="{{ kkd.ad or '' }}" required>
+        </div>
+        <div class="grid grid-2" style="gap:10px;">
+            <div class="form-group">
+                <label class="form-label">Yenileme Süresi (ay)</label>
+                <input type="number" name="yenileme_ay" class="form-input" value="{{ kkd.yenileme_ay or 12 }}" min="1">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Bağlı Stok Ürünü</label>
+                <select name="stok_urun_id" class="form-select">
+                    <option value="">— Yok —</option>
+                    {% for u in urunler %}
+                    <option value="{{ u.id }}" {% if kkd.stok_urun_id==u.id %}selected{% endif %}>{{ u.stok_kodu }} — {{ u.urun_adi }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Açıklama</label>
+            <textarea name="aciklama" class="form-input" rows="2">{{ kkd.aciklama or '' }}</textarea>
+        </div>
+    </div>
+</div>
+<div style="display:flex;gap:8px;margin-top:8px;">
+    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Kaydet</button>
+    <a href="{{ url_for('ik.kkd_liste') }}" class="btn btn-ghost">İptal</a>
+</div>
+</form>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}İrsaliyeler{% endblock %}
+{% block page_title %}İrsaliye Listesi{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">İrsaliyeler</h3>
+        <div style="display:flex;gap:8px;">
+            <a href="{{ url_for('fatura.irsaliye_ekle', tip='giris') }}" class="btn btn-ghost btn-sm">+ Giriş</a>
+            <a href="{{ url_for('fatura.irsaliye_ekle', tip='cikis') }}" class="btn btn-primary btn-sm">+ Çıkış</a>
+        </div>
+    </div>
+    <div class="table-container" style="box-shadow:none;">
+        <table class="data-table">
+            <thead>
+                <tr><th>İrsaliye No</th><th>Tür</th><th>Tarih</th><th>Taraf</th><th>Kalem</th><th>Durum</th><th>Araç</th><th>İşlem</th></tr>
+            </thead>
+            <tbody>
+            {% for i in irsaliyeler %}
+            <tr>
+                <td><strong>{{ i.irsaliye_no }}</strong></td>
+                <td><span class="status-badge {% if i.irsaliye_tipi == 'giris' %}acik{% else %}beklemede{% endif %}">
+                    {{ 'Giriş' if i.irsaliye_tipi == 'giris' else 'Çıkış' }}
+                </span></td>
+                <td>{{ i.irsaliye_tarihi }}</td>
+                <td>{{ i.tedarikci.unvan if i.tedarikci else i.musteri_adi or '-' }}</td>
+                <td>{{ i.satirlar | length }} kalem</td>
+                <td><span class="status-badge {% if i.durum=='teslim' %}acik{% elif i.durum=='iptal' %}iptal{% elif i.durum=='yolda' %}devam{% else %}beklemede{% endif %}">{{ i.durum }}</span></td>
+                <td style="font-size:12px;">{{ i.arac_plaka or '-' }}</td>
+                <td><a href="{{ url_for('fatura.irsaliye_detay', id=i.id) }}" class="btn btn-ghost btn-sm">Detay</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--color-muted);">İrsaliye bulunamadı</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

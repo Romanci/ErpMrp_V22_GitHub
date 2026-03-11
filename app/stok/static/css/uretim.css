@@ -1,0 +1,397 @@
+﻿/*
+ * ERP MRP v0.4 - Uretim Modulu Ozel Stilleri
+ * Bu dosya uretim modulune ait sayfalarin ozel stillerini icerir
+ * Ana renk: Sarı/Amber (#f59e0b)
+ */
+
+/* === URETIM MODULU RENK VURGULARI === */
+.module-uretim .page-title {
+    color: var(--color-yellow);
+}
+
+/* Uretim kartlari icin sari vurgu */
+.production-card {
+    border-left: 4px solid var(--color-yellow);
+}
+
+/* === URETIM EMRI DURUMLARI === */
+/* Uretim emri durumlarina gore farkli renkler */
+.durum-planlandi {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: var(--color-blue);
+}
+
+.durum-basladi {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--color-yellow);
+}
+
+.durum-devam-ediyor {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--color-yellow);
+}
+
+.durum-tamamlandi {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--color-green);
+}
+
+.durum-durduruldu {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--color-red);
+}
+
+/* === URETIM EMRI KARTI === */
+.uretim-emri-card {
+    background-color: var(--color-card);
+    border-radius: var(--card-radius);
+    border: 1px solid var(--color-border);
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.uretim-emri-header {
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05));
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.uretim-emri-no {
+    font-family: 'Courier New', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--color-yellow);
+    margin-bottom: 8px;
+}
+
+.uretim-emri-urun {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.uretim-emri-miktar {
+    font-size: 14px;
+    color: var(--color-text-light);
+    margin-top: 4px;
+}
+
+.uretim-emri-body {
+    padding: 20px;
+}
+
+/* Ilerleme cubugu */
+.progress-section {
+    margin-bottom: 20px;
+}
+
+.progress-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.progress-value {
+    font-weight: 600;
+    color: var(--color-yellow);
+}
+
+.progress-bar-large {
+    height: 12px;
+    background-color: var(--color-bg);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.progress-fill-large {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-yellow), var(--color-yellow-light));
+    border-radius: 6px;
+    transition: width 0.5s ease;
+}
+
+/* Operasyonlar listesi */
+.operasyon-list {
+    list-style: none;
+}
+
+.operasyon-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background-color: var(--color-bg);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    border-left: 3px solid var(--color-border);
+}
+
+.operasyon-item.tamamlandi {
+    border-left-color: var(--color-green);
+}
+
+.operasyon-item.devam-ediyor {
+    border-left-color: var(--color-yellow);
+}
+
+.operasyon-item.beklemede {
+    border-left-color: var(--color-border);
+}
+
+.operasyon-sira {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--color-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--color-text-light);
+}
+
+.operasyon-item.tamamlandi .operasyon-sira {
+    background-color: var(--color-green);
+    color: white;
+}
+
+.operasyon-item.devam-ediyor .operasyon-sira {
+    background-color: var(--color-yellow);
+    color: white;
+}
+
+.operasyon-info {
+    flex: 1;
+}
+
+.operasyon-ad {
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 4px;
+}
+
+.operasyon-tezgah {
+    font-size: 13px;
+    color: var(--color-text-light);
+}
+
+.operasyon-sure {
+    text-align: right;
+}
+
+.operasyon-sure-deger {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.operasyon-sure-label {
+    font-size: 12px;
+    color: var(--color-text-light);
+}
+
+/* === BOM (URUN AGACI) === */
+.bom-tree {
+    padding: 20px;
+}
+
+.bom-level {
+    margin-left: 32px;
+    border-left: 2px solid var(--color-border);
+    padding-left: 20px;
+    margin-top: 12px;
+}
+
+.bom-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background-color: var(--color-bg);
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.bom-item.parent {
+    background-color: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.bom-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background-color: var(--color-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-yellow);
+}
+
+.bom-details {
+    flex: 1;
+}
+
+.bom-kod {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: var(--color-text-light);
+}
+
+.bom-ad {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.bom-miktar {
+    font-size: 14px;
+    color: var(--color-text-light);
+    text-align: right;
+}
+
+/* === TEZGAH KARTLARI === */
+.tezgah-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+}
+
+.tezgah-card {
+    background-color: var(--color-card);
+    border-radius: var(--card-radius);
+    padding: 24px;
+    border: 1px solid var(--color-border);
+    transition: all 0.3s ease;
+}
+
+.tezgah-card:hover {
+    border-color: var(--color-yellow);
+    box-shadow: 0 4px 20px rgba(245, 158, 11, 0.15);
+}
+
+.tezgah-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.tezgah-icon {
+    width: 56px;
+    height: 56px;
+    background-color: rgba(245, 158, 11, 0.1);
+    color: var(--color-yellow);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.tezgah-info h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 4px;
+}
+
+.tezgah-durum {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.tezgah-durum.aktif {
+    color: var(--color-green);
+}
+
+.tezgah-durum.bakim {
+    color: var(--color-yellow);
+}
+
+.tezgah-durum.pasif {
+    color: var(--color-red);
+}
+
+/* Durum indicatoru */
+.durum-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: currentColor;
+}
+
+.tezgah-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-border);
+}
+
+.tezgah-stat {
+    text-align: center;
+}
+
+.tezgah-stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.tezgah-stat-label {
+    font-size: 12px;
+    color: var(--color-text-light);
+}
+
+/* === PLANLAMA TAKVIMI === */
+.planlama-calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 12px;
+    background-color: var(--color-card);
+}
+
+.calendar-day.has-production {
+    background-color: rgba(245, 158, 11, 0.1);
+    border-color: var(--color-yellow);
+}
+
+.calendar-day-header {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-light);
+    padding: 8px;
+}
+
+.day-number {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.day-productions {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.day-production {
+    height: 4px;
+    background-color: var(--color-yellow);
+    border-radius: 2px;
+}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}MRP Siparişleri{% endblock %}
+{% block page_title %}MRP Otomatik Siparişler{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">MRP Tarafından Oluşturulan Siparişler</h3>
+        <div style="display:flex; gap:8px;">
+            <a href="{{ url_for('mrp.mrp_analiz') }}" class="btn btn-ghost btn-sm">
+                <i class="fas fa-arrow-left"></i> MRP Analizine Dön
+            </a>
+            <a href="{{ url_for('siparis.siparis_liste') }}" class="btn btn-ghost btn-sm">
+                <i class="fas fa-shopping-cart"></i> Tüm Siparişler
+            </a>
+        </div>
+    </div>
+    <div class="table-container" style="box-shadow:none;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Sipariş No</th>
+                    <th>Tedarikçi</th>
+                    <th>Tarih</th>
+                    <th>Satır Sayısı</th>
+                    <th>Toplam Tutar</th>
+                    <th>Durum</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for siparis in siparisler %}
+                <tr>
+                    <td><strong>{{ siparis.siparis_no }}</strong></td>
+                    <td>{{ siparis.tedarikci.unvan if siparis.tedarikci else '-' }}</td>
+                    <td>{{ siparis.siparis_tarihi }}</td>
+                    <td>{{ siparis.satirlar | length }} kalem</td>
+                    <td style="font-weight:600;">{{ '%.2f' | format(siparis.toplam_tutar) }} {{ siparis.para_birimi }}</td>
+                    <td>
+                        <span class="status-badge {{ siparis.durum }}">{{ siparis.durum | capitalize }}</span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('siparis.siparis_detay', id=siparis.id) }}" class="btn btn-ghost btn-sm">
+                            <i class="fas fa-eye"></i> Detay
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align:center; padding:32px; color:var(--color-muted);">
+                        <i class="fas fa-inbox" style="font-size:2rem; display:block; margin-bottom:8px;"></i>
+                        Henüz MRP ile oluşturulmuş sipariş yok.<br>
+                        <a href="{{ url_for('mrp.mrp_analiz') }}" style="margin-top:8px; display:inline-block;">MRP analizine git →</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,21 @@
+{
+  "_aciklama": "ERP Modül Yönetimi — true/false ile modüller açılır/kapatılır",
+  "_versiyon": "20.0",
+  "moduller": {
+    "stok":       {"aktif": true,  "zorunlu": true,  "ad": "Stok Yönetimi",       "versiyon": "1.0", "kategori": "cekirdek"},
+    "kullanici":  {"aktif": true,  "zorunlu": true,  "ad": "Kullanıcı & Yetki",   "versiyon": "1.0", "kategori": "cekirdek"},
+    "satin_alma": {"aktif": true,  "zorunlu": false, "ad": "Satın Alma",           "versiyon": "1.0", "kategori": "katman1"},
+    "fatura":     {"aktif": true,  "zorunlu": false, "ad": "Fatura & İrsaliye",    "versiyon": "1.0", "kategori": "katman1"},
+    "ik":         {"aktif": true,  "zorunlu": false, "ad": "İK & Personel",        "versiyon": "1.0", "kategori": "katman1"},
+    "crm":        {"aktif": true,  "zorunlu": false, "ad": "CRM & Satış",          "versiyon": "1.0", "kategori": "katman1"},
+    "uretim":     {"aktif": true,  "zorunlu": false, "ad": "Üretim & MRP",         "versiyon": "1.0", "kategori": "katman2"},
+    "proje":      {"aktif": true,  "zorunlu": false, "ad": "Proje Yönetimi",       "versiyon": "1.0", "kategori": "katman2"},
+    "siparis":    {"aktif": true,  "zorunlu": false, "ad": "Sipariş Akışı",        "versiyon": "1.0", "kategori": "katman2"},
+    "muhasebe":   {"aktif": true,  "zorunlu": false, "ad": "Muhasebe",             "versiyon": "1.0", "kategori": "katman2"},
+    "bakim":      {"aktif": true,  "zorunlu": false, "ad": "Bakım & Onarım",       "versiyon": "1.0", "kategori": "katman2"},
+    "kalite":     {"aktif": true,  "zorunlu": false, "ad": "Kalite Kontrol",       "versiyon": "1.0", "kategori": "katman2"},
+    "vardiya":    {"aktif": true,  "zorunlu": false, "ad": "Vardiya & Puantaj",    "versiyon": "1.0", "kategori": "katman3"},
+    "arac":       {"aktif": true,  "zorunlu": false, "ad": "Araç & Ekipman",       "versiyon": "1.0", "kategori": "katman3"},
+    "dokuman":    {"aktif": true,  "zorunlu": false, "ad": "Doküman Yönetimi",     "versiyon": "1.0", "kategori": "katman3"}
+  }
+}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Puantaj{% endblock %}
+{% block page_title %}Aylık Puantaj{% endblock %}
+{% block content %}
+<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
+    <form method="GET" style="display:flex;gap:6px;align-items:center;">
+        <label style="font-size:13px;color:var(--gri);">Dönem:</label>
+        <input type="month" name="ay" class="form-input" value="{{ secili_ay }}" style="width:160px;" onchange="this.form.submit()">
+    </form>
+    <form method="POST" action="{{ url_for('vardiya.puantaj_olustur') }}">
+        <input type="hidden" name="ay" value="{{ secili_ay }}">
+        <button type="submit" class="btn btn-ghost" onclick="return confirm('Bu ay için puantaj otomatik oluşturulsun mu? (Mevcut kayıtlar korunur)')">
+            <i class="fas fa-magic"></i> Otomatik Oluştur
+        </button>
+    </form>
+</div>
+<div class="card">
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Personel</th>
+                    <th style="text-align:right;">Çalışılan</th>
+                    <th style="text-align:right;">İzin</th>
+                    <th style="text-align:right;">Hastalık</th>
+                    <th style="text-align:right;">Devamsız</th>
+                    <th style="text-align:right;">Resmi Tatil</th>
+                    <th style="text-align:right;">Fazla Mesai</th>
+                    <th>Durum</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for p in puantajlar %}
+            <tr>
+                <td style="font-weight:500;">{{ p.personel.tam_ad if p.personel else '?' }}</td>
+                <td style="text-align:right;font-weight:700;color:var(--yesil);">{{ p.calisilan_gun }}</td>
+                <td style="text-align:right;">{{ p.izin_gun }}</td>
+                <td style="text-align:right;">{{ p.hastalik_gun }}</td>
+                <td style="text-align:right;{% if p.devamsizlik_gun > 0 %}color:var(--kirmizi);{% endif %}">{{ p.devamsizlik_gun }}</td>
+                <td style="text-align:right;">{{ p.resmi_tatil_gun }}</td>
+                <td style="text-align:right;{% if p.fazla_mesai_saat > 0 %}color:var(--sari);font-weight:600;{% endif %}">{{ p.fazla_mesai_saat }} sa</td>
+                <td>
+                    {% if p.onaylandi %}
+                    <span class="status-badge acik"><i class="fas fa-check"></i> Onaylı</span>
+                    {% else %}
+                    <span class="status-badge beklemede">Taslak</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--gri);">
+                <i class="fas fa-table" style="font-size:32px;opacity:0.3;display:block;margin-bottom:8px;"></i>
+                Bu dönem için puantaj yok.<br>
+                <small>"Otomatik Oluştur" ile oluşturabilirsiniz.</small>
+            </td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

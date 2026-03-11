@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Vardiya Tanımları{% endblock %}
+{% block page_title %}Vardiya Tanımları{% endblock %}
+{% block content %}
+<div class="grid grid-2" style="gap:16px;">
+    <!-- Yeni Tanım Formu -->
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-plus"></i> Yeni Vardiya Tanımı</h3></div>
+        <form method="POST" action="{{ url_for('vardiya.tanim_kaydet') }}" style="padding:16px;">
+            <div class="form-group">
+                <label class="form-label">Vardiya Adı *</label>
+                <input type="text" name="ad" class="form-input" required placeholder="Sabah, Öğle, Gece...">
+            </div>
+            <div class="grid grid-2" style="gap:10px;">
+                <div class="form-group">
+                    <label class="form-label">Başlangıç</label>
+                    <input type="text" name="baslangic" class="form-input" value="08:00" placeholder="08:00">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Bitiş</label>
+                    <input type="text" name="bitis" class="form-input" value="17:00" placeholder="17:00">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Renk</label>
+                <input type="color" name="renk" class="form-input" value="#3b82f6" style="height:38px;cursor:pointer;">
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Kaydet</button>
+        </form>
+    </div>
+    <!-- Mevcut Tanımlar -->
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-list"></i> Mevcut Vardiyalar</h3></div>
+        <div style="padding:12px;">
+            {% for t in tanimlar %}
+            <div style="display:flex;align-items:center;gap:12px;padding:10px;border-bottom:1px solid var(--gri-kenar);">
+                <div style="width:12px;height:12px;border-radius:50%;background:{{ t.renk }};flex-shrink:0;"></div>
+                <div style="flex:1;">
+                    <div style="font-weight:600;font-size:13px;">{{ t.ad }}</div>
+                    <div style="font-size:12px;color:var(--gri);">{{ t.baslangic }} — {{ t.bitis }}</div>
+                </div>
+                <div style="font-size:11px;color:var(--gri);">{{ t.atamalar|length }} atama</div>
+            </div>
+            {% else %}
+            <div style="color:var(--gri);font-size:13px;padding:8px;">Vardiya tanımı yok</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

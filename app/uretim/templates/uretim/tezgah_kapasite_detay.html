@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}{{ tezgah.tezgah_adi }} - Kapasite{% endblock %}
+{% block page_title %}{{ tezgah.tezgah_adi }} — Kapasite Detayı{% endblock %}
+{% block content %}
+
+<div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
+    <div class="stat-card uretim">
+        <div class="stat-icon"><i class="fas fa-tasks"></i></div>
+        <div class="stat-value">{{ aktif_ops | length }}</div>
+        <div class="stat-label">Bekleyen Operasyon</div>
+    </div>
+    <div class="stat-card satin-alma">
+        <div class="stat-icon"><i class="fas fa-clock"></i></div>
+        <div class="stat-value">{{ toplam_aktif_saat }}</div>
+        <div class="stat-label">Planlanan Saat</div>
+    </div>
+    <div class="stat-card stok">
+        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="stat-value">{{ tamamlanan | length }}</div>
+        <div class="stat-label">Tamamlanan (son)</div>
+    </div>
+    {% if ort_verimlilik %}
+    <div class="stat-card {% if ort_verimlilik >= 90 %}stok{% elif ort_verimlilik >= 70 %}uretim{% else %}kritik{% endif %}">
+        <div class="stat-icon"><i class="fas fa-tachometer-alt"></i></div>
+        <div class="stat-value">%{{ ort_verimlilik }}</div>
+        <div class="stat-label">Ortalama Verimlilik</div>
+        <span class="stat-change">Planlanan/Gerçekleşen</span>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Aktif Operasyonlar -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Bekleyen / Devam Eden Operasyonlar</h3>
+        <a href="{{ url_for('kapasite.kapasite_analiz') }}" class="btn btn-ghost btn-sm">← Genel Görünüm</a>
+    </div>
+    <div class="table-container" style="box-shadow:none;">
+        <table class="data-table">
+            <thead>
+                <tr><th>Üretim Emri</th><th>Operasyon</th><th>Sıra</th><th>Planlanan Süre</th><th>Durum</th><th>Başlangıç</th></tr>
+            </thead>
+            <tbody>
+            {% for op in aktif_ops %}
+            <tr>
+                <td>
+                    {% if op.uretim_emri %}
+                    <a href="{{ url_for('uretim.uretim_emri_detay', id=op.uretim_emri_id) }}">
+                        {{ op.uretim_emri.emir_no }}
+                    </a>
+                    <div style="font-size:11px;color:var(--color-muted);">
+                        {{ op.uretim_emri.urun.urun_adi if op.uretim_emri.urun else '-' }}
+                        (x{{ op.uretim_emri.miktar }})
+                    </div>
+                    {% else %}-{% endif %}
+                </td>
+                <td><strong>{{ op.operasyon_adi }}</strong></td>
+                <td style="text-align:center;">{{ op.operasyon_sirasi }}</td>
+                <td>{{ op.planlanan_sure or '-' }} dk
+                    {% if op.planlanan_sure %}<span style="color:var(--color-muted);font-size:11px;">({{ (op.planlanan_sure/60)|round(1) }}h)</span>{% endif %}
+                </td>
+                <td><span class="status-badge {{ op.durum }}">{{ op.durum }}</span></td>
+                <td style="font-size:12px;">{{ op.baslangic_zamani or '-' }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" style="text-align:center;color:var(--color-green);">Bekleyen operasyon yok</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Tamamlanan Operasyonlar Verimlilik -->
+{% if tamamlanan %}
+<div class="card" style="margin-top:16px;">
+    <div class="card-header">
+        <h3 class="card-title">Son Tamamlanan Operasyonlar — Verimlilik</h3>
+    </div>
+    <div class="table-container" style="box-shadow:none;">
+        <table class="data-table">
+            <thead>
+                <tr><th>Operasyon</th><th>Planlanan</th><th>Gerçekleşen</th><th>Verimlilik</th><th>Fire</th></tr>
+            </thead>
+            <tbody>
+            {% for op in tamamlanan %}
+            {% set v = (op.planlanan_sure / op.gerceklesen_sure * 100) | round(1) if op.planlanan_sure and op.gerceklesen_sure and op.gerceklesen_sure > 0 else none %}
+            <tr>
+                <td>{{ op.operasyon_adi }}</td>
+                <td>{{ op.planlanan_sure or '-' }} dk</td>
+                <td>{{ op.gerceklesen_sure or '-' }} dk</td>
+                <td>
+                    {% if v %}
+                    <span style="color:{% if v >= 90 %}var(--color-green){% elif v >= 70 %}var(--color-yellow){% else %}var(--color-red){% endif %};font-weight:600;">
+                        %{{ v }}
+                    </span>
+                    {% else %}-{% endif %}
+                </td>
+                <td>{{ op.fire_miktari or '-' }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

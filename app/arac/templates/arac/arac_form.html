@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}{% if arac.id %}Araç Düzenle{% else %}Yeni Araç{% endif %}{% endblock %}
+{% block page_title %}{% if arac.id %}Araç Düzenle{% else %}Yeni Araç / Ekipman{% endif %}{% endblock %}
+{% block content %}
+<form method="POST">
+<div class="grid grid-2" style="gap:16px;">
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-truck"></i> Araç Bilgileri</h3></div>
+        <div style="padding:16px;">
+            <div class="grid grid-2" style="gap:10px;">
+                <div class="form-group">
+                    <label class="form-label">Tür</label>
+                    <select name="tur" class="form-select">
+                        {% for v,a in [('arac','Araç'),('ekipman','Ekipman'),('is_makinesi','İş Makinesi')] %}
+                        <option value="{{ v }}" {% if arac.tur==v %}selected{% endif %}>{{ a }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Plaka / Kod</label>
+                    <input type="text" name="plaka" class="form-input" value="{{ arac.plaka or '' }}" placeholder="34 ABC 123">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Marka</label>
+                    <input type="text" name="marka" class="form-input" value="{{ arac.marka or '' }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Model</label>
+                    <input type="text" name="model" class="form-input" value="{{ arac.model or '' }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Yıl</label>
+                    <input type="number" name="yil" class="form-input" value="{{ arac.yil or '' }}" placeholder="2020">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Renk</label>
+                    <input type="text" name="renk" class="form-input" value="{{ arac.renk or '' }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Yakıt Türü</label>
+                    <input type="text" name="yakit_turu" class="form-input" value="{{ arac.yakit_turu or '' }}" placeholder="Dizel, Benzin, Elektrik">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Şase No</label>
+                    <input type="text" name="sase_no" class="form-input" value="{{ arac.sase_no or '' }}">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-calendar-check"></i> Tarihler & Sorumluluk</h3></div>
+        <div style="padding:16px;">
+            <div class="form-group">
+                <label class="form-label">Sorumlu Personel</label>
+                <select name="sorumlu_personel_id" class="form-select">
+                    <option value="">— Seçiniz —</option>
+                    {% for p in personeller %}
+                    <option value="{{ p.id }}" {% if arac.sorumlu_personel_id==p.id %}selected{% endif %}>{{ p.tam_ad }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" {% if arac.muayene_uyari %}style="color:var(--sari);"{% endif %}>Muayene Tarihi</label>
+                <input type="text" name="muayene_tarihi" class="datepicker form-input" value="{{ arac.muayene_tarihi or '' }}" placeholder="GG.AA.YYYY">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Sigorta Bitiş</label>
+                <input type="text" name="sigorta_tarihi" class="datepicker form-input" value="{{ arac.sigorta_tarihi or '' }}" placeholder="GG.AA.YYYY">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Kasko Bitiş</label>
+                <input type="text" name="kasko_tarihi" class="datepicker form-input" value="{{ arac.kasko_tarihi or '' }}" placeholder="GG.AA.YYYY">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Motor No</label>
+                <input type="text" name="motor_no" class="form-input" value="{{ arac.motor_no or '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Notlar</label>
+                <textarea name="notlar" class="form-input" rows="3">{{ arac.notlar or '' }}</textarea>
+            </div>
+        </div>
+    </div>
+</div>
+<div style="display:flex;gap:8px;margin-top:10px;">
+    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Kaydet</button>
+    <a href="{{ url_for('arac.arac_liste') }}" class="btn btn-ghost">İptal</a>
+</div>
+</form>
+{% endblock %}

@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% block title %}Günlük Devam Takibi{% endblock %}
+{% block page_title %}Günlük Devam Takibi{% endblock %}
+
+{% block content %}
+
+<!-- Tarih Seçimi -->
+<div class="card" style="margin-bottom:16px;padding:16px;">
+    <form method="GET" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:8px;">
+            <label style="font-weight:600;white-space:nowrap;">Tarih:</label>
+            <input type="text" name="tarih" value="{{ tarih }}"
+                   class="datepicker form-input" style="width:140px;"
+                   placeholder="GG.AA.YYYY">
+        </div>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-search"></i> Getir
+        </button>
+        <!-- Dün / Bugün / Yarın hızlı butonlar -->
+        <div style="display:flex;gap:6px;">
+            {% set bugun = now().strftime('%d.%m.%Y') %}
+            <a href="{{ url_for('vardiya.devam_listesi', tarih=bugun) }}"
+               class="btn btn-sm {{ 'btn-primary' if tarih == bugun else 'btn-ghost' }}">
+               Bugün
+            </a>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:8px;">
+            <a href="{{ url_for('vardiya.devam_rapor') }}" class="btn btn-ghost btn-sm">
+                <i class="fas fa-chart-bar"></i> Aylık Rapor
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Özet Satırı -->
+{% set toplam = personeller|length %}
+{% set geldi_sayisi   = kayitlar.values()|selectattr('durum','equalto','geldi')   |list|length %}
+{% set gelmedi_sayisi = kayitlar.values()|selectattr('durum','equalto','gelmedi') |list|length %}
+{% set izinli_sayisi  = kayitlar.values()|selectattr('durum','equalto','izinli')  |list|length %}
+{% set kayitsiz = toplam - kayitlar|length %}
+
+<div class="grid grid-4" style="margin-bottom:16px;">
+    <div class="stat-card" style="border-left:4px solid #22c55e;">
+        <div class="stat-icon" style="background:#22c55e;"><i class="fas fa-check"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ geldi_sayisi }}</div>
+            <div class="stat-label">Geldi</div>
+        </div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid #ef4444;">
+        <div class="stat-icon" style="background:#ef4444;"><i class="fas fa-times"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ gelmedi_sayisi }}</div>
+            <div class="stat-label">Gelmedi</div>
+        </div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid #f59e0b;">
+        <div class="stat-icon" style="background:#f59e0b;"><i class="fas fa-umbrella-beach"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ izinli_sayisi }}</div>
+            <div class="stat-label">İzinli</div>
+        </div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid #94a3b8;">
+        <div class="stat-icon" style="background:#94a3b8;"><i class="fas fa-question"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ kayitsiz }}</div>
+            <div class="stat-label">Kayıtsız</div>
+        </div>
+    </div>
+</div>
+
+<!-- Toplu Devam Formu -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">
+            {{ tarih }} — Personel Devam Listesi
+            <span style="font-size:13px;color:#64748b;font-weight:400;margin-left:8px;">
+                ({{ toplam }} personel)
+            </span>
+        </h3>
+        <div style="display:flex;gap:8px;">
+            <!-- Tümünü Geldi Yap -->
+            <button type="button" onclick="tumunuAyarla('geldi')"
+                    class="btn btn-sm" style="background:#22c55e;color:white;">
+                <i class="fas fa-check-double"></i> Tümü Geldi
+            </button>
+            <button type="submit" form="devam-form" class="btn btn-primary btn-sm">
+                <i class="fas fa-save"></i> Kaydet
+            </button>
+        </div>
+    </div>
+
+    <form id="devam-form" method="POST" action="{{ url_for('vardiya.devam_kaydet') }}">
+        <input type="hidden" name="tarih" value="{{ tarih }}">
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width:40px;">#</th>
+                    <th>Personel</th>
+                    <th>Departman</th>
+                    <th style="width:180px;">Durum</th>
+                    <th style="width:100px;">Giriş</th>
+                    <th style="width:100px;">Çıkış</th>
+                    <th style="width:80px;">Gecikme</th>
+                    <th>Açıklama</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for p in personeller %}
+            {% set kayit = kayitlar.get(p.id) %}
+            {% set durum = kayit.durum if kayit else '' %}
+            <input type="hidden" name="personel_id[]" value="{{ p.id }}">
+            <tr id="satir-{{ p.id }}"
+                style="{{ 'background:#f0fdf4;' if durum=='geldi' else
+                          'background:#fef2f2;' if durum=='gelmedi' else
+                          'background:#fffbeb;' if durum=='izinli' else '' }}">
+                <td style="color:#94a3b8;">{{ loop.index }}</td>
+                <td>
+                    <div style="font-weight:600;">{{ p.ad }} {{ p.soyad }}</div>
+                    <div style="font-size:11px;color:#94a3b8;">{{ p.sicil_no or '' }}</div>
+                </td>
+                <td>
+                    <span style="font-size:12px;background:#f1f5f9;padding:2px 8px;border-radius:4px;">
+                        {{ p.departman or '—' }}
+                    </span>
+                </td>
+                <td>
+                    <select name="durum_{{ p.id }}"
+                            class="form-select durum-select"
+                            data-pid="{{ p.id }}"
+                            style="font-size:12px;padding:4px 8px;"
+                            onchange="durumDegisti(this)">
+                        <option value=""          {{ 'selected' if not durum }}>— Seçin —</option>
+                        <option value="geldi"     {{ 'selected' if durum=='geldi' }}     style="color:#15803d;">✓ Geldi</option>
+                        <option value="gelmedi"   {{ 'selected' if durum=='gelmedi' }}   style="color:#ef4444;">✗ Gelmedi</option>
+                        <option value="gec_geldi" {{ 'selected' if durum=='gec_geldi' }} style="color:#f59e0b;">⏰ Geç Geldi</option>
+                        <option value="erken_cikti" {{ 'selected' if durum=='erken_cikti' }} style="color:#f97316;">⬆ Erken Çıktı</option>
+                        <option value="izinli"    {{ 'selected' if durum=='izinli' }}    style="color:#3b82f6;">📋 İzinli</option>
+                        <option value="hastalik"  {{ 'selected' if durum=='hastalik' }}  style="color:#8b5cf6;">🏥 Hastalık</option>
+                        <option value="yari_gun"  {{ 'selected' if durum=='yari_gun' }}  style="color:#06b6d4;">½ Yarım Gün</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="time" name="giris_{{ p.id }}"
+                           value="{{ kayit.giris_saati if kayit and kayit.giris_saati else '08:00' }}"
+                           class="form-input" style="font-size:12px;padding:4px;">
+                </td>
+                <td>
+                    <input type="time" name="cikis_{{ p.id }}"
+                           value="{{ kayit.cikis_saati if kayit and kayit.cikis_saati else '17:00' }}"
+                           class="form-input" style="font-size:12px;padding:4px;">
+                </td>
+                <td>
+                    {% if kayit and kayit.gecikme_dakika > 0 %}
+                    <span style="color:#ef4444;font-size:12px;font-weight:600;">
+                        +{{ kayit.gecikme_dakika }}dk
+                    </span>
+                    {% else %}
+                    <span style="color:#94a3b8;font-size:12px;">—</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <input type="text" name="aciklama_{{ p.id }}"
+                           value="{{ kayit.aciklama if kayit and kayit.aciklama else '' }}"
+                           class="form-input" style="font-size:12px;padding:4px;"
+                           placeholder="Not...">
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" style="text-align:center;color:#94a3b8;padding:32px;">
+                    Aktif personel bulunamadı.
+                    <a href="{{ url_for('ik.personel_ekle') }}">Personel ekle</a>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <div style="padding:16px;display:flex;justify-content:flex-end;gap:8px;
+                    border-top:1px solid #e2e8f0;">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Tümünü Kaydet
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+function durumDegisti(sel) {
+    const pid = sel.dataset.pid;
+    const satir = document.getElementById('satir-' + pid);
+    const durum = sel.value;
+
+    // Satır rengi
+    satir.style.background =
+        durum === 'geldi'      ? '#f0fdf4' :
+        durum === 'gec_geldi'  ? '#fffbeb' :
+        durum === 'erken_cikti'? '#fff7ed' :
+        durum === 'gelmedi'    ? '#fef2f2' :
+        durum === 'izinli'     ? '#eff6ff' :
+        durum === 'hastalik'   ? '#faf5ff' :
+        durum === 'yari_gun'   ? '#ecfeff' : '';
+}
+
+function tumunuAyarla(durum) {
+    document.querySelectorAll('.durum-select').forEach(function(sel) {
+        sel.value = durum;
+        durumDegisti(sel);
+    });
+}
+
+// Sayfa yüklenince renkleri uygula
+document.querySelectorAll('.durum-select').forEach(function(sel) {
+    if (sel.value) durumDegisti(sel);
+});
+</script>
+{% endblock %}

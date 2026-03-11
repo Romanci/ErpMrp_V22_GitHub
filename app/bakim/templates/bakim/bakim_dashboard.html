@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Bakım Yönetimi{% endblock %}
+{% block page_title %}Bakım Yönetimi{% endblock %}
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card" style="border-left:4px solid #3b82f6;">
+        <div class="stat-icon" style="background:#3b82f6;"><i class="fas fa-tools"></i></div>
+        <div class="stat-value">{{ toplam_tezgah }}</div>
+        <div class="stat-label">Toplam Tezgah</div>
+    </div>
+    <div class="stat-card kritik">
+        <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="stat-value">{{ acik_ariza }}</div>
+        <div class="stat-label">Açık Arıza</div>
+        <span class="stat-change {% if kritik_ariza > 0 %}negative{% endif %}">Kritik: {{ kritik_ariza }}</span>
+    </div>
+    <div class="stat-card {% if yaklasan_bakimlar %}uretim{% else %}stok{% endif %}">
+        <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+        <div class="stat-value">{{ yaklasan_bakimlar | length }}</div>
+        <div class="stat-label">Yaklaşan Bakım (7 gün)</div>
+    </div>
+</div>
+
+<div class="grid grid-2">
+    <!-- Acik Arizalar -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title" style="color:var(--kirmizi);">Son Açık Arızalar</h3>
+            <div style="display:flex;gap:8px;">
+                <a href="{{ url_for('bakim.ariza_ekle') }}" class="btn btn-primary btn-sm">+ Arıza Bildir</a>
+                <a href="{{ url_for('bakim.ariza_liste') }}" class="btn btn-ghost btn-sm">Tümü</a>
+            </div>
+        </div>
+        <div class="table-container" style="box-shadow:none;">
+            <table class="data-table">
+                <thead><tr><th>Tezgah</th><th>Arıza</th><th>Öncelik</th><th>Tarih</th></tr></thead>
+                <tbody>
+                {% for a in son_arizalar %}
+                <tr>
+                    <td>{{ a.tezgah.tezgah_adi if a.tezgah else '-' }}</td>
+                    <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ a.ariza_aciklama }}</td>
+                    <td><span class="status-badge {% if a.oncelik == 'kritik' %}iptal{% elif a.oncelik == 'yuksek' %}beklemede{% else %}acik{% endif %}">{{ a.oncelik }}</span></td>
+                    <td style="font-size:11px;">{{ a.ariza_tarihi }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" style="text-align:center;color:var(--yesil);">Açık arıza yok</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Yaklasan Bakimlar -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title" style="color:var(--sari);">Yaklaşan Bakımlar</h3>
+            <a href="{{ url_for('bakim.bakim_plan_ekle') }}" class="btn btn-ghost btn-sm">+ Plan Ekle</a>
+        </div>
+        <div class="table-container" style="box-shadow:none;">
+            <table class="data-table">
+                <thead><tr><th>Bakım</th><th>Tezgah</th><th>Tarih</th><th>Kalan</th></tr></thead>
+                <tbody>
+                {% for item in yaklasan_bakimlar %}
+                <tr>
+                    <td>{{ item.plan.bakim_adi }}</td>
+                    <td>{{ item.plan.tezgah.tezgah_adi if item.plan.tezgah else '-' }}</td>
+                    <td>{{ item.plan.sonraki_bakim }}</td>
+                    <td>
+                        <span style="color:{% if item.kalan <= 0 %}var(--kirmizi){% elif item.kalan <= 3 %}var(--sari){% else %}var(--yesil){% endif %};font-weight:600;">
+                            {% if item.kalan <= 0 %}Gecikti!{% else %}{{ item.kalan }} gün{% endif %}
+                        </span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" style="text-align:center;color:var(--yesil);">7 gün içinde bakım yok</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

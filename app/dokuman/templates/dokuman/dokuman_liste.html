@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Dokümanlar{% endblock %}
+{% block page_title %}Doküman Yönetimi{% endblock %}
+{% block content %}
+<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
+    <a href="{{ url_for('dokuman.dokuman_yukle') }}" class="btn btn-primary"><i class="fas fa-upload"></i> Doküman Yükle</a>
+    <form method="GET" style="display:flex;gap:6px;flex-wrap:wrap;">
+        <select name="kategori" class="form-select" style="width:200px;" onchange="this.form.submit()">
+            <option value="">Tüm Kategoriler</option>
+            {% for k,a in kategoriler %}
+            <option value="{{ k }}" {% if k==secili_kategori %}selected{% endif %}>{{ a }}</option>
+            {% endfor %}
+        </select>
+        <input type="text" name="q" value="{{ q }}" class="form-input" placeholder="Başlık veya etiket ara..." style="width:200px;">
+        <button class="btn btn-ghost"><i class="fas fa-search"></i></button>
+    </form>
+</div>
+
+{% set ikon_map = {'pdf':'fa-file-pdf','docx':'fa-file-word','doc':'fa-file-word','xlsx':'fa-file-excel','xls':'fa-file-excel','pptx':'fa-file-powerpoint','png':'fa-file-image','jpg':'fa-file-image','jpeg':'fa-file-image','dwg':'fa-drafting-compass'} %}
+
+<div class="card">
+    <div class="table-container">
+        <table class="data-table">
+            <thead><tr><th>Dosya</th><th>Başlık</th><th>Kategori</th><th>Revizyon</th><th>Geçerlilik</th><th>Boyut</th><th>Tarih</th><th></th></tr></thead>
+            <tbody>
+            {% for d in dokumanlar %}
+            <tr {% if d.suresi_dolacak_mi %}style="background:rgba(245,197,24,0.05);"{% endif %}>
+                <td style="text-align:center;width:36px;">
+                    <i class="fas {{ ikon_map.get(d.dosya_tur, 'fa-file') }}" style="font-size:20px;color:{% if d.dosya_tur=='pdf' %}#ef4444{% elif d.dosya_tur in ('xlsx','xls') %}#22c55e{% elif d.dosya_tur in ('docx','doc') %}#3b82f6{% else %}var(--gri){% endif %};"></i>
+                </td>
+                <td style="font-weight:500;">
+                    {{ d.baslik }}
+                    {% if d.etiketler %}
+                    <div style="font-size:10px;color:var(--gri);margin-top:2px;">
+                        {% for e in d.etiketler.split(',') %}<span style="background:var(--gri-acik);padding:1px 5px;border-radius:3px;margin-right:3px;">{{ e.strip() }}</span>{% endfor %}
+                    </div>
+                    {% endif %}
+                </td>
+                <td><span class="status-badge">{{ d.kategori }}</span></td>
+                <td style="font-size:12px;text-align:center;">{{ d.revizyon }}</td>
+                <td style="font-size:12px;{% if d.suresi_dolacak_mi %}color:var(--sari);font-weight:600;{% endif %}">
+                    {{ d.gecerlilik_tarihi or '—' }}
+                    {% if d.suresi_dolacak_mi %}<i class="fas fa-clock" title="30 gün içinde sona eriyor"></i>{% endif %}
+                </td>
+                <td style="font-size:12px;color:var(--gri);">{{ d.boyut_str }}</td>
+                <td style="font-size:12px;color:var(--gri);">{{ d.olusturma_tarihi }}</td>
+                <td style="display:flex;gap:4px;">
+                    {% if d.dosya_adi %}
+                    <a href="{{ url_for('dokuman.dokuman_indir', id=d.id) }}" class="btn btn-ghost btn-sm" title="İndir"><i class="fas fa-download"></i></a>
+                    {% endif %}
+                    <form method="POST" action="{{ url_for('dokuman.dokuman_sil', id=d.id) }}" onsubmit="return confirm('Silinsin mi?')">
+                        <button class="btn btn-ghost btn-sm" title="Sil"><i class="fas fa-trash" style="color:var(--kirmizi);"></i></button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--gri);">
+                <i class="fas fa-folder-open" style="font-size:32px;margin-bottom:8px;display:block;opacity:0.3;"></i>
+                Doküman bulunamadı
+            </td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

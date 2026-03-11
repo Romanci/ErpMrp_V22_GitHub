@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}{% if musteri.id %}{{ musteri.unvan }}{% else %}Yeni Müşteri{% endif %}{% endblock %}
+{% block page_title %}{% if musteri.id %}{{ musteri.unvan }} — Düzenle{% else %}Yeni Müşteri{% endif %}{% endblock %}
+{% block content %}
+<form method="POST">
+<div class="grid grid-2" style="gap:16px;">
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-building"></i> Firma Bilgileri</h3></div>
+        <div style="padding:16px;">
+            <div class="grid grid-2" style="gap:10px;">
+                <div class="form-group">
+                    <label class="form-label">Müşteri Kodu *</label>
+                    <input type="text" name="musteri_kodu" class="form-input" value="{{ musteri.musteri_kodu or '' }}" required placeholder="MST001">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tür</label>
+                    <select name="tur" class="form-select">
+                        <option value="firma" {% if musteri.tur=='firma' %}selected{% endif %}>Firma</option>
+                        <option value="bireysel" {% if musteri.tur=='bireysel' %}selected{% endif %}>Bireysel</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Ünvan / Ad Soyad *</label>
+                <input type="text" name="unvan" class="form-input" value="{{ musteri.unvan or '' }}" required>
+            </div>
+            <div class="grid grid-2" style="gap:10px;">
+                <div class="form-group">
+                    <label class="form-label">Vergi No</label>
+                    <input type="text" name="vergi_no" class="form-input" value="{{ musteri.vergi_no or '' }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Vergi Dairesi</label>
+                    <input type="text" name="vergi_dairesi" class="form-input" value="{{ musteri.vergi_dairesi or '' }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Şehir</label>
+                    <input type="text" name="sehir" class="form-input" value="{{ musteri.sehir or '' }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Sektör</label>
+                    <input type="text" name="sektor" class="form-input" value="{{ musteri.sektor or '' }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Ödeme Vadesi (gün)</label>
+                    <input type="number" name="odeme_vadesi" class="form-input" value="{{ musteri.odeme_vadesi or 30 }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Para Birimi</label>
+                    <select name="para_birimi" class="form-select">
+                        {% for pb in ['TRY','USD','EUR','GBP'] %}
+                        <option value="{{ pb }}" {% if musteri.para_birimi==pb %}selected{% endif %}>{{ pb }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Adres</label>
+                <textarea name="adres" class="form-input" rows="2">{{ musteri.adres or '' }}</textarea>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-phone"></i> İletişim & Yetkili</h3></div>
+        <div style="padding:16px;">
+            <div class="form-group">
+                <label class="form-label">Telefon</label>
+                <input type="text" name="telefon" class="form-input" value="{{ musteri.telefon or '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">E-posta</label>
+                <input type="email" name="email" class="form-input" value="{{ musteri.email or '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Website</label>
+                <input type="text" name="website" class="form-input" value="{{ musteri.website or '' }}" placeholder="www.firma.com">
+            </div>
+            <hr style="border:none;border-top:1px solid var(--gri-kenar);margin:12px 0;">
+            <div style="font-size:12px;font-weight:600;color:var(--gri);margin-bottom:8px;">YETKİLİ KİŞİ</div>
+            <div class="form-group">
+                <label class="form-label">Ad Soyad</label>
+                <input type="text" name="yetkili_ad" class="form-input" value="{{ musteri.yetkili_ad or '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Telefon</label>
+                <input type="text" name="yetkili_tel" class="form-input" value="{{ musteri.yetkili_tel or '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">E-posta</label>
+                <input type="email" name="yetkili_email" class="form-input" value="{{ musteri.yetkili_email or '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Notlar</label>
+                <textarea name="notlar" class="form-input" rows="2">{{ musteri.notlar or '' }}</textarea>
+            </div>
+        </div>
+    </div>
+</div>
+<div style="display:flex;gap:8px;margin-top:10px;">
+    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Kaydet</button>
+    <a href="{{ url_for('crm.musteri_liste') }}" class="btn btn-ghost">İptal</a>
+</div>
+</form>
+{% endblock %}

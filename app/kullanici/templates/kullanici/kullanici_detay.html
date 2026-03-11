@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}{{ kullanici.tam_ad }} - ERP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>👤 {{ kullanici.tam_ad }}</h1>
+    <div>
+        <a href="{{ url_for('kullanici.kullanici_duzenle', id=kullanici.id) }}" class="btn btn-primary">Duzenle</a>
+        <a href="{{ url_for('kullanici.kullanici_liste') }}" class="btn btn-secondary">Listeye Don</a>
+    </div>
+</div>
+
+<div class="grid grid-2">
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Temel Bilgiler</h3></div>
+        <div class="card-body">
+            <table class="data-table">
+                <tr><th>Kullanici Adi</th><td>{{ kullanici.kullanici_adi }}</td></tr>
+                <tr><th>Ad Soyad</th><td>{{ kullanici.tam_ad }}</td></tr>
+                <tr><th>Email</th><td>{{ kullanici.email or '-' }}</td></tr>
+                <tr><th>Telefon</th><td>{{ kullanici.telefon or '-' }}</td></tr>
+                <tr><th>Departman</th><td>{{ kullanici.departman or '-' }}</td></tr>
+                <tr><th>Olusturma Tarihi</th><td>{{ kullanici.olusturma_tarihi }}</td></tr>
+                <tr><th>Son Giris</th><td>{{ kullanici.son_giris or 'Hic giris yapilmadi' }}</td></tr>
+                <tr><th>Durum</th><td>
+                    <span class="status-badge {{ 'devam' if kullanici.aktif else 'iptal' }}">
+                        {{ 'Aktif' if kullanici.aktif else 'Pasif' }}
+                    </span>
+                </td></tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Roller ve Yetkiler</h3></div>
+        <div class="card-body">
+            {% for kr in kullanici.roller %}
+            <div style="margin-bottom: 1rem; padding: 1rem; background: var(--siyah-acik); border-radius: 8px; color: white;">
+                <strong style="color: var(--sari);">{{ kr.rol.rol_adi.upper() }}</strong>
+                {% if kr.rol.aciklama %}<p style="color: var(--gri);">{{ kr.rol.aciklama }}</p>{% endif %}
+                <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    {% if kr.rol.stok_erisim %}<span class="status-badge devam">Stok</span>{% endif %}
+                    {% if kr.rol.satin_alma_erisim %}<span class="status-badge devam">Satin Alma</span>{% endif %}
+                    {% if kr.rol.uretim_erisim %}<span class="status-badge devam">Uretim</span>{% endif %}
+                    {% if kr.rol.ik_erisim %}<span class="status-badge devam">IK</span>{% endif %}
+                    {% if kr.rol.bakim_erisim %}<span class="status-badge devam">Bakim</span>{% endif %}
+                    {% if not kr.rol.yazma_izni %}<span class="status-badge iptal">Salt Okuma</span>{% endif %}
+                    {% if kr.rol.silme_izni %}<span class="status-badge tamamlandi">Silme Yetkisi</span>{% endif %}
+                </div>
+                <small style="color: var(--gri);">Atama: {{ kr.atama_tarihi }}</small>
+            </div>
+            {% else %}
+            <p style="color: var(--gri);">Rol atanmamis</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

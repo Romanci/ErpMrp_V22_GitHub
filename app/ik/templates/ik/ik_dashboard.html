@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}IK Dashboard{% endblock %}
+{% block page_title %}İnsan Kaynakları{% endblock %}
+{% block content %}
+
+<div class="stats-grid">
+    <div class="stat-card stok">
+        <div class="stat-icon"><i class="fas fa-users"></i></div>
+        <div class="stat-value">{{ personel_sayisi }}</div>
+        <div class="stat-label">Aktif Personel</div>
+    </div>
+    <div class="stat-card satin-alma">
+        <div class="stat-icon"><i class="fas fa-clock"></i></div>
+        <div class="stat-value" style="{% if bekleyen_izin %}color:var(--sari);{% endif %}">{{ bekleyen_izin }}</div>
+        <div class="stat-label">Bekleyen İzin</div>
+    </div>
+    <div class="stat-card uretim">
+        <div class="stat-icon"><i class="fas fa-umbrella-beach"></i></div>
+        <div class="stat-value">{{ bugun_izinli }}</div>
+        <div class="stat-label">Bugün İzinli</div>
+    </div>
+    <div class="stat-card bakim" style="{% if kkd_uyari %}border-left:4px solid var(--kirmizi);{% endif %}">
+        <div class="stat-icon"><i class="fas fa-hard-hat"></i></div>
+        <div class="stat-value" style="{% if kkd_uyari %}color:var(--kirmizi);{% endif %}">{{ kkd_uyari }}</div>
+        <div class="stat-label">KKD Yenileme Uyarısı</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-user-times"></i></div>
+        <div class="stat-value">{{ devamsizlik }}</div>
+        <div class="stat-label">Bu Ay Devamsızlık</div>
+    </div>
+</div>
+
+<div class="grid grid-2" style="gap:16px;margin-top:16px;">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-list"></i> Son İzin Talepleri</h3>
+            <a href="{{ url_for('ik.izin_liste') }}" class="btn btn-ghost btn-sm">Tümü</a>
+        </div>
+        <div class="table-container">
+            <table class="data-table">
+                <thead><tr><th>Personel</th><th>Tür</th><th>Başlangıç</th><th>Gün</th><th>Durum</th><th></th></tr></thead>
+                <tbody>
+                {% for iz in son_izinler %}
+                <tr>
+                    <td><a href="{{ url_for('ik.personel_detay', id=iz.personel_id) }}">{{ iz.personel.tam_ad if iz.personel else '?' }}</a></td>
+                    <td style="font-size:12px;">{{ iz.izin_turu }}</td>
+                    <td style="font-size:12px;">{{ iz.baslangic }}</td>
+                    <td>{{ iz.gun_sayisi }}</td>
+                    <td>
+                        <span class="status-badge {% if iz.durum=='onaylandi' %}acik{% elif iz.durum=='reddedildi' %}iptal{% else %}beklemede{% endif %}">
+                            {{ iz.durum }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if iz.durum == 'beklemede' %}
+                        <form method="POST" action="{{ url_for('ik.izin_onayla', izin_id=iz.id) }}" style="display:inline;">
+                            <button class="btn btn-ghost btn-sm" style="color:var(--yesil);"><i class="fas fa-check"></i></button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" style="text-align:center;color:var(--gri);padding:20px;">İzin talebi yok</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-link"></i> Hızlı Erişim</h3></div>
+        <div style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            {% for url, ikon, etiket, renk in [
+                (url_for('ik.personel_liste'), 'fa-id-card', 'Personel Listesi', '#3b82f6'),
+                (url_for('ik.personel_form'), 'fa-user-plus', 'Yeni Personel', '#22c55e'),
+                (url_for('ik.izin_liste'), 'fa-calendar-check', 'İzin Listesi', '#f59e0b'),
+                (url_for('ik.tatil_liste'), 'fa-calendar-alt', 'Tatil Takvimi', '#8b5cf6'),
+                (url_for('ik.kkd_liste'), 'fa-hard-hat', 'KKD Tanımları', '#ef4444'),
+                (url_for('ik.zimmet_liste'), 'fa-clipboard-list', 'Zimmet Listesi', '#06b6d4'),
+            ] %}
+            <a href="{{ url }}" style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--gri-acik);border-radius:8px;text-decoration:none;color:inherit;font-size:13px;font-weight:500;">
+                <i class="fas {{ ikon }}" style="color:{{ renk }};width:18px;text-align:center;"></i> {{ etiket }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

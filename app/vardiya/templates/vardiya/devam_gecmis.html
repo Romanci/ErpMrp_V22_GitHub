@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Devam Geçmişi{% endblock %}
+{% block page_title %}Personel Devam Raporu{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Son 30 Gün — Personel Bazlı Özet</h3>
+        <a href="{{ url_for('vardiya.devam_dashboard') }}" class="btn btn-ghost btn-sm">
+            ← Bugünün Girişi
+        </a>
+    </div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Personel</th>
+                <th>Departman</th>
+                <th style="color:#22c55e;">Geldi</th>
+                <th style="color:#ef4444;">Gelmedi</th>
+                <th style="color:#f59e0b;">Geç</th>
+                <th>Kayıtlı Gün</th>
+                <th>Devam %</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for p in personeller %}
+        {% set ist = istatistikler.get(p.id, {}) %}
+        {% set toplam = ist.get('toplam', 0) %}
+        {% set geldi = ist.get('geldi', 0) %}
+        <tr>
+            <td>
+                <strong>{{ p.ad }} {{ p.soyad }}</strong>
+                <div style="font-size:11px;color:#94a3b8;">{{ p.sicil_no or '' }}</div>
+            </td>
+            <td style="font-size:12px;">{{ p.departman or '—' }}</td>
+            <td style="color:#22c55e;font-weight:600;">{{ geldi }}</td>
+            <td style="color:#ef4444;font-weight:600;">{{ ist.get('gelmedi', 0) }}</td>
+            <td style="color:#f59e0b;font-weight:600;">{{ ist.get('gec', 0) }}</td>
+            <td>{{ toplam }}</td>
+            <td>
+                {% if toplam > 0 %}
+                {% set oran = (geldi / toplam * 100)|round(0)|int %}
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <div style="flex:1;background:#e2e8f0;border-radius:4px;height:6px;">
+                        <div style="width:{{ oran }}%;background:
+                            {% if oran >= 90 %}#22c55e{% elif oran >= 75 %}#f59e0b{% else %}#ef4444{% endif %};
+                            height:6px;border-radius:4px;"></div>
+                    </div>
+                    <span style="font-size:12px;font-weight:600;min-width:36px;">{{ oran }}%</span>
+                </div>
+                {% else %}
+                <span style="color:#94a3b8;font-size:12px;">—</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:32px;">
+            Kayıt bulunamadı.
+        </td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

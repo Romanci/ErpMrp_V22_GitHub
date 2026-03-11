@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Personel Listesi{% endblock %}
+{% block page_title %}Personel Listesi{% endblock %}
+{% block content %}
+<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+    <a href="{{ url_for('ik.personel_form') }}" class="btn btn-primary"><i class="fas fa-user-plus"></i> Yeni Personel</a>
+    <form method="GET" style="display:flex;gap:8px;flex:1;">
+        <input type="text" name="q" value="{{ q }}" class="form-input" placeholder="Ad, soyad, sicil ara..." style="max-width:220px;">
+        <select name="departman" class="form-select" style="max-width:160px;" onchange="this.form.submit()">
+            <option value="">Tüm Departmanlar</option>
+            {% for d in departmanlar %}
+            <option value="{{ d }}" {% if d==secili_departman %}selected{% endif %}>{{ d }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-ghost"><i class="fas fa-search"></i></button>
+    </form>
+</div>
+<div class="card">
+    <div class="table-container">
+        <table class="data-table">
+            <thead><tr><th>Sicil</th><th>Ad Soyad</th><th>Departman</th><th>Pozisyon</th><th>İşe Başlama</th><th>Kıdem</th><th>İzin Hakkı</th><th>İşlem</th></tr></thead>
+            <tbody>
+            {% for p in personeller %}
+            {% set hakki = p.izinler|selectattr('durum','equalto','onaylandi')|selectattr('izin_turu','equalto','yillik')|sum(attribute='gun_sayisi') %}
+            <tr>
+                <td style="font-weight:600;font-size:12px;">{{ p.sicil_no }}</td>
+                <td><a href="{{ url_for('ik.personel_detay', id=p.id) }}" style="font-weight:500;">{{ p.tam_ad }}</a>
+                    {% if p.yas and p.yas >= 50 %}<span style="font-size:10px;color:var(--mavi);margin-left:4px;">50+</span>{% endif %}
+                </td>
+                <td>{{ p.departman or '—' }}</td>
+                <td style="font-size:12px;">{{ p.pozisyon or '—' }}</td>
+                <td style="font-size:12px;">{{ p.ise_baslama or '—' }}</td>
+                <td>{{ p.kidem_yil }} yıl</td>
+                <td style="font-weight:600;color:var(--mavi);">{{ p.izinler|selectattr('durum','equalto','onaylandi')|selectattr('izin_turu','equalto','yillik')|sum(attribute='gun_sayisi') }} / —</td>
+                <td style="display:flex;gap:4px;">
+                    <a href="{{ url_for('ik.personel_detay', id=p.id) }}" class="btn btn-ghost btn-sm"><i class="fas fa-eye"></i></a>
+                    <a href="{{ url_for('ik.personel_form', id=p.id) }}" class="btn btn-ghost btn-sm"><i class="fas fa-edit"></i></a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" style="text-align:center;padding:30px;color:var(--gri);">
+                {% if q or secili_departman %}Sonuç bulunamadı{% else %}Henüz personel eklenmemiş{% endif %}
+            </td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

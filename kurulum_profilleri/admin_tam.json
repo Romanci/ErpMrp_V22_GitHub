@@ -1,0 +1,9 @@
+{
+  "profil_adi": "Admin - Tam Yetki",
+  "aciklama": "Tüm modüller ve admin yetkisi",
+  "moduller": {
+    "stok": true, "satin_alma": true, "uretim": true, "fatura": true,
+    "ik": true, "bakim": true, "crm": true, "kalite": true,
+    "dokuman": true, "arac": true, "vardiya": true, "muhasebe": true
+  }
+}

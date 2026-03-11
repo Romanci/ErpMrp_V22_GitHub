@@ -1,0 +1,95 @@
+<!-- Urun listesi sayfasi -->
+{% extends "base.html" %}
+{% block title %}Ürün Listesi - ERP{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Ürün Listesi</h1>
+    <div style="display:flex;gap:8px;">
+        <a href="{{ url_for('export.excel_stok') }}" class="btn btn-ghost btn-sm">
+            <i class="fas fa-file-excel"></i> Excel
+        </a>
+        <a href="{{ url_for('export.pdf_stok') }}" class="btn btn-ghost btn-sm">
+            <i class="fas fa-file-pdf"></i> PDF
+        </a>
+        <a href="{{ url_for('stok.urun_ekle') }}" class="btn btn-primary btn-sm">+ Yeni Ürün</a>
+    </div>
+</div>
+
+<!-- Filtre -->
+<div class="card" style="margin-bottom:16px;">
+    <form method="GET" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+        <div class="form-group" style="margin:0;min-width:220px;">
+            <label style="font-size:11px;color:var(--color-muted);text-transform:uppercase;">Arama</label>
+            <input type="text" name="ara" value="{{ request.args.get('ara','') }}"
+                   class="form-control" placeholder="Ürün adı, stok kodu, barkod..." style="width:100%;">
+        </div>
+        <div class="form-group" style="margin:0;min-width:150px;">
+            <label style="font-size:11px;color:var(--color-muted);text-transform:uppercase;">Kategori</label>
+            <select name="kategori_id" class="form-select" style="width:100%;" onchange="this.form.submit()">
+                <option value="">Tümü</option>
+                {% for k in kategoriler or [] %}
+                <option value="{{ k.id }}" {% if request.args.get('kategori_id')==k.id|string %}selected{% endif %}>{{ k.kategori_adi }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group" style="margin:0;min-width:140px;">
+            <label style="font-size:11px;color:var(--color-muted);text-transform:uppercase;">Durum</label>
+            <select name="kritik" class="form-select" style="width:100%;" onchange="this.form.submit()">
+                <option value="">Tümü</option>
+                <option value="1" {% if request.args.get('kritik')=='1' %}selected{% endif %}>Sadece Kritik</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-ghost btn-sm" style="margin-bottom:1px;">Filtrele</button>
+        {% if request.args %}<a href="{{ url_for('stok.urun_liste') }}" class="btn btn-ghost btn-sm" style="margin-bottom:1px;">Temizle ✕</a>{% endif %}
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Ürünler
+            {% if urunler %}<span class="status-badge info" style="margin-left:8px;">{{ urunler|length }} kayıt</span>{% endif %}
+        </h3>
+    </div>
+    <div class="table-container" style="box-shadow:none;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Stok Kodu</th><th>Barkod</th><th>Ürün Adı</th><th>Birim</th>
+                    <th style="text-align:right;">Alış Fiyatı</th><th style="text-align:right;">Satış Fiyatı</th>
+                    <th style="text-align:center;">KDV %</th><th>Min/Max</th>
+                    <th style="text-align:center;">Parti</th><th>İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for urun in urunler %}
+                <tr>
+                    <td><code>{{ urun.stok_kodu }}</code></td>
+                    <td>{{ urun.barkod or '—' }}</td>
+                    <td><strong>{{ urun.urun_adi }}</strong></td>
+                    <td>{{ urun.birim }}</td>
+                    <td style="text-align:right;">{{ "%.2f"|format(urun.alis_fiyati or 0) }}</td>
+                    <td style="text-align:right;">{{ "%.2f"|format(urun.satis_fiyati or 0) }}</td>
+                    <td style="text-align:center;">%{{ urun.kdv_orani | int }}</td>
+                    <td>{{ urun.min_stok }} / {{ urun.max_stok }}</td>
+                    <td style="text-align:center;">
+                        {% if urun.parti_takibi %}<span class="status-badge acik">Evet</span>{% else %}—{% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('stok.urun_duzenle', id=urun.id) }}" class="btn btn-ghost btn-sm">Düzenle</a>
+                        <form action="{{ url_for('stok.urun_sil', id=urun.id) }}" method="POST" style="display:inline;"
+                              onsubmit="return confirm('Ürün pasife alınsın mı?')">
+                            <button type="submit" class="btn btn-sm btn-danger">Sil</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="10" style="text-align:center;padding:32px;color:var(--color-muted);">
+                    Ürün bulunamadı.
+                    {% if not request.args %}<a href="{{ url_for('stok.urun_ekle') }}">İlk ürünü ekle →</a>{% endif %}
+                </td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

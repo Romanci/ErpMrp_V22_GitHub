@@ -1,0 +1,43 @@
+<!-- Depo listesi ve lokasyon yonetimi -->
+{% extends "base.html" %}
+
+{% block title %}Depolar - ERP{% endblock %}
+
+{% block content %}
+{% block page_title %}Depolar{% endblock %}
+<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><a href="{{ url_for('depo.depo_ekle') }}" class="btn btn-primary">Yeni Depo</a></div>
+
+{% for depo in depolar %}
+<div class="depo-kart">
+    <h3>{{ depo.depo_kodu }} - {{ depo.depo_adi }}</h3>
+    <p>Adres: {{ depo.adres or '-' }}</p>
+    
+    <h4>Lokasyonlar:</h4>
+    <ul class="lokasyon-liste">
+        {% for lok in depo.lokasyonlar %}
+            {% if lok.aktif %}
+            <li>{{ lok.lokasyon_kodu }} - {{ lok.lokasyon_adi or 'Isimsiz' }}</li>
+            {% endif %}
+        {% else %}
+            <li>Lokasyon yok</li>
+        {% endfor %}
+    </ul>
+    
+    <!-- Lokasyon ekleme formu -->
+    <form action="{{ url_for('depo.lokasyon_ekle', depo_id=depo.id) }}" method="POST" class="form-inline">
+        <input type="text" name="lokasyon_kodu" placeholder="Lokasyon Kodu" required>
+        <input type="text" name="lokasyon_adi" placeholder="Lokasyon Adi">
+        <button type="submit" class="btn btn-sm">Lokasyon Ekle</button>
+    </form>
+    
+    <div class="form-actions" style="margin-top: 1rem;">
+        <a href="{{ url_for('depo.depo_duzenle', id=depo.id) }}" class="btn btn-sm">Duzenle</a>
+        <form action="{{ url_for('depo.depo_sil', id=depo.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Silmek istediginize emin misiniz?')">
+            <button type="submit" class="btn btn-sm btn-danger">Sil</button>
+        </form>
+    </div>
+</div>
+{% else %}
+<p>Henuz depo tanimlanmamis.</p>
+{% endfor %}
+{% endblock %}

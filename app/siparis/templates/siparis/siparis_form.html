@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block title %}Yeni Sipariş{% endblock %}
+{% block page_title %}Yeni Satış Siparişi{% endblock %}
+{% block content %}
+<form method="POST">
+<div class="grid grid-2" style="gap:16px;">
+
+    <!-- Sol: Müşteri & Genel Bilgiler -->
+    <div class="card" style="padding:20px;">
+        <h4 style="margin-bottom:16px;color:#1e293b;">Müşteri Bilgileri</h4>
+        <div class="form-group">
+            <label class="form-label">Müşteri (CRM'den)</label>
+            <select name="musteri_id" class="form-select">
+                <option value="">— Seçiniz veya aşağıya yazınız —</option>
+                {% for m in musteriler %}
+                <option value="{{ m.id }}">{{ m.unvan }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Müşteri Adı (CRM'de yoksa)</label>
+            <input type="text" name="musteri_adi_serbest" class="form-input"
+                   placeholder="Sözlü sipariş için müşteri adı">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Telefon</label>
+            <input type="text" name="musteri_telefon" class="form-input">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Teslim Adresi</label>
+            <textarea name="teslim_adresi" class="form-input" rows="2"></textarea>
+        </div>
+    </div>
+
+    <!-- Sağ: Sipariş Detayları -->
+    <div class="card" style="padding:20px;">
+        <h4 style="margin-bottom:16px;color:#1e293b;">Sipariş Detayları</h4>
+        <div class="form-group">
+            <label class="form-label">Sipariş Kaynağı</label>
+            <select name="kaynak" class="form-select">
+                {% for k, kadi in kaynaklar %}
+                <option value="{{ k }}">{{ kadi }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Termin Tarihi</label>
+            <input type="text" name="termin_tarihi" class="datepicker form-input" placeholder="GG.AA.YYYY">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Bağlı Proje (opsiyonel)</label>
+            <select name="proje_id" class="form-select">
+                <option value="">— Yok —</option>
+                {% for p in projeler %}
+                <option value="{{ p.id }}">{{ p.proje_no }} — {{ p.proje_adi }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Para Birimi</label>
+            <select name="para_birimi" class="form-select">
+                <option value="TL">TL</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Açıklama</label>
+            <textarea name="aciklama" class="form-input" rows="2"></textarea>
+        </div>
+    </div>
+</div>
+
+<!-- Ürün Kalemleri -->
+<div class="card" style="margin-top:16px;">
+    <div class="card-header">
+        <h3 class="card-title">Sipariş Kalemleri</h3>
+        <button type="button" onclick="satirEkle()" class="btn btn-ghost btn-sm">
+            <i class="fas fa-plus"></i> Satır Ekle
+        </button>
+    </div>
+    <div style="overflow-x:auto;">
+    <table class="data-table" id="satirlar-tablosu">
+        <thead>
+            <tr>
+                <th style="width:200px;">Ürün</th>
+                <th style="width:200px;">Açıklama</th>
+                <th style="width:100px;">Proje Kodu</th>
+                <th style="width:80px;">Miktar</th>
+                <th style="width:120px;">Birim Fiyat</th>
+                <th style="width:60px;">KDV %</th>
+                <th style="width:100px;">Toplam</th>
+                <th style="width:40px;"></th>
+            </tr>
+        </thead>
+        <tbody id="satirlar-body">
+        </tbody>
+    </table>
+    </div>
+    <div style="padding:16px;text-align:right;">
+        <strong id="genel-toplam" style="font-size:18px;">Toplam: 0.00</strong>
+    </div>
+</div>
+
+<div style="display:flex;gap:8px;margin-top:16px;">
+    <button type="submit" class="btn btn-primary">
+        <i class="fas fa-save"></i> Siparişi Kaydet (Onaya Gönder)
+    </button>
+    <a href="{{ url_for('siparis.siparis_dashboard') }}" class="btn btn-ghost">İptal</a>
+</div>
+</form>
+
+<!-- Ürün Listesi JSON -->
+<script>
+const urunler = [
+    {% for u in urunler %}
+    { id: {{ u.id }}, ad: "{{ u.urun_adi }}", birim: "{{ u.birim }}", fiyat: {{ u.satis_fiyati or 0 }} },
+    {% endfor %}
+];
+
+let satirSayaci = 0;
+
+function satirEkle() {
+    satirSayaci++;
+    const tbody = document.getElementById('satirlar-body');
+    const tr = document.createElement('tr');
+    tr.id = `satir-${satirSayaci}`;
+    tr.innerHTML = `
+        <td>
+            <select name="urun_id[]" class="form-select" style="font-size:12px;"
+                    onchange="urunSecildi(this, ${satirSayaci})">
+                <option value="">— Serbest Giriş —</option>
+                ${urunler.map(u => `<option value="${u.id}" data-birim="${u.birim}" data-fiyat="${u.fiyat}">${u.ad}</option>`).join('')}
+            </select>
+        </td>
+        <td><input type="text" name="tanim[]" class="form-input" style="font-size:12px;" placeholder="Açıklama"></td>
+        <td><input type="text" name="proje_kodu[]" class="form-input" style="font-size:12px;" placeholder="Proje kodu"></td>
+        <td><input type="number" name="miktar[]" class="form-input" style="font-size:12px;"
+                   value="1" step="0.001" min="0.001" onchange="toplamHesapla(${satirSayaci})"></td>
+        <td><input type="number" name="birim_fiyat[]" class="form-input" style="font-size:12px;"
+                   value="0" step="0.0001" id="fiyat-${satirSayaci}" onchange="toplamHesapla(${satirSayaci})"></td>
+        <td><input type="number" name="kdv_orani[]" class="form-input" style="font-size:12px;"
+                   value="18" step="1" onchange="toplamHesapla(${satirSayaci})"></td>
+        <td><span id="toplam-${satirSayaci}" style="font-weight:600;">0.00</span></td>
+        <td><button type="button" onclick="satirSil(${satirSayaci})"
+                    style="background:#ef4444;color:white;border:none;border-radius:4px;
+                           padding:4px 8px;cursor:pointer;">×</button></td>
+    `;
+    tbody.appendChild(tr);
+}
+
+function urunSecildi(sel, no) {
+    const opt = sel.selectedOptions[0];
+    if (opt.value) {
+        document.getElementById(`fiyat-${no}`).value = opt.dataset.fiyat || 0;
+        toplamHesapla(no);
+    }
+}
+
+function toplamHesapla(no) {
+    const tr = document.getElementById(`satir-${no}`);
+    const miktar = parseFloat(tr.querySelector('[name="miktar[]"]').value) || 0;
+    const fiyat  = parseFloat(tr.querySelector('[name="birim_fiyat[]"]').value) || 0;
+    const kdv    = parseFloat(tr.querySelector('[name="kdv_orani[]"]').value) || 0;
+    const ara    = miktar * fiyat;
+    const toplam = ara + (ara * kdv / 100);
+    document.getElementById(`toplam-${no}`).textContent = toplam.toFixed(2);
+    genelToplamHesapla();
+}
+
+function genelToplamHesapla() {
+    let toplam = 0;
+    document.querySelectorAll('[id^="toplam-"]').forEach(el => {
+        toplam += parseFloat(el.textContent) || 0;
+    });
+    document.getElementById('genel-toplam').textContent = `Toplam: ${toplam.toFixed(2)}`;
+}
+
+function satirSil(no) {
+    document.getElementById(`satir-${no}`).remove();
+    genelToplamHesapla();
+}
+
+// Başlangıçta 1 satır ekle
+satirEkle();
+</script>
+{% endblock %}

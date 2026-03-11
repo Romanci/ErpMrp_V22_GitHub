@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Sipariş Yönetimi{% endblock %}
+{% block page_title %}Satış Siparişleri{% endblock %}
+{% block content %}
+
+<!-- Onay Bekleyenler Uyarısı -->
+{% if onay_bekleyenler %}
+<div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;
+            padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;">
+    <i class="fas fa-exclamation-triangle" style="color:#f59e0b;font-size:18px;"></i>
+    <div>
+        <strong>{{ onay_bekleyenler|length }} sipariş onay bekliyor</strong>
+        {% for e in onay_bekleyenler %}
+        — <a href="{{ url_for('siparis.siparis_onayla', id=e.id) }}"
+             style="color:#92400e;font-weight:600;">{{ e.siparis_no }}</a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- İstatistikler -->
+<div class="grid grid-4" style="margin-bottom:24px;">
+    <div class="stat-card" style="border-left:4px solid #3b82f6;">
+        <div class="stat-icon" style="background:#3b82f6;"><i class="fas fa-shopping-cart"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ aktif|length }}</div>
+            <div class="stat-label">Aktif Sipariş</div>
+        </div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid #f59e0b;">
+        <div class="stat-icon" style="background:#f59e0b;"><i class="fas fa-clock"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ durum_sayilari.get('onay_bekliyor', 0) }}</div>
+            <div class="stat-label">Onay Bekliyor</div>
+        </div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid #8b5cf6;">
+        <div class="stat-icon" style="background:#8b5cf6;"><i class="fas fa-cogs"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ durum_sayilari.get('hazirlaniyor', 0) }}</div>
+            <div class="stat-label">Hazırlanıyor</div>
+        </div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid #0ea5e9;">
+        <div class="stat-icon" style="background:#0ea5e9;"><i class="fas fa-truck"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ durum_sayilari.get('sevk_edildi', 0) }}</div>
+            <div class="stat-label">Sevk Edildi</div>
+        </div>
+    </div>
+</div>
+
+<!-- Aktif Siparişler -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Aktif Siparişler</h3>
+        <div style="display:flex;gap:8px;">
+            <a href="{{ url_for('siparis.siparis_liste') }}" class="btn btn-ghost btn-sm">Tüm Liste</a>
+            <a href="{{ url_for('siparis.siparis_yeni') }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus"></i> Yeni Sipariş
+            </a>
+        </div>
+    </div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Sipariş No</th><th>Müşteri</th><th>Kaynak</th>
+                <th>Tarih</th><th>Termin</th><th>Tutar</th><th>Durum</th><th></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for e in aktif %}
+        <tr>
+            <td><strong>{{ e.siparis_no }}</strong></td>
+            <td>{{ e.musteri_adi }}</td>
+            <td>
+                <span style="font-size:11px;background:#f1f5f9;padding:2px 6px;border-radius:4px;">
+                    {{ e.kaynak_adi }}
+                </span>
+            </td>
+            <td>{{ e.siparis_tarihi }}</td>
+            <td>{{ e.termin_tarihi or '—' }}</td>
+            <td>{{ '{:,.2f}'.format(e.toplam_tutar) }} {{ e.para_birimi }}</td>
+            <td>
+                <span style="background:{{ e.durum_rengi }};color:white;
+                             padding:3px 10px;border-radius:12px;font-size:12px;">
+                    {{ e.durum_adi }}
+                </span>
+            </td>
+            <td>
+                {% if e.durum == 'onay_bekliyor' %}
+                <a href="{{ url_for('siparis.siparis_onayla', id=e.id) }}"
+                   class="btn btn-sm" style="background:#f59e0b;color:white;">Onayla</a>
+                {% else %}
+                <a href="{{ url_for('siparis.siparis_detay', id=e.id) }}"
+                   class="btn btn-ghost btn-sm">Detay</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:32px;">
+            Aktif sipariş bulunmuyor.
+            <a href="{{ url_for('siparis.siparis_yeni') }}">Yeni sipariş oluştur</a>
+        </td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

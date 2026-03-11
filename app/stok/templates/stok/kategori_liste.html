@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Kategoriler - ERP{% endblock %}
+
+{% block content %}
+{% block page_title %}Stok Kategorileri{% endblock %}
+<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><a href="{{ url_for('kategori.kategori_ekle') }}" class="btn btn-primary">Yeni Kategori</a></div>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Kategori Adi</th>
+            <th>Ust Kategori</th>
+            <th>Alt Kategori Sayisi</th>
+            <th>Islemler</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for kategori in kategoriler %}
+        <tr>
+            <td><strong>{{ kategori.tam_yol() }}</strong></td>
+            <td>{{ kategori.ust_kategori.kategori_adi if kategori.ust_kategori else '-' }}</td>
+            <td>{{ kategori.alt_kategoriler|length }}</td>
+            <td>
+                <a href="{{ url_for('kategori.kategori_duzenle', id=kategori.id) }}" class="btn btn-sm">Duzenle</a>
+                <form action="{{ url_for('kategori.kategori_sil', id=kategori.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Silmek istediginize emin misiniz?')">
+                    <button type="submit" class="btn btn-sm btn-danger">Sil</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4">Henuz kategori tanimlanmamis.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

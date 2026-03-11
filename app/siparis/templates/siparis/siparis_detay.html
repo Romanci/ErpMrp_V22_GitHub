@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}{{ siparis.siparis_no }}{% endblock %}
+{% block page_title %}{{ siparis.siparis_no }} — {{ siparis.musteri_adi }}{% endblock %}
+{% block content %}
+
+<!-- Üst Bilgi -->
+<div style="display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap;">
+    <div class="card" style="flex:1;min-width:160px;padding:16px;">
+        <div style="font-size:12px;color:#94a3b8;">MÜŞTERİ</div>
+        <div style="font-weight:600;margin-top:4px;">{{ siparis.musteri_adi }}</div>
+        <div style="font-size:12px;color:#64748b;">{{ siparis.kaynak_adi }}</div>
+    </div>
+    <div class="card" style="flex:1;min-width:160px;padding:16px;">
+        <div style="font-size:12px;color:#94a3b8;">DURUM</div>
+        <div style="margin-top:4px;">
+            <span style="background:{{ siparis.durum_rengi }};color:white;
+                         padding:4px 12px;border-radius:12px;font-size:13px;">
+                {{ siparis.durum_adi }}
+            </span>
+        </div>
+    </div>
+    <div class="card" style="flex:1;min-width:160px;padding:16px;">
+        <div style="font-size:12px;color:#94a3b8;">TERMİN</div>
+        <div style="font-weight:600;margin-top:4px;">{{ siparis.termin_tarihi or '—' }}</div>
+        <div style="font-size:12px;color:#64748b;">Sipariş: {{ siparis.siparis_tarihi }}</div>
+    </div>
+    <div class="card" style="flex:1;min-width:160px;padding:16px;">
+        <div style="font-size:12px;color:#94a3b8;">TOPLAM</div>
+        <div style="font-weight:600;font-size:18px;margin-top:4px;">
+            {{ '{:,.2f}'.format(siparis.toplam_tutar) }} {{ siparis.para_birimi }}
+        </div>
+    </div>
+</div>
+
+<!-- Durum Güncelle -->
+<div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+    <form method="POST" action="{{ url_for('siparis.siparis_durum_guncelle', id=siparis.id) }}"
+          style="display:flex;gap:8px;">
+        <select name="durum" class="form-select" style="width:auto;">
+            {% for d_key, d_adi, d_renk in durumlar %}
+            <option value="{{ d_key }}" {{ 'selected' if siparis.durum == d_key }}>{{ d_adi }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">Durumu Güncelle</button>
+    </form>
+    {% if siparis.durum == 'onay_bekliyor' %}
+    <a href="{{ url_for('siparis.siparis_onayla', id=siparis.id) }}"
+       class="btn btn-sm" style="background:#f59e0b;color:white;">
+        <i class="fas fa-check"></i> Onayla / Reddet
+    </a>
+    {% endif %}
+    <a href="{{ url_for('siparis.siparis_dashboard') }}" class="btn btn-ghost btn-sm">← Geri</a>
+</div>
+
+<!-- Kalemler -->
+<div class="card">
+    <div class="card-header"><h3 class="card-title">Sipariş Kalemleri</h3></div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>#</th><th>Ürün / Açıklama</th><th>Proje</th>
+                <th>Miktar</th><th>Birim Fiyat</th><th>KDV %</th><th>Toplam</th>
+                <th>Stok Durumu</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for s in siparis.satirlar %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ s.satir_tanim }}</td>
+            <td><span style="font-size:11px;background:#f1f5f9;padding:2px 6px;border-radius:4px;">
+                {{ s.proje_kodu or '—' }}</span></td>
+            <td>{{ s.miktar }} {{ s.birim }}</td>
+            <td>{{ '{:,.4f}'.format(s.birim_fiyat) }}</td>
+            <td>%{{ s.kdv_orani }}</td>
+            <td><strong>{{ '{:,.2f}'.format(s.satir_toplam) }}</strong></td>
+            <td>
+                {% if s.urun_id %}
+                    {% if s.stok_mevcut >= s.miktar %}
+                    <span style="color:#22c55e;">✓ Stokta ({{ s.stok_mevcut }})</span>
+                    {% else %}
+                    <span style="color:#ef4444;">✗ Yetersiz ({{ s.stok_mevcut }})</span>
+                    {% endif %}
+                {% else %}—{% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="6" style="text-align:right;font-weight:600;">TOPLAM</td>
+                <td colspan="2" style="font-weight:700;font-size:16px;">
+                    {{ '{:,.2f}'.format(siparis.toplam_tutar) }} {{ siparis.para_birimi }}
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+{% if siparis.onay_notu %}
+<div class="card" style="margin-top:16px;padding:16px;">
+    <div style="font-size:12px;color:#94a3b8;">ONAY NOTU</div>
+    <div style="margin-top:4px;">{{ siparis.onay_notu }}</div>
+    {% if siparis.onaylayan %}
+    <div style="font-size:12px;color:#64748b;margin-top:4px;">
+        {{ siparis.onaylayan.ad }} {{ siparis.onaylayan.soyad }} — {{ siparis.onay_tarihi }}
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

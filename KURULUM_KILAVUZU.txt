@@ -1,0 +1,104 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║           ERP SİSTEMİ — KURULUM VE KULLANIM KILAVUZU               ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. GÜNLÜK BAŞLATMA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Windows : baslat.bat (çift tıkla)
+Linux   : ./baslat.sh
+
+İlk açılışta ekranda şu bilgiler görünür:
+  Bu bilgisayar    : https://localhost:5000
+  Ağdaki cihazlar  : https://192.168.1.XXX:5000
+
+⚠ TARAYICI UYARISI (HTTPS):
+  Chrome/Edge: "Bağlantınız özel değil" ekranı çıkarsa
+  → "Gelişmiş" → "192.168.1.x adresine git (güvensiz)" tıklayın.
+  Bu uyarı self-signed sertifikadan kaynaklanır, normaldir.
+  Sadece ilk açılışta bir kez gerekir.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. moduller.json — MODÜL AÇMA/KAPATMA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Bu dosya sistemdeki modülleri açıp kapatır.
+Bir kullanıcının görmesini istemediğiniz modülü
+false yaparak tamamen gizlersiniz.
+
+  Dosya yolu: moduller.json (ana klasörde)
+
+  İçeriği (örnek):
+  {
+    "stok": true,          ← Stok modülü AÇIK
+    "uretim": true,        ← Üretim modülü AÇIK
+    "crm": true,           ← CRM modülü AÇIK
+    "muhasebe": false,     ← Muhasebe KAPALI (görünmez)
+    "ik": true
+  }
+
+  Değiştirme adımları:
+  1. moduller.json dosyasını not defteri ile açın
+  2. İstemediğiniz modülü false yapın
+  3. Dosyayı kaydedin
+  4. Sunucuyu yeniden başlatın (baslat.bat)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. 3 BİLGİSAYAR İÇİN KURULUM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BİLGİSAYAR 1 — Admin (Sizin bilgisayarınız):
+  - Sunucu bu bilgisayarda çalışır
+  - moduller.json: tüm modüller true
+  - Adres: https://localhost:5000
+  - Kullanıcı: admin / şifre: (belirlediğiniz)
+
+BİLGİSAYAR 2 — Muhasebe:
+  - Sunucu BU bilgisayarda kurulmaz
+  - Tarayıcıdan: https://[Admin PC IP]:5000
+  - Admin panelinden muhasebe kullanıcısı oluşturun
+  - Rol: muhasebe (fatura, stok, CRM, doküman)
+
+  Muhasebeci kısıtlaması için moduller.json yerine
+  Rol bazlı erişim kullanın:
+  Admin → Kullanıcılar → Roller → "muhasebe" rolü
+
+BİLGİSAYAR 3 — Yönetici:
+  - Tarayıcıdan: https://[Admin PC IP]:5000
+  - Admin panelinden yönetici kullanıcısı oluşturun
+  - Rol: mudur (tüm modüller, yazma var, silme yok)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. HAZIR KURULum PROFİLLERİ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Hazır profiller kurulum_profilleri/ klasöründedir.
+Her profil farklı bir modül seti açar.
+
+Komut satırından uygulamak için:
+  python profil_uygula.py muhasebe    ← Muhasebe profili
+  python profil_uygula.py yonetici    ← Yönetici profili
+  python profil_uygula.py admin_tam   ← Tüm modüller açık
+
+Veya Admin panelinden: Ayarlar → Modül Yönetimi
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5. İLK KURULUM (sadece bir kez)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Windows: kurulum.bat
+  Linux  : ./kurulum.sh
+
+Bu komut:
+  - Python sanal ortamı oluşturur
+  - Gerekli paketleri kurar
+  - Veritabanını ilk kez oluşturur
+
+⚠ kurulum.bat/sh'i ikinci kez çalıştırmayın!
+  Mevcut verileriniz silinmez ama paketler
+  yeniden yüklenir (gereksizdir).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+6. VERİTABANI GÜVENLİĞİ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Şifreler PBKDF2-HMAC-SHA256 ile hashlenir.
+database.db kopyalansa bile şifreler okunamaz.
+
+Düzenli yedek: Admin → Ayarlar → Yedekleme

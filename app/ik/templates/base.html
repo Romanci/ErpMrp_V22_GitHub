@@ -1,0 +1,727 @@
+<!-- Ana sablon - minimalist sol menu, temiz header -->
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ERP Sistemi{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {% block extra_css %}{% endblock %}
+<style>
+/* Bildirim Zili */
+.bildirim-wrapper { position: relative; }
+.bildirim-btn {
+    background: none; border: 1px solid #334155; color: #64748b;
+    width: 34px; height: 34px; border-radius: 8px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; transition: all 0.15s; position: relative;
+}
+.bildirim-btn:hover { color: var(--sari); border-color: var(--sari); background: rgba(245,197,24,0.08); }
+.bildirim-badge {
+    position: absolute; top: -6px; right: -6px;
+    background: var(--kirmizi); color: white;
+    font-size: 10px; font-weight: 700;
+    min-width: 18px; height: 18px; border-radius: 9999px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 4px;
+}
+.bildirim-panel {
+    display: none; position: absolute; right: 0; top: calc(100% + 8px);
+    width: 320px; background: white; border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15); border: 1px solid var(--gri-kenar);
+    z-index: 9999;
+}
+.bildirim-panel.acik { display: block; }
+.bildirim-panel-header {
+    padding: 12px 14px; border-bottom: 1px solid var(--gri-kenar);
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 13px; font-weight: 700; color: #1e293b;
+}
+.bildirim-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 14px; border-bottom: 1px solid var(--gri-kenar);
+    text-decoration: none; color: inherit; transition: background 0.1s;
+}
+.bildirim-item:hover { background: #f8fafc; }
+.bildirim-item:last-child { border-bottom: none; }
+.bildirim-ikon {
+    width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 12px;
+}
+.bildirim-ikon.kirmizi { background: rgba(239,68,68,0.1); color: var(--kirmizi); }
+.bildirim-ikon.sari { background: rgba(245,197,24,0.15); color: #a16207; }
+.bildirim-ikon.mavi { background: rgba(59,130,246,0.1); color: var(--mavi); }
+.bildirim-bos { padding: 24px; text-align: center; color: var(--gri); font-size: 13px; }
+</style>
+<style>
+.sidebar-arama { padding: 8px 10px; position: relative; }
+.sidebar-arama input {
+    width: 100%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px; padding: 6px 8px 6px 28px; color: #94a3b8;
+    font-size: 12px; outline: none; transition: all 0.15s;
+}
+.sidebar-arama input:focus { border-color: var(--sari); background: rgba(255,255,255,0.1); color: #e2e8f0; }
+.sidebar-arama input::placeholder { color: #475569; }
+.sidebar-arama-ikon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #475569; font-size: 11px; pointer-events: none; }
+.arama-sonuclar {
+    display: none; position: absolute; left: 0; top: 100%; width: 280px;
+    background: #1e293b; border: 1px solid #334155; border-radius: 8px;
+    z-index: 9999; box-shadow: 0 8px 24px rgba(0,0,0,0.3); margin-top: 4px; overflow: hidden;
+}
+.arama-sonuclar.acik { display: block; }
+.arama-sonuc-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-bottom: 1px solid #334155;
+    text-decoration: none; color: #cbd5e1; font-size: 12px; transition: background 0.1s;
+}
+.arama-sonuc-item:last-child { border-bottom: none; }
+.arama-sonuc-item:hover { background: rgba(255,255,255,0.05); }
+.arama-sonuc-ikon { width: 26px; height: 26px; background: rgba(245,197,24,0.15); color: var(--sari); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; }
+.arama-sonuc-tur { font-size: 10px; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.sidebar-alt-menu { border-top: 1px solid rgba(255,255,255,0.07); padding: 8px 0; margin-top: 8px; }
+.sidebar-alt-link {
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 16px; color: #475569; font-size: 12px; text-decoration: none; transition: all 0.15s;
+}
+.sidebar-alt-link:hover { color: #94a3b8; background: rgba(255,255,255,0.04); }
+.sidebar-alt-link i { width: 16px; text-align: center; font-size: 12px; }
+</style>
+<!-- Flatpickr Takvim -->
+<!-- Takvim: lokal datepicker.js (CDN bağımlılığı yok) -->
+<style>
+.flatpickr-calendar { font-family: inherit; box-shadow: 0 8px 32px rgba(0,0,0,0.18); border-radius: 10px; }
+.flatpickr-day.selected, .flatpickr-day.selected:hover { background: #f59e0b; border-color: #f59e0b; }
+.flatpickr-day:hover { background: #fef3c7; }
+.flatpickr-months .flatpickr-month { background: #1e293b; color: #fff; }
+.flatpickr-current-month .flatpickr-monthDropdown-months { background: #1e293b; }
+.flatpickr-weekday { color: #64748b; font-weight: 600; }
+.numInputWrapper:hover { background: transparent; }
+</style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="sidebarKapat()"></div>
+<!-- Sol Menü -->
+<aside class="sidebar">
+    <div class="sidebar-logo">
+        {% if firma_logo %}
+        <img src="{{ url_for('static', filename='img/' + firma_logo) }}"
+             alt="{{ firma_adi }}" style="height:36px;max-width:140px;object-fit:contain;">
+        {% else %}
+        <span class="sidebar-logo-icon"><i class="fas fa-cogs"></i></span>
+        <span class="sidebar-logo-text">{{ firma_adi }}</span>
+        {% endif %}
+    </div>
+
+    <div class="sidebar-arama">
+        <i class="fas fa-search sidebar-arama-ikon"></i>
+        <input type="text" id="global-arama" placeholder="Ara..." autocomplete="off">
+        <div class="arama-sonuclar" id="arama-sonuclar"></div>
+    </div>
+    <nav class="sidebar-nav">
+
+        <a href="/" class="nav-item {% if request.path == '/' %}active{% endif %}">
+            <i class="fas fa-home"></i><span>Ana Sayfa</span>
+        </a>
+
+        <div class="nav-group">
+            <div class="nav-group-title" id="btn-stok-menu">
+                <i class="fas fa-boxes ng-icon"></i>
+                <span class="ng-label">Stok</span>
+                <i class="fas fa-chevron-down ng-arrow"></i>
+            </div>
+            <div id="stok-menu" class="nav-submenu">
+                <a href="{{ url_for('stok.urun_liste') }}"><i class="fas fa-tag"></i> Ürünler</a>
+                <a href="{{ url_for('kategori.kategori_liste') }}"><i class="fas fa-folder"></i> Kategoriler</a>
+                <a href="{{ url_for('depo.depo_liste') }}"><i class="fas fa-warehouse"></i> Depolar</a>
+                <a href="{{ url_for('hareket.hareket_liste') }}"><i class="fas fa-exchange-alt"></i> Hareketler</a>
+                <a href="{{ url_for('parti.parti_liste') }}"><i class="fas fa-layer-group"></i> Partiler</a>
+                <a href="{{ url_for('sayim.sayim_liste') }}"><i class="fas fa-clipboard-list"></i> Sayım</a>
+                <a href="{{ url_for('rapor.mevcut_stok_raporu') }}"><i class="fas fa-chart-bar"></i> Rapor</a>
+                <a href="{{ url_for('sube.sube_liste') }}"><i class="fas fa-building"></i> Şubeler</a>
+                <a href="{{ url_for('barkod.barkod_panel') }}"><i class="fas fa-barcode"></i> Barkod / QR</a>
+            </div>
+        </div>
+
+        <div class="nav-group">
+            <div class="nav-group-title" id="btn-satin-menu">
+                <i class="fas fa-shopping-cart ng-icon"></i>
+                <span class="ng-label">Satın Alma</span>
+                <i class="fas fa-chevron-down ng-arrow"></i>
+            </div>
+            <div id="satin-menu" class="nav-submenu">
+                <a href="{{ url_for('tedarikci.tedarikci_liste') }}"><i class="fas fa-truck"></i> Tedarikçiler</a>
+                <a href="{{ url_for('satin_alma_siparis.siparis_liste') }}"><i class="fas fa-file-alt"></i> Siparişler</a>
+            </div>
+        </div>
+
+        <div class="nav-group">
+            <div class="nav-group-title" id="btn-uretim-menu">
+                <i class="fas fa-industry ng-icon"></i>
+                <span class="ng-label">Üretim</span>
+                <i class="fas fa-chevron-down ng-arrow"></i>
+            </div>
+            <div id="uretim-menu" class="nav-submenu">
+                <a href="{{ url_for('uretim.uretim_emri_liste') }}"><i class="fas fa-tasks"></i> Üretim Emirleri</a>
+                <a href="{{ url_for('tezgah.tezgah_liste') }}"><i class="fas fa-cog"></i> Tezgahlar</a>
+                <a href="{{ url_for('bom.bom_liste') }}"><i class="fas fa-sitemap"></i> BOM</a>
+                <a href="{{ url_for('mrp.mrp_analiz') }}" style="color:var(--sari);"><i class="fas fa-calculator"></i> MRP Analizi</a>
+            </div>
+        </div>
+
+        <div class="nav-group">
+            <div class="nav-group-title" id="btn-fatura-menu">
+                <i class="fas fa-file-invoice ng-icon"></i>
+                <span class="ng-label">Fatura / İrsaliye</span>
+                <i class="fas fa-chevron-down ng-arrow"></i>
+            </div>
+            <div id="fatura-menu" class="nav-submenu">
+                <a href="{{ url_for('fatura.fatura_liste') }}"><i class="fas fa-list"></i> Tüm Faturalar</a>
+                <a href="{{ url_for('fatura.fatura_ekle', tip='alis') }}"><i class="fas fa-plus"></i> Alış Faturası</a>
+                <a href="{{ url_for('fatura.fatura_ekle', tip='satis') }}"><i class="fas fa-plus"></i> Satış Faturası</a>
+                <a href="{{ url_for('fatura.irsaliye_liste') }}"><i class="fas fa-truck-loading"></i> İrsaliyeler</a>
+            </div>
+        </div>
+
+        {% if session.get('admin') or yetki.get('ik') %}
+        <div class="nav-group">
+            <div class="nav-group-title" id="btn-ik-menu">
+                <i class="fas fa-users ng-icon"></i>
+                <span class="ng-label">İnsan Kaynakları</span>
+                <i class="fas fa-chevron-down ng-arrow"></i>
+            </div>
+            <div id="ik-menu" class="nav-submenu">
+                <a href="{{ url_for('ik.ik_dashboard') }}"><i class="fas fa-tachometer-alt"></i> IK Dashboard</a>
+                <a href="{{ url_for('ik.personel_liste') }}"><i class="fas fa-id-card"></i> Personel</a>
+                <a href="{{ url_for('ik.izin_liste') }}"><i class="fas fa-calendar-check"></i> İzin Listesi</a>
+                <a href="{{ url_for('ik.tatil_liste') }}"><i class="fas fa-calendar-alt"></i> Tatil Takvimi</a>
+                <a href="{{ url_for('ik.kkd_liste') }}"><i class="fas fa-hard-hat"></i> KKD Tanımları</a>
+                <a href="{{ url_for('ik.zimmet_liste') }}"><i class="fas fa-clipboard-list"></i> Zimmet</a>
+                {% if session.get('admin') %}
+                <a href="{{ url_for('zkteco.zk_panel') }}"><i class="fas fa-fingerprint"></i> ZKTeco Cihaz</a>
+                {% endif %}
+                {% if session.get('admin') or yetki.get('yazma') %}
+                <a href="{{ url_for('ik.personel_form') }}"><i class="fas fa-user-plus"></i> Yeni Personel</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if aktif_moduller.get('crm') %}
+        <div class="nav-group">
+            <div class="nav-group-title" id="btn-crm-menu">
+                <i class="fas fa-handshake ng-icon"></i>
+                <span class="ng-label">Müşteri & CRM</span>
+                <i class="fas fa-chevron-down ng-arrow"></i>
+            </div>
+            <div id="crm-menu" class="nav-submenu">
+                <a href="{{ url_for('crm.crm_dashboard') }}"><i class="fas fa-tachometer-alt"></i> CRM Dashboard</a>
+                <a href="{{ url_for('crm.musteri_liste') }}"><i class="fas fa-building"></i> Müşteriler</a>
+                <a href="{{ url_for('crm.teklif_liste') }}"><i class="fas fa-file-invoice"></i> Teklifler</a>
+                <a href="{{ url_for('crm.teklif_form') }}"><i class="fas fa-plus"></i> Yeni Teklif</a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if aktif_moduller.get('kalite') %}
+        <div class="nav-group">
+            <div class="nav-group-title" id="btn-kalite-menu">
+                <i class="fas fa-clipboard-check ng-icon"></i>
+                <span class="ng-label">Kalite Kontrol</span>
+                <i class="fas fa-chevron-down ng-arrow"></i>
+            </div>
+            <div id="kalite-menu" class="nav-submenu">
+                <a href="{{ url_for('kalite.kalite_dashboard') }}"><i class="fas fa-tachometer-alt"></i> Kalite Dashboard</a>
+                <a href="{{ url_for('kalite.kontrol_liste') }}"><i class="fas fa-list"></i> Kontroller</a>
+                <a href="{{ url_for('kalite.kontrol_form') }}"><i class="fas fa-plus"></i> Yeni Kontrol</a>
+                <a href="{{ url_for('kalite.sertifika_liste') }}"><i class="fas fa-certificate"></i> Sertifikalar</a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if aktif_moduller.get('dokuman') %}
+        <div class="nav-group">
+            <div class="nav-group-title" id="btn-dokuman-menu">
+                <i class="fas fa-folder-open ng-icon"></i>
+                <span class="ng-label">Dokümanlar</span>
+                <i class="fas fa-chevron-down ng-arrow"></i>
+            </div>
+            <div id="dokuman-menu" class="nav-submenu">
+                <a href="{{ url_for('dokuman.dokuman_liste') }}"><i class="fas fa-list"></i> Tüm Dokümanlar</a>
+                <a href="{{ url_for('dokuman.dokuman_yukle') }}"><i class="fas fa-upload"></i> Doküman Yükle</a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if aktif_moduller.get('arac') %}
+        <div class="nav-group">
+            <div class="nav-group-title" id="btn-arac-menu">
+                <i class="fas fa-truck ng-icon"></i>
+                <span class="ng-label">Araç & Ekipman</span>
+                <i class="fas fa-chevron-down ng-arrow"></i>
+            </div>
+            <div id="arac-menu" class="nav-submenu">
+                <a href="{{ url_for('arac.arac_dashboard') }}"><i class="fas fa-tachometer-alt"></i> Araç Dashboard</a>
+                <a href="{{ url_for('arac.arac_liste') }}"><i class="fas fa-list"></i> Araçlar</a>
+                <a href="{{ url_for('arac.arac_form') }}"><i class="fas fa-plus"></i> Yeni Araç</a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if aktif_moduller.get('vardiya') %}
+        <div class="nav-group">
+            <div class="nav-group-title" id="btn-vardiya-menu">
+                <i class="fas fa-clock ng-icon"></i>
+                <span class="ng-label">Vardiya & Puantaj</span>
+                <i class="fas fa-chevron-down ng-arrow"></i>
+            </div>
+            <div id="vardiya-menu" class="nav-submenu">
+                <a href="{{ url_for('vardiya.vardiya_dashboard') }}"><i class="fas fa-tachometer-alt"></i> Vardiya Dashboard</a>
+                <a href="{{ url_for('vardiya.devam_listesi') }}" style="font-weight:600;color:#f59e0b;"><i class="fas fa-user-check"></i> Günlük Devam Girişi</a>
+                <a href="{{ url_for('vardiya.devam_rapor') }}"><i class="fas fa-chart-bar"></i> Devam Raporu</a>
+                <a href="{{ url_for('vardiya.atama_liste') }}"><i class="fas fa-calendar"></i> Vardiya Atamaları</a>
+                <a href="{{ url_for('vardiya.puantaj_liste') }}"><i class="fas fa-table"></i> Puantaj</a>
+                <a href="{{ url_for('vardiya.tanim_liste') }}"><i class="fas fa-cog"></i> Vardiya Tanımları</a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if aktif_moduller.get('bakim') %}
+        <div class="nav-group">
+            <div class="nav-group-title" id="btn-bakim-menu">
+                <i class="fas fa-wrench ng-icon"></i>
+                <span class="ng-label">Bakım</span>
+                <i class="fas fa-chevron-down ng-arrow"></i>
+            </div>
+            <div id="bakim-menu" class="nav-submenu">
+                <a href="{{ url_for('bakim.bakim_dashboard') }}"><i class="fas fa-tachometer-alt"></i> Bakım Dashboard</a>
+                <a href="{{ url_for('bakim.ariza_liste') }}"><i class="fas fa-exclamation-triangle"></i> Arızalar</a>
+                <a href="{{ url_for('bakim.bakim_plan_liste') }}"><i class="fas fa-calendar-check"></i> Bakım Planları</a>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="nav-group">
+            <div class="nav-group-title" id="btn-analiz-menu">
+                <i class="fas fa-chart-line ng-icon"></i>
+                <span class="ng-label">Analiz</span>
+                <i class="fas fa-chevron-down ng-arrow"></i>
+            </div>
+            <div id="analiz-menu" class="nav-submenu">
+                <a href="{{ url_for('maliyet.maliyet_analiz') }}"><i class="fas fa-coins"></i> Maliyet Analizi</a>
+                <a href="{{ url_for('kapasite.kapasite_analiz') }}"><i class="fas fa-tachometer-alt"></i> Kapasite</a>
+            </div>
+        </div>
+
+        <div class="nav-group">
+            <div class="nav-group-title" id="btn-rapor-menu">
+                <i class="fas fa-download ng-icon"></i>
+                <span class="ng-label">Raporlar</span>
+                <i class="fas fa-chevron-down ng-arrow"></i>
+            </div>
+            <div id="rapor-menu" class="nav-submenu">
+                <a href="{{ url_for('export.excel_stok') }}"><i class="fas fa-file-excel" style="color:#1d6f42;"></i> Stok → Excel</a>
+                <a href="{{ url_for('export.excel_hareketler') }}"><i class="fas fa-file-excel" style="color:#1d6f42;"></i> Hareketler → Excel</a>
+                <a href="{{ url_for('export.excel_siparisler') }}"><i class="fas fa-file-excel" style="color:#1d6f42;"></i> Siparişler → Excel</a>
+                <a href="{{ url_for('export.excel_uretim') }}"><i class="fas fa-file-excel" style="color:#1d6f42;"></i> Üretim → Excel</a>
+                <a href="{{ url_for('export.pdf_stok') }}"><i class="fas fa-file-pdf" style="color:#e74c3c;"></i> Stok → PDF</a>
+                <a href="{{ url_for('gelismis_rapor.rapor_panel') }}"><i class="fas fa-chart-line"></i> Gelişmiş Raporlar</a>
+            </div>
+        </div>
+
+        {% if session.get('admin') %}
+        <div class="nav-group">
+            <div class="nav-group-title" id="btn-kullanici-menu">
+                <i class="fas fa-user-cog ng-icon"></i>
+                <span class="ng-label">Kullanıcılar</span>
+                <i class="fas fa-chevron-down ng-arrow"></i>
+            </div>
+            <div id="kullanici-menu" class="nav-submenu">
+                <a href="{{ url_for('kullanici.kullanici_liste') }}"><i class="fas fa-list"></i> Kullanıcı Listesi</a>
+                <a href="{{ url_for('kullanici.kullanici_ekle') }}"><i class="fas fa-user-plus"></i> Yeni Kullanıcı</a>
+                <a href="{{ url_for('kullanici.rol_liste') }}"><i class="fas fa-shield-alt"></i> Roller</a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if aktif_moduller.get('proje') %}
+        <div class="nav-group">
+            <div class="nav-group-title" id="btn-proje-menu">
+                <i class="fas fa-project-diagram ng-icon"></i>
+                <span class="ng-label">Proje Yönetimi</span>
+                <i class="fas fa-chevron-right ng-arrow"></i>
+            </div>
+            <div id="proje-menu" class="nav-submenu">
+                <a href="{{ url_for('proje.proje_dashboard') }}"><i class="fas fa-tachometer-alt"></i> Proje Dashboard</a>
+                <a href="{{ url_for('proje.proje_liste') }}"><i class="fas fa-folder-open"></i> Projeler</a>
+                <a href="{{ url_for('proje.proje_form') }}"><i class="fas fa-plus"></i> Yeni Proje</a>
+                <a href="{{ url_for('proje.gorev_listesi') }}"><i class="fas fa-tasks"></i> Görev Listesi</a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if aktif_moduller.get('siparis') %}
+        <div class="nav-group">
+            <div class="nav-group-title" id="btn-siparis-menu">
+                <i class="fas fa-shopping-cart ng-icon"></i>
+                <span class="ng-label">Satış Siparişleri</span>
+                <i class="fas fa-chevron-right ng-arrow"></i>
+            </div>
+            <div id="siparis-menu" class="nav-submenu">
+                <a href="{{ url_for('siparis.siparis_dashboard') }}"><i class="fas fa-tachometer-alt"></i> Sipariş Dashboard</a>
+                <a href="{{ url_for('siparis.siparis_liste') }}"><i class="fas fa-list"></i> Sipariş Listesi</a>
+                <a href="{{ url_for('siparis.siparis_yeni') }}"><i class="fas fa-plus"></i> Yeni Sipariş</a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if aktif_moduller.get('muhasebe') %}
+        <div class="nav-group">
+            <div class="nav-group-title" id="btn-muhasebe-menu">
+                <i class="fas fa-calculator ng-icon"></i>
+                <span class="ng-label">Muhasebe</span>
+                <i class="fas fa-chevron-right ng-arrow"></i>
+            </div>
+            <div id="muhasebe-menu" class="nav-submenu">
+                <a href="{{ url_for('muhasebe.muhasebe_dashboard') }}"><i class="fas fa-chart-bar"></i> Gelir/Gider Özeti</a>
+                <a href="{{ url_for('muhasebe.muhasebe_liste') }}"><i class="fas fa-list"></i> Tüm Kayıtlar</a>
+                <a href="{{ url_for('muhasebe.muhasebe_yeni') }}"><i class="fas fa-plus"></i> Yeni Giriş</a>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="sidebar-alt-menu">
+            <a href="{{ url_for('kullanici.profil') }}" class="sidebar-alt-link">
+                <i class="fas fa-user-circle"></i> Profilim
+            </a>
+            {% if session.get('admin') %}
+            <a href="{{ url_for('ayar.ayarlar') }}" class="sidebar-alt-link">
+                <i class="fas fa-cog"></i> Sistem Ayarları
+            </a>
+            <a href="{{ url_for('sube.sube_liste') }}" class="sidebar-alt-link">
+                <i class="fas fa-building"></i> Şube Yönetimi
+            </a>
+            <a href="{{ url_for('depo.depo_liste') }}" class="sidebar-alt-link">
+                <i class="fas fa-warehouse"></i> Depo Yönetimi
+            </a>
+            <a href="{{ url_for('email.email_ayarlar') }}" class="sidebar-alt-link">
+                <i class="fas fa-envelope"></i> E-posta Ayarları
+            </a>
+            <a href="{{ url_for('import_modul.import_panel') }}" class="sidebar-alt-link">
+                <i class="fas fa-file-import"></i> Veri İçe Aktar
+            </a>
+            <a href="{{ url_for('yedek.yedek_panel') }}" class="sidebar-alt-link">
+                <i class="fas fa-database"></i> Yedekleme
+            </a>
+            {% endif %}
+        </div>
+    </nav>
+</aside>
+
+<!-- Ana alan -->
+<div class="main-wrapper">
+
+    <!-- Üst Header -->
+    <header class="top-header">
+        <div class="header-left">
+            <button class="hamburger-btn" onclick="sidebarAcKapat()" title="Menü"><i class="fas fa-bars"></i></button>
+            <a href="{{ url_for('kullanici.profil') }}" class="header-user" title="Profilim" style="text-decoration:none;">
+                <div class="header-user-avatar">{{ session.get('tam_ad', 'K')[:1] | upper }}</div>
+                <div class="header-user-info">
+                    <span class="header-user-name">{{ session.get('tam_ad', 'Kullanıcı') }}</span>
+                    <span class="header-user-role">{% if session.get('admin') %}Admin{% else %}Kullanıcı{% endif %}</span>
+                </div>
+            </a>
+        </div>
+
+        <div class="header-center">
+            <div class="header-firma">{{ firma_adi }}</div>
+            <div class="header-firma-alt">{{ firma_alt_baslik }}</div>
+        </div>
+
+        <div class="header-right">
+            <div class="header-datetime">
+                <span class="header-saat" id="header-saat">--:--:--</span>
+                <span class="header-tarih" id="header-tarih">--.--.----</span>
+            </div>
+            <!-- Bildirim Zili -->
+            <div class="bildirim-wrapper" id="bildirim-wrapper">
+                <button class="bildirim-btn" onclick="toggleBildirimler()" title="Bildirimler">
+                    <i class="fas fa-bell"></i>
+                    <span class="bildirim-badge" id="bildirim-badge" style="display:none;">0</span>
+                </button>
+                <div class="bildirim-panel" id="bildirim-panel">
+                    <div class="bildirim-panel-header">
+                        <span><i class="fas fa-bell"></i> Bildirimler</span>
+                        <span id="bildirim-panel-sayi" style="font-size:11px;color:var(--gri);">Yükleniyor...</span>
+                    </div>
+                    <div id="bildirim-liste" style="max-height:320px;overflow-y:auto;"></div>
+                </div>
+            </div>
+            <a href="{{ url_for('kullanici.cikis') }}" class="header-cikis" title="Çıkış Yap">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Çıkış</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Sayfa başlığı -->
+    <div class="page-header">
+        <h2 class="page-title">{% block page_title %}{% endblock %}</h2>
+    </div>
+
+    <!-- Flash mesajları -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        <i class="fas {% if category == 'success' %}fa-check-circle{% elif category in ['danger','error'] %}fa-exclamation-circle{% else %}fa-info-circle{% endif %}"></i>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <span>© 2026 {{ firma_adi }} ERP — v1.9</span>
+    </footer>
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+function updateClock() {
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const saatEl = document.getElementById('header-saat');
+    const tarihEl = document.getElementById('header-tarih');
+    if (saatEl) saatEl.textContent = pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+    if (tarihEl) tarihEl.textContent = pad(now.getDate()) + '.' + pad(now.getMonth()+1) + '.' + now.getFullYear();
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+function toggleMenu(menuId) {
+    const menu = document.getElementById(menuId);
+    if (!menu) return;
+    const wasActive = menu.classList.contains('active');
+
+    // Diğer tüm açık menüleri kapat
+    document.querySelectorAll('.nav-submenu').forEach(function(m) {
+        m.classList.remove('active');
+    });
+    document.querySelectorAll('.nav-group-title').forEach(function(t) {
+        t.classList.remove('_acik');
+    });
+
+    // Kapalıysa aç
+    if (!wasActive) {
+        menu.classList.add('active');
+        const btn = document.getElementById('btn-' + menuId);
+        if (btn) btn.classList.add('_acik');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Her başlığa sadece click listener
+    document.querySelectorAll('.nav-group-title').forEach(function(title) {
+        const group = title.closest('.nav-group');
+        const menu  = group && group.querySelector('.nav-submenu');
+        if (!menu) return;
+        title.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleMenu(menu.id);
+        });
+    });
+
+    // Sayfa yüklenince aktif menüyü aç
+    const path = window.location.pathname;
+    const menuMap = {
+        '/stok':       'stok-menu',
+        '/satin-alma': 'satin-menu',
+        '/uretim':     'uretim-menu',
+        '/fatura':     'fatura-menu',
+        '/ik':         'ik-menu',
+        '/crm':        'crm-menu',
+        '/kalite':     'kalite-menu',
+        '/dokuman':    'dokuman-menu',
+        '/arac':       'arac-menu',
+        '/vardiya':    'vardiya-menu',
+        '/bakim':      'bakim-menu',
+        '/proje':      'proje-menu',
+        '/siparis':    'siparis-menu',
+        '/muhasebe':   'muhasebe-menu',
+        '/stok/rapor': 'rapor-menu',
+        '/kullanici':  'kullanici-menu',
+        '/admin':      'kullanici-menu',
+    };
+    for (const [prefix, menuId] of Object.entries(menuMap)) {
+        if (path.startsWith(prefix)) {
+            const menu = document.getElementById(menuId);
+            const btn  = document.getElementById('btn-' + menuId);
+            if (menu) menu.classList.add('active');
+            if (btn)  btn.classList.add('_acik');
+            // Aktif linki işaretle
+            document.querySelectorAll('.nav-submenu a').forEach(function(a) {
+                if (a.pathname === path) a.classList.add('active-link');
+            });
+            break;
+        }
+    }
+});
+document.addEventListener('DOMContentLoaded', function() {
+    const path = window.location.pathname;
+    const map = {
+        '/stok': 'stok-menu', '/kategori': 'stok-menu', '/depo': 'stok-menu',
+        '/parti': 'stok-menu', '/sayim': 'stok-menu',
+        '/satin-alma': 'satin-menu',
+        '/uretim': 'uretim-menu',
+        '/fatura': 'fatura-menu',
+        '/ik': 'ik-menu',
+        '/bakim': 'bakim-menu',
+        '/maliyet': 'analiz-menu', '/kapasite': 'analiz-menu',
+        '/kullanici': 'kullanici-menu',
+    };
+    for (const [prefix, menuId] of Object.entries(map)) {
+        if (path.startsWith(prefix)) {
+            const menu = document.getElementById(menuId);
+            if (menu) {
+                menu.classList.add('active');
+                const arrow = menu.previousElementSibling.querySelector('.nav-arrow');
+                if (arrow) arrow.style.transform = 'rotate(180deg)';
+            }
+            break;
+        }
+    }
+});
+</script>
+
+
+
+<script>
+function sidebarAcKapat() {
+    document.querySelector('.sidebar').classList.toggle('mobil-acik');
+    document.getElementById('sidebar-overlay').classList.toggle('acik');
+}
+function sidebarKapat() {
+    document.querySelector('.sidebar').classList.remove('mobil-acik');
+    document.getElementById('sidebar-overlay').classList.remove('acik');
+}
+// Menü linklerine tıklanınca mobilde kapat
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.nav-submenu a, .nav-item').forEach(function(el) {
+        el.addEventListener('click', function() {
+            if (window.innerWidth <= 768) sidebarKapat();
+        });
+    });
+});
+</script>
+<script>
+// Global arama
+let _aramaTimeout;
+document.addEventListener('DOMContentLoaded', function() {
+    const inp = document.getElementById('global-arama');
+    const panel = document.getElementById('arama-sonuclar');
+    if (!inp) return;
+    inp.addEventListener('input', function() {
+        clearTimeout(_aramaTimeout);
+        const q = this.value.trim();
+        if (q.length < 2) { panel.classList.remove('acik'); return; }
+        _aramaTimeout = setTimeout(() => {
+            fetch('/api/arama?q=' + encodeURIComponent(q))
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.sonuclar.length) {
+                        panel.innerHTML = '<div style="padding:12px;text-align:center;color:#475569;font-size:12px;">Sonuç bulunamadı</div>';
+                    } else {
+                        panel.innerHTML = data.sonuclar.map(s =>
+                            `<a href="${s.url}" class="arama-sonuc-item">
+                                <div class="arama-sonuc-ikon"><i class="fas ${s.ikon}"></i></div>
+                                <div style="flex:1;min-width:0;">
+                                    <div class="arama-sonuc-tur">${s.tur}</div>
+                                    <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.baslik}</div>
+                                    <div style="font-size:11px;color:#475569;">${s.alt}</div>
+                                </div>
+                            </a>`).join('');
+                    }
+                    panel.classList.add('acik');
+                }).catch(() => {});
+        }, 250);
+    });
+    document.addEventListener('click', function(e) {
+        if (!inp.contains(e.target) && !panel.contains(e.target)) panel.classList.remove('acik');
+    });
+});
+</script>
+<script>
+// Bildirim paneli
+function toggleBildirimler() {
+    const panel = document.getElementById('bildirim-panel');
+    panel.classList.toggle('acik');
+    if (panel.classList.contains('acik')) {
+        bildirimYukle();
+    }
+}
+document.addEventListener('click', function(e) {
+    const wrapper = document.getElementById('bildirim-wrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+        document.getElementById('bildirim-panel').classList.remove('acik');
+    }
+});
+function bildirimYukle() {
+    fetch('/api/bildirimler')
+        .then(r => r.json())
+        .then(data => {
+            const badge = document.getElementById('bildirim-badge');
+            const liste = document.getElementById('bildirim-liste');
+            const sayi = document.getElementById('bildirim-panel-sayi');
+            badge.textContent = data.sayi;
+            badge.style.display = data.sayi > 0 ? 'flex' : 'none';
+            sayi.textContent = data.sayi + ' bildirim';
+            if (data.bildirimler.length === 0) {
+                liste.innerHTML = '<div class="bildirim-bos"><i class="fas fa-check-circle" style="color:var(--yesil);font-size:24px;display:block;margin-bottom:8px;"></i>Bildirim yok, her şey yolunda!</div>';
+            } else {
+                liste.innerHTML = data.bildirimler.map(b => `
+                    <a href="${b.url}" class="bildirim-item">
+                        <div class="bildirim-ikon ${b.renk}"><i class="${b.ikon}"></i></div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:2px;">${b.baslik}</div>
+                            <div style="font-size:11px;color:var(--gri);">${b.aciklama}</div>
+                        </div>
+                    </a>`).join('');
+            }
+        }).catch(() => {});
+}
+// Sayfa yüklenince badge güncelle
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/api/bildirimler')
+        .then(r => r.json())
+        .then(data => {
+            const badge = document.getElementById('bildirim-badge');
+            if (badge && data.sayi > 0) {
+                badge.textContent = data.sayi;
+                badge.style.display = 'flex';
+            }
+        }).catch(() => {});
+});
+
+<!-- Flatpickr Takvim Başlatma -->
+<script src="{{ url_for('static', filename='js/datepicker.js') }}"></script>
+<script>
+// Datepicker yüklendiğini doğrula ve tüm alanlara uygula
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.ERPDatepicker) {
+        window.ERPDatepicker.apply();
+    }
+});
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

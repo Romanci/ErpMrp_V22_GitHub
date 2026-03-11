@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% block title %}ZKTeco TRFace 200{% endblock %}
+{% block page_title %}ZKTeco TRFace 200 — Entegrasyon{% endblock %}
+{% block content %}
+
+<!-- Durum Kartı -->
+<div class="card" style="margin-bottom:16px;">
+    <div style="padding:16px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:10px;">
+            <div id="durum-led" style="width:14px;height:14px;border-radius:50%;background:#94a3b8;border:2px solid #64748b;"></div>
+            <div>
+                <div style="font-weight:700;font-size:14px;" id="durum-yazi">Bağlantı kontrol ediliyor...</div>
+                <div style="font-size:11px;color:var(--gri);">{{ ayarlar.ip }}:{{ ayarlar.port }} &nbsp;|&nbsp; Son senkron: {{ ayarlar.son_senkron }}</div>
+            </div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" onclick="baglantiTest()"><i class="fas fa-plug"></i> Bağlantı Test</button>
+            <button class="btn btn-ghost btn-sm" onclick="saatAyarla()"><i class="fas fa-clock"></i> Saati Ayarla</button>
+            <button class="btn btn-primary btn-sm" onclick="senkronizeEt()"><i class="fas fa-sync"></i> Senkronize Et</button>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-2" style="gap:16px;margin-bottom:16px;">
+
+    <!-- Ayarlar -->
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-cog"></i> Cihaz Ayarları</h3></div>
+        <form method="POST" action="{{ url_for('zkteco.zk_ayarlar_kaydet') }}" style="padding:16px;">
+            <div class="grid grid-2" style="gap:10px;">
+                <div class="form-group">
+                    <label class="form-label">Cihaz IP</label>
+                    <input type="text" name="ip" class="form-input" value="{{ ayarlar.ip }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Port</label>
+                    <input type="number" name="port" class="form-input" value="{{ ayarlar.port }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Timeout (sn)</label>
+                    <input type="number" name="timeout" class="form-input" value="{{ ayarlar.timeout }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Çalışma Başlangıç</label>
+                    <input type="text" name="calisma_baslangic" class="form-input" value="{{ ayarlar.calisma_baslangic }}" placeholder="08:00">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Çalışma Bitiş</label>
+                    <input type="text" name="calisma_bitis" class="form-input" value="{{ ayarlar.calisma_bitis }}" placeholder="17:00">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Geç Kalma Toleransı (dk)</label>
+                    <input type="number" name="gec_kalma_tolerans" class="form-input" value="{{ ayarlar.gec_tolerans }}">
+                </div>
+            </div>
+            <div style="display:flex;gap:16px;margin:10px 0;">
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                    <input type="checkbox" name="aktif" value="1" {% if ayarlar.aktif=='1' %}checked{% endif %}>
+                    Entegrasyon Aktif
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                    <input type="checkbox" name="otomatik_devamsizlik" value="1" {% if ayarlar.otomatik_devamsizlik=='1' %}checked{% endif %}>
+                    Otomatik Devamsızlık Kaydı
+                </label>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-save"></i> Kaydet</button>
+        </form>
+    </div>
+
+    <!-- Senkronizasyon -->
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-sync"></i> Senkronizasyon</h3></div>
+        <div style="padding:16px;">
+            <!-- Manuel senkron -->
+            <div style="margin-bottom:14px;">
+                <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Manuel Senkronizasyon</div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    {% for gun, etiket in [(1,'Bugün'),(3,'3 Gün'),(7,'7 Gün'),(30,'30 Gün')] %}
+                    <button class="btn btn-ghost btn-sm" onclick="senkronizeEt({{ gun }})">{{ etiket }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Sonuç -->
+            <div id="senkron-sonuc" style="display:none;padding:10px;border-radius:6px;font-size:12px;margin-bottom:14px;"></div>
+
+            <!-- Ham loglar -->
+            <div style="margin-bottom:14px;">
+                <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Ham Giriş/Çıkış Logları</div>
+                <div style="display:flex;gap:6px;margin-bottom:8px;">
+                    {% for gun, etiket in [(1,'Bugün'),(3,'3 Gün'),(7,'7 Gün')] %}
+                    <button class="btn btn-ghost btn-sm" onclick="hamLoglariGoster({{ gun }})">{{ etiket }}</button>
+                    {% endfor %}
+                </div>
+                <div id="log-container" style="max-height:200px;overflow-y:auto;font-size:11px;font-family:monospace;background:var(--gri-acik);border-radius:6px;padding:8px;display:none;"></div>
+            </div>
+
+            <!-- Cihaz bilgisi -->
+            <div id="cihaz-bilgi" style="display:none;font-size:12px;background:var(--gri-acik);border-radius:6px;padding:10px;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Personel Eşleştirme -->
+<div class="card" style="margin-bottom:16px;">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-link"></i> Cihaz — ERP Personel Eşleştirmesi</h3>
+        <button class="btn btn-ghost btn-sm" onclick="kullanicilariYukle()"><i class="fas fa-refresh"></i> Cihazdan Yükle</button>
+    </div>
+    <div id="kullanici-liste" style="padding:16px;color:var(--gri);font-size:13px;">
+        <i class="fas fa-info-circle"></i> "Cihazdan Yükle" butonuna tıklayın.
+    </div>
+    <div style="padding:0 16px 16px;font-size:12px;color:var(--gri);">
+        <i class="fas fa-lightbulb" style="color:var(--sari);"></i>
+        <strong>Eşleştirme nasıl çalışır?</strong> ZKTeco'da her kullanıcının "User ID" alanı,
+        ERP'deki personelin <strong>Sicil No</strong>'su ile aynı olmalıdır.
+        Cihaza personel kaydederken User ID = Sicil No kullanın.
+    </div>
+</div>
+
+<!-- Son ZKTeco Devamsızlıkları -->
+<div class="card">
+    <div class="card-header"><h3 class="card-title"><i class="fas fa-list"></i> Son Otomatik Devamsızlık Kayıtları</h3></div>
+    <div class="table-container">
+        <table class="data-table">
+            <thead><tr><th>Personel</th><th>Tarih</th><th>Tür</th><th>Süre</th><th>Açıklama</th></tr></thead>
+            <tbody>
+            {% for d in son_kayitlar %}
+            <tr>
+                <td>{{ d.personel.tam_ad if d.personel else '?' }}</td>
+                <td>{{ d.tarih }}</td>
+                <td>{{ d.tur.replace('_',' ')|title }}</td>
+                <td>{% if d.sure_dakika %}{{ d.sure_dakika }} dk{% else %}—{% endif %}</td>
+                <td style="font-size:11px;color:var(--gri);">{{ d.aciklama or '—' }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" style="text-align:center;padding:20px;color:var(--gri);">Henüz otomatik kayıt yok</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+// ─── Durum LED
+async function baglantiTest() {
+    const led = document.getElementById('durum-led');
+    const yazi = document.getElementById('durum-yazi');
+    const bilgiDiv = document.getElementById('cihaz-bilgi');
+    led.style.background = '#f5c518'; yazi.textContent = 'Bağlanıyor...';
+    try {
+        const r = await fetch('/ik/api/zkteco/baglan-test');
+        const d = await r.json();
+        if (d.basarili) {
+            led.style.background = '#22c55e'; led.style.borderColor = '#16a34a';
+            yazi.textContent = 'Bağlı — ' + (d.bilgi?.firmware || 'TRFace 200');
+            if (d.bilgi) {
+                bilgiDiv.style.display = 'block';
+                bilgiDiv.innerHTML = `<strong>Cihaz Bilgisi:</strong><br>
+                    Seri No: ${d.bilgi.seri_no || '—'} | Platform: ${d.bilgi.platform || '—'}<br>
+                    Kullanıcı: ${d.bilgi.kullanici_sayisi} | Log: ${d.bilgi.log_sayisi}`;
+            }
+        } else {
+            led.style.background = '#ef4444'; led.style.borderColor = '#dc2626';
+            yazi.textContent = 'Bağlanamadı: ' + d.mesaj;
+        }
+    } catch(e) {
+        led.style.background = '#ef4444';
+        yazi.textContent = 'Hata: ' + e.message;
+    }
+}
+
+// ─── Senkronize Et
+async function senkronizeEt(gun=7) {
+    const sonucDiv = document.getElementById('senkron-sonuc');
+    sonucDiv.style.display = 'block';
+    sonucDiv.style.background = 'rgba(245,197,24,0.1)';
+    sonucDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Senkronize ediliyor... (son ' + gun + ' gün)';
+    try {
+        const r = await fetch('/ik/api/zkteco/senkronize', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({gun})
+        });
+        const d = await r.json();
+        if (d.basarili) {
+            sonucDiv.style.background = 'rgba(34,197,94,0.1)';
+            sonucDiv.innerHTML = `✓ Tamamlandı — İşlenen: ${d.islenen} | Yeni devamsızlık: ${d.yeni}` +
+                (d.hatalar.length ? `<br><span style="color:var(--sari)">⚠ ${d.hatalar.slice(0,3).join(' | ')}</span>` : '');
+        } else {
+            sonucDiv.style.background = 'rgba(239,68,68,0.1)';
+            sonucDiv.innerHTML = '✗ ' + (d.hatalar[0] || 'Bilinmeyen hata');
+        }
+    } catch(e) {
+        sonucDiv.style.background = 'rgba(239,68,68,0.1)';
+        sonucDiv.innerHTML = '✗ Hata: ' + e.message;
+    }
+}
+
+// ─── Ham Loglar
+async function hamLoglariGoster(gun=1) {
+    const c = document.getElementById('log-container');
+    c.style.display = 'block';
+    c.textContent = 'Yükleniyor...';
+    try {
+        const r = await fetch('/ik/api/zkteco/ham-loglar?gun=' + gun);
+        const d = await r.json();
+        if (d.basarili) {
+            c.innerHTML = d.kayitlar.map(k =>
+                `<div style="padding:2px 0;border-bottom:1px solid var(--gri-kenar);color:${k.eslesti?'var(--yazi)':'var(--kirmizi)'}">
+                    ${k.timestamp} &nbsp; <strong>${k.personel}</strong>
+                    &nbsp;<span style="color:var(--gri)">(punch:${k.punch})</span>
+                </div>`
+            ).join('') || '<div style="color:var(--gri)">Bu dönemde kayıt yok</div>';
+            c.innerHTML += `<div style="padding:4px 0;color:var(--gri)">Toplam: ${d.toplam}</div>`;
+        } else {
+            c.textContent = '✗ ' + d.mesaj;
+        }
+    } catch(e) { c.textContent = 'Hata: ' + e.message; }
+}
+
+// ─── Kullanıcılar
+async function kullanicilariYukle() {
+    const div = document.getElementById('kullanici-liste');
+    div.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Yükleniyor...';
+    try {
+        const r = await fetch('/ik/api/zkteco/kullanicilar');
+        const d = await r.json();
+        if (!d.kullanicilar.length) {
+            div.innerHTML = '<div style="color:var(--gri)">Cihazda kayıtlı kullanıcı yok veya bağlantı kurulamadı</div>';
+            return;
+        }
+        const eslesti = d.kullanicilar.filter(k=>k.eslesti).length;
+        div.innerHTML = `<div style="margin-bottom:8px;font-size:12px;">
+            Toplam: ${d.toplam} | <span style="color:var(--yesil)">Eşleşti: ${eslesti}</span> |
+            <span style="color:var(--kirmizi)">Eşleşmedi: ${d.toplam-eslesti}</span>
+        </div>
+        <table class="data-table" style="font-size:12px;">
+            <thead><tr><th>ZK ID</th><th>Cihaz Adı</th><th>ERP Personel</th><th>Durum</th></tr></thead>
+            <tbody>` +
+        d.kullanicilar.map(k => `<tr>
+            <td style="font-family:monospace;">${k.user_id}</td>
+            <td>${k.name || '—'}</td>
+            <td>${k.erp_personel || '<span style="color:var(--kirmizi)">Eşleşme yok</span>'}</td>
+            <td>${k.eslesti ? '<i class="fas fa-check-circle" style="color:var(--yesil);"></i>' : '<i class="fas fa-times-circle" style="color:var(--kirmizi);"></i>'}</td>
+        </tr>`).join('') + `</tbody></table>`;
+    } catch(e) { div.innerHTML = 'Hata: ' + e.message; }
+}
+
+// ─── Saat Ayarla
+async function saatAyarla() {
+    if (!confirm('Cihaz saati sunucu saatiyle senkronize edilsin mi?')) return;
+    const r = await fetch('/ik/api/zkteco/saat-ayarla', {method:'POST'});
+    const d = await r.json();
+    alert(d.basarili ? '✓ ' + d.mesaj : '✗ ' + d.mesaj);
+}
+
+// Sayfa yüklenince bağlantı test et
+baglantiTest();
+</script>
+{% endblock %}

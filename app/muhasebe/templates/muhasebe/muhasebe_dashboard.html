@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}Muhasebe Dashboard{% endblock %}
+{% block page_title %}Gelir / Gider Takibi{% endblock %}
+{% block content %}
+
+<!-- Özet Kartları -->
+<div class="grid grid-3" style="margin-bottom:24px;">
+    <div class="stat-card" style="border-left:4px solid #22c55e;">
+        <div class="stat-icon" style="background:#22c55e;"><i class="fas fa-arrow-up"></i></div>
+        <div class="stat-info">
+            <div class="stat-value" style="color:#22c55e;">
+                {{ '{:,.2f}'.format(bu_ay.gelir) }} ₺
+            </div>
+            <div class="stat-label">Bu Ay Gelir</div>
+            <div style="font-size:11px;color:#64748b;margin-top:2px;">
+                Yıllık: {{ '{:,.2f}'.format(bu_yil.gelir) }} ₺
+            </div>
+        </div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid #ef4444;">
+        <div class="stat-icon" style="background:#ef4444;"><i class="fas fa-arrow-down"></i></div>
+        <div class="stat-info">
+            <div class="stat-value" style="color:#ef4444;">
+                {{ '{:,.2f}'.format(bu_ay.gider) }} ₺
+            </div>
+            <div class="stat-label">Bu Ay Gider</div>
+            <div style="font-size:11px;color:#64748b;margin-top:2px;">
+                Yıllık: {{ '{:,.2f}'.format(bu_yil.gider) }} ₺
+            </div>
+        </div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid {{ '#22c55e' if bu_ay.kar >= 0 else '#ef4444' }};">
+        <div class="stat-icon" style="background:{{ '#22c55e' if bu_ay.kar >= 0 else '#ef4444' }};">
+            <i class="fas fa-{{ 'chart-line' if bu_ay.kar >= 0 else 'chart-line' }}"></i>
+        </div>
+        <div class="stat-info">
+            <div class="stat-value" style="color:{{ '#22c55e' if bu_ay.kar >= 0 else '#ef4444' }};">
+                {{ '{:,.2f}'.format(bu_ay.kar) }} ₺
+            </div>
+            <div class="stat-label">Bu Ay Kar / Zarar</div>
+            <div style="font-size:11px;color:#64748b;margin-top:2px;">
+                Yıllık: {{ '{:,.2f}'.format(bu_yil.kar) }} ₺
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Grafik + Son Kayıtlar -->
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;">
+
+    <!-- Aylık Grafik -->
+    <div class="card" style="padding:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h4>Son 12 Ay</h4>
+            <a href="{{ url_for('muhasebe.muhasebe_yeni') }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus"></i> Yeni Giriş
+            </a>
+        </div>
+        <canvas id="aylikGrafik" height="220"></canvas>
+    </div>
+
+    <!-- Hızlı Özet -->
+    <div class="card" style="padding:20px;">
+        <h4 style="margin-bottom:16px;">Genel Bakış</h4>
+        <div style="margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;font-size:13px;">
+                <span>Toplam Gelir</span>
+                <strong style="color:#22c55e;">{{ '{:,.2f}'.format(toplam.gelir) }} ₺</strong>
+            </div>
+        </div>
+        <div style="margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;font-size:13px;">
+                <span>Toplam Gider</span>
+                <strong style="color:#ef4444;">{{ '{:,.2f}'.format(toplam.gider) }} ₺</strong>
+            </div>
+        </div>
+        <div style="border-top:1px solid #e2e8f0;padding-top:12px;">
+            <div style="display:flex;justify-content:space-between;font-size:15px;">
+                <span><strong>Net Kar / Zarar</strong></span>
+                <strong style="color:{{ '#22c55e' if toplam.kar >= 0 else '#ef4444' }};">
+                    {{ '{:,.2f}'.format(toplam.kar) }} ₺
+                </strong>
+            </div>
+        </div>
+        <div style="margin-top:20px;">
+            <a href="{{ url_for('muhasebe.muhasebe_liste') }}" class="btn btn-ghost btn-sm" style="width:100%;text-align:center;">
+                Tüm Kayıtlar →
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Son Kayıtlar -->
+<div class="card" style="margin-top:16px;">
+    <div class="card-header">
+        <h3 class="card-title">Son Kayıtlar</h3>
+        <a href="{{ url_for('muhasebe.muhasebe_liste') }}" class="btn btn-ghost btn-sm">Tümü</a>
+    </div>
+    <table class="data-table">
+        <thead>
+            <tr><th>Tarih</th><th>Tür</th><th>Kategori</th><th>Açıklama</th>
+                <th>Kaynak</th><th>Tutar</th></tr>
+        </thead>
+        <tbody>
+        {% for k in son_kalemler %}
+        <tr>
+            <td>{{ k.tarih }}</td>
+            <td>
+                <span style="background:{{ k.tur_rengi }};color:white;
+                             padding:2px 8px;border-radius:10px;font-size:11px;">
+                    {{ k.tur_adi }}
+                </span>
+            </td>
+            <td style="font-size:12px;">{{ k.kategori or '—' }}</td>
+            <td>{{ k.aciklama }}</td>
+            <td style="font-size:11px;color:#64748b;">
+                {{ {'fatura':'Fatura','satin_alma':'Satın Alma','elle':'Elle Giriş'}.get(k.kaynak, k.kaynak or '—') }}
+            </td>
+            <td style="font-weight:600;color:{{ k.tur_rengi }};">
+                {{ '+' if k.tur == 'gelir' else '-' }}{{ '{:,.2f}'.format(k.tutar) }} {{ k.para_birimi }}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px;">
+            Henüz kayıt yok.
+        </td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+const aylikVeri = {{ aylik_veri | tojson }};
+new Chart(document.getElementById('aylikGrafik'), {
+    type: 'bar',
+    data: {
+        labels: aylikVeri.map(d => d.ay_adi),
+        datasets: [
+            {
+                label: 'Gelir',
+                data: aylikVeri.map(d => d.gelir),
+                backgroundColor: 'rgba(34,197,94,0.7)',
+                borderColor: '#22c55e', borderWidth: 1,
+            },
+            {
+                label: 'Gider',
+                data: aylikVeri.map(d => d.gider),
+                backgroundColor: 'rgba(239,68,68,0.7)',
+                borderColor: '#ef4444', borderWidth: 1,
+            },
+            {
+                label: 'Kar/Zarar',
+                data: aylikVeri.map(d => d.kar),
+                type: 'line',
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59,130,246,0.1)',
+                borderWidth: 2, fill: true, tension: 0.3,
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { position: 'top' } },
+        scales: { y: { beginAtZero: true } }
+    }
+});
+</script>
+{% endblock %}

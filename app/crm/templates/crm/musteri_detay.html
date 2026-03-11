@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}{{ musteri.unvan }}{% endblock %}
+{% block page_title %}{{ musteri.unvan }}{% endblock %}
+{% block content %}
+<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+    <a href="{{ url_for('crm.musteri_form', id=musteri.id) }}" class="btn btn-primary"><i class="fas fa-edit"></i> Düzenle</a>
+    <a href="{{ url_for('crm.teklif_form') }}?musteri_id={{ musteri.id }}" class="btn btn-ghost"><i class="fas fa-file-invoice"></i> Yeni Teklif</a>
+    <a href="{{ url_for('crm.musteri_liste') }}" class="btn btn-ghost"><i class="fas fa-arrow-left"></i> Liste</a>
+</div>
+<div class="grid grid-2" style="gap:16px;margin-bottom:16px;">
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-building"></i> Firma Bilgileri</h3></div>
+        <div style="padding:14px;">
+            {% for etiket, deger in [('Kod',musteri.musteri_kodu),('Tür',musteri.tur),('Vergi No',musteri.vergi_no),('Vergi Dairesi',musteri.vergi_dairesi),('Şehir',musteri.sehir),('Sektör',musteri.sektor),('Ödeme Vadesi',(musteri.odeme_vadesi|string + ' gün') if musteri.odeme_vadesi else None),('Para Birimi',musteri.para_birimi)] %}
+            <div style="padding:5px 0;border-bottom:1px solid var(--gri-kenar);font-size:13px;display:flex;justify-content:space-between;">
+                <span style="color:var(--gri);">{{ etiket }}</span><span style="font-weight:500;">{{ deger or '—' }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-phone"></i> İletişim</h3></div>
+        <div style="padding:14px;">
+            {% for etiket, deger in [('Telefon',musteri.telefon),('E-posta',musteri.email),('Website',musteri.website),('Yetkili',musteri.yetkili_ad),('Yetkili Tel',musteri.yetkili_tel),('Yetkili Email',musteri.yetkili_email)] %}
+            <div style="padding:5px 0;border-bottom:1px solid var(--gri-kenar);font-size:13px;display:flex;justify-content:space-between;">
+                <span style="color:var(--gri);">{{ etiket }}</span><span>{{ deger or '—' }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+<!-- Teklifler -->
+<div class="card" style="margin-bottom:16px;">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-file-invoice"></i> Teklifler</h3>
+        <a href="{{ url_for('crm.teklif_form') }}?musteri_id={{ musteri.id }}" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Yeni</a>
+    </div>
+    <div class="table-container">
+        <table class="data-table">
+            <thead><tr><th>No</th><th>Başlık</th><th>Tarih</th><th>Toplam</th><th>Durum</th><th></th></tr></thead>
+            <tbody>
+            {% for t in musteri.teklifler|sort(attribute='id', reverse=True) %}
+            <tr>
+                <td style="font-family:monospace;font-size:11px;">{{ t.teklif_no }}</td>
+                <td>{{ t.baslik or '—' }}</td>
+                <td style="font-size:12px;">{{ t.tarih }}</td>
+                <td style="font-weight:600;">{{ "%.2f"|format(t.genel_toplam) }} {{ t.para_birimi }}</td>
+                <td><span class="status-badge {% if t.durum=='kabul' %}acik{% elif t.durum in ('red','iptal') %}iptal{% elif t.durum=='gonderildi' %}beklemede{% endif %}">{{ t.durum }}</span></td>
+                <td><a href="{{ url_for('crm.teklif_detay', id=t.id) }}" class="btn btn-ghost btn-sm"><i class="fas fa-eye"></i></a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" style="text-align:center;color:var(--gri);padding:16px;">Teklif yok</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<!-- Takip -->
+<div class="card">
+    <div class="card-header"><h3 class="card-title"><i class="fas fa-comments"></i> Takip / Notlar</h3></div>
+    <form method="POST" action="{{ url_for('crm.takip_ekle', musteri_id=musteri.id) }}" style="padding:16px;border-bottom:1px solid var(--gri-kenar);">
+        <div class="grid grid-2" style="gap:10px;margin-bottom:8px;">
+            <div class="form-group">
+                <label class="form-label">Tür</label>
+                <select name="tur" class="form-select">
+                    {% for v,a in [('not','Not'),('arama','Telefon Araması'),('email','E-posta'),('ziyaret','Ziyaret'),('hatirlatma','Hatırlatma')] %}
+                    <option value="{{ v }}">{{ a }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Başlık</label>
+                <input type="text" name="baslik" class="form-input" placeholder="Konu">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tarih</label>
+                <input type="text" name="tarih" class="datepicker form-input" value="{{ now().strftime('%d.%m.%Y') if now else '' }}" placeholder="GG.AA.YYYY">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Hatırlatma Tarihi</label>
+                <input type="text" name="hatirlatma_tarihi" class="datepicker form-input" placeholder="GG.AA.YYYY (opsiyonel)">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Açıklama</label>
+            <textarea name="aciklama" class="form-input" rows="2" placeholder="Görüşme notu..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-save"></i> Kaydet</button>
+    </form>
+    <div style="padding:12px;">
+        {% for t in musteri.takipler|sort(attribute='id', reverse=True) %}
+        <div style="padding:10px;border-bottom:1px solid var(--gri-kenar);display:flex;gap:12px;align-items:flex-start;">
+            <div style="width:32px;height:32px;border-radius:50%;background:var(--gri-acik);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i class="fas {% if t.tur=='arama' %}fa-phone{% elif t.tur=='email' %}fa-envelope{% elif t.tur=='ziyaret' %}fa-handshake{% elif t.tur=='hatirlatma' %}fa-bell{% else %}fa-sticky-note{% endif %}" style="font-size:12px;color:var(--gri);"></i>
+            </div>
+            <div style="flex:1;">
+                <div style="font-size:13px;font-weight:500;">{{ t.baslik or t.tur }}</div>
+                <div style="font-size:12px;color:var(--gri);margin-top:2px;">{{ t.aciklama or '' }}</div>
+                <div style="font-size:11px;color:var(--gri);margin-top:4px;">{{ t.tarih }}
+                    {% if t.hatirlatma_tarihi and not t.tamamlandi %}
+                    <span style="color:var(--sari);">⏰ {{ t.hatirlatma_tarihi }}</span>
+                    {% endif %}
+                    {% if t.tamamlandi %}<span style="color:var(--yesil);">✓ Tamamlandı</span>{% endif %}
+                </div>
+            </div>
+            {% if not t.tamamlandi %}
+            <form method="POST" action="{{ url_for('crm.takip_tamamla', id=t.id) }}">
+                <button class="btn btn-ghost btn-sm" title="Tamamla"><i class="fas fa-check" style="color:var(--yesil);"></i></button>
+            </form>
+            {% endif %}
+        </div>
+        {% else %}
+        <div style="color:var(--gri);font-size:13px;padding:8px;">Takip kaydı yok</div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

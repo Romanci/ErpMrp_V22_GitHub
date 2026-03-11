@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Kategori Duzenle' if kategori else 'Yeni Kategori' }} - ERP{% endblock %}
+
+{% block content %}
+{% block page_title %}{{ 'Kategori Duzenle' if kategori else 'Yeni Kategori' }}{% endblock %}
+<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><a href="{{ url_for('kategori.kategori_liste') }}" class="btn btn-secondary">Listeye Don</a></div>
+
+<form method="POST" class="form-container">
+    <div class="form-group">
+        <label for="kategori_adi">Kategori Adi *</label>
+        <input type="text" id="kategori_adi" name="kategori_adi" value="{{ kategori.kategori_adi if kategori else '' }}" required>
+    </div>
+
+    <div class="form-group">
+        <label for="ust_kategori_id">Ust Kategori (Opsiyonel)</label>
+        <select id="ust_kategori_id" name="ust_kategori_id">
+            <option value="">Ana Kategori (Ust yok)</option>
+            {% for k in kategoriler %}
+            <option value="{{ k.id }}" {{ 'selected' if kategori and kategori.ust_kategori_id == k.id else '' }}>
+                {{ k.kategori_adi }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Kaydet</button>
+        <a href="{{ url_for('kategori.kategori_liste') }}" class="btn btn-secondary">Iptal</a>
+    </div>
+</form>
+{% endblock %}

@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}{{ arac.plaka or arac.marka }}{% endblock %}
+{% block page_title %}{{ arac.marka }} {{ arac.model }} — {{ arac.plaka or '' }}{% endblock %}
+{% block content %}
+<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+    <a href="{{ url_for('arac.arac_form', id=arac.id) }}" class="btn btn-primary"><i class="fas fa-edit"></i> Düzenle</a>
+    <a href="{{ url_for('arac.arac_liste') }}" class="btn btn-ghost"><i class="fas fa-arrow-left"></i> Liste</a>
+</div>
+<!-- Araç bilgileri -->
+<div class="grid grid-2" style="gap:16px;margin-bottom:16px;">
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-id-card"></i> Araç Bilgileri</h3></div>
+        <div style="padding:14px;">
+            {% for e,d in [('Plaka',arac.plaka),('Tür',arac.tur),('Marka',arac.marka),('Model',arac.model),('Yıl',arac.yil),('Renk',arac.renk),('Yakıt',arac.yakit_turu),('Şase No',arac.sase_no),('Motor No',arac.motor_no)] %}
+            <div style="padding:5px 0;border-bottom:1px solid var(--gri-kenar);font-size:13px;display:flex;justify-content:space-between;">
+                <span style="color:var(--gri);">{{ e }}</span><span style="font-weight:500;">{{ d or '—' }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-calendar"></i> Önemli Tarihler</h3></div>
+        <div style="padding:14px;">
+            {% for e,d,uyari in [('Sorumlu',(arac.sorumlu.tam_ad if arac.sorumlu else None),False),('Muayene',arac.muayene_tarihi,arac.muayene_uyari),('Sigorta',arac.sigorta_tarihi,False),('Kasko',arac.kasko_tarihi,False)] %}
+            <div style="padding:7px 0;border-bottom:1px solid var(--gri-kenar);font-size:13px;display:flex;justify-content:space-between;align-items:center;">
+                <span style="color:var(--gri);">{{ e }}</span>
+                <span {% if uyari %}style="color:var(--sari);font-weight:600;"{% endif %}>
+                    {{ d or '—' }}
+                    {% if uyari %}<i class="fas fa-exclamation-triangle" style="margin-left:4px;"></i>{% endif %}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Bakım Kaydı Ekle -->
+<div class="card" style="margin-bottom:16px;">
+    <div class="card-header"><h3 class="card-title"><i class="fas fa-wrench"></i> Bakım Geçmişi</h3></div>
+    <form method="POST" action="{{ url_for('arac.bakim_ekle', arac_id=arac.id) }}" style="padding:14px;border-bottom:1px solid var(--gri-kenar);">
+        <div class="grid grid-2" style="gap:10px;">
+            <div class="form-group">
+                <label class="form-label">Bakım Türü</label>
+                <select name="bakim_turu" class="form-select">
+                    {% for v,a in [('yag_degisimi','Yağ Değişimi'),('lastik','Lastik'),('fren','Fren'),('periyodik','Periyodik Bakım'),('onarim','Onarım'),('genel','Genel')] %}
+                    <option value="{{ v }}">{{ a }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tarih</label>
+                <input type="text" name="tarih" class="datepicker form-input" placeholder="GG.AA.YYYY">
+            </div>
+            <div class="form-group">
+                <label class="form-label">KM</label>
+                <input type="number" name="km" class="form-input" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Maliyet (₺)</label>
+                <input type="number" name="maliyet" class="form-input" step="0.01" placeholder="0.00">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Servis Yeri</label>
+                <input type="text" name="servis_yeri" class="form-input">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Sonraki Bakım KM</label>
+                <input type="number" name="sonraki_bakim_km" class="form-input" placeholder="0">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Yapılan İşler</label>
+            <textarea name="yapilan_isler" class="form-input" rows="2"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Bakım Ekle</button>
+    </form>
+    <div class="table-container">
+        <table class="data-table">
+            <thead><tr><th>Tarih</th><th>Tür</th><th>KM</th><th>Yapılan</th><th>Servis</th><th>Maliyet</th><th>Sonraki KM</th></tr></thead>
+            <tbody>
+            {% for b in arac.bakimlar|sort(attribute='tarih', reverse=True) %}
+            <tr>
+                <td style="font-size:12px;">{{ b.tarih }}</td>
+                <td><span class="status-badge">{{ b.bakim_turu.replace('_',' ')|title }}</span></td>
+                <td>{{ b.km|int if b.km else '—' }}</td>
+                <td style="font-size:12px;max-width:200px;">{{ b.yapilan_isler or '—' }}</td>
+                <td style="font-size:12px;">{{ b.servis_yeri or '—' }}</td>
+                <td style="font-weight:600;">{{ "%.2f"|format(b.maliyet) }} ₺</td>
+                <td style="font-size:12px;">{{ b.sonraki_bakim_km|int if b.sonraki_bakim_km else '—' }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" style="text-align:center;color:var(--gri);padding:16px;">Bakım kaydı yok</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Yakıt -->
+<div class="card">
+    <div class="card-header"><h3 class="card-title"><i class="fas fa-gas-pump"></i> Yakıt Takibi</h3></div>
+    <form method="POST" action="{{ url_for('arac.yakit_ekle', arac_id=arac.id) }}" style="padding:14px;border-bottom:1px solid var(--gri-kenar);">
+        <div class="grid grid-2" style="gap:10px;">
+            <div class="form-group">
+                <label class="form-label">Tarih</label>
+                <input type="text" name="tarih" class="datepicker form-input" placeholder="GG.AA.YYYY">
+            </div>
+            <div class="form-group">
+                <label class="form-label">KM</label>
+                <input type="number" name="km" class="form-input">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Litre</label>
+                <input type="number" name="litre" class="form-input" step="0.01">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Birim Fiyat</label>
+                <input type="number" name="birim_fiyat" class="form-input" step="0.01">
+            </div>
+            <div class="form-group">
+                <label class="form-label">İstasyon</label>
+                <input type="text" name="istasyon" class="form-input">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Yakıt Ekle</button>
+    </form>
+    <div class="table-container">
+        <table class="data-table">
+            <thead><tr><th>Tarih</th><th>KM</th><th>Litre</th><th>Birim Fiyat</th><th>Toplam</th><th>İstasyon</th></tr></thead>
+            <tbody>
+            {% for y in arac.yakit_kayitlari|sort(attribute='tarih', reverse=True) %}
+            <tr>
+                <td style="font-size:12px;">{{ y.tarih }}</td>
+                <td>{{ y.km|int if y.km else '—' }}</td>
+                <td>{{ "%.2f"|format(y.litre) }} L</td>
+                <td>{{ "%.2f"|format(y.birim_fiyat) }} ₺</td>
+                <td style="font-weight:600;">{{ "%.2f"|format(y.toplam) }} ₺</td>
+                <td style="font-size:12px;">{{ y.istasyon or '—' }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" style="text-align:center;color:var(--gri);padding:16px;">Yakıt kaydı yok</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}İzin Listesi{% endblock %}
+{% block page_title %}İzin Listesi{% endblock %}
+{% block content %}
+<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
+    <form method="GET" style="display:flex;gap:8px;flex-wrap:wrap;">
+        <select name="durum" class="form-select" style="width:140px;" onchange="this.form.submit()">
+            <option value="">Tüm Durumlar</option>
+            {% for d in ['beklemede','onaylandi','reddedildi'] %}
+            <option value="{{ d }}" {% if d==secili_durum %}selected{% endif %}>{{ d|capitalize }}</option>
+            {% endfor %}
+        </select>
+        <select name="tur" class="form-select" style="width:160px;" onchange="this.form.submit()">
+            <option value="">Tüm Türler</option>
+            {% for kod, ad in izin_turleri %}
+            <option value="{{ kod }}" {% if kod==secili_tur %}selected{% endif %}>{{ ad }}</option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+<div class="card">
+    <div class="table-container">
+        <table class="data-table">
+            <thead><tr><th>Personel</th><th>Tür</th><th>Başlangıç</th><th>Bitiş</th><th>Gün</th><th>Durum</th><th>Giriş</th><th>İşlem</th></tr></thead>
+            <tbody>
+            {% for iz in izinler %}
+            <tr>
+                <td><a href="{{ url_for('ik.personel_detay', id=iz.personel_id) }}">{{ iz.personel.tam_ad if iz.personel else '?' }}</a></td>
+                <td style="font-size:12px;">{{ iz.izin_turu }}{% if iz.vefat_yakin %} ({{ iz.vefat_yakin }}){% endif %}</td>
+                <td>{{ iz.baslangic }}</td>
+                <td>{{ iz.bitis }}</td>
+                <td style="font-weight:600;">{{ iz.gun_sayisi }}</td>
+                <td><span class="status-badge {% if iz.durum=='onaylandi' %}acik{% elif iz.durum=='reddedildi' %}iptal{% else %}beklemede{% endif %}">{{ iz.durum }}</span></td>
+                <td style="font-size:11px;">{{ iz.talep_turu }}</td>
+                <td style="display:flex;gap:4px;">
+                    {% if iz.durum == 'beklemede' %}
+                    <form method="POST" action="{{ url_for('ik.izin_onayla', izin_id=iz.id) }}">
+                        <button class="btn btn-ghost btn-sm" style="color:var(--yesil);"><i class="fas fa-check"></i></button>
+                    </form>
+                    <form method="POST" action="{{ url_for('ik.izin_reddet', izin_id=iz.id) }}">
+                        <input type="hidden" name="red_nedeni" value="">
+                        <button class="btn btn-ghost btn-sm" style="color:var(--kirmizi);"><i class="fas fa-times"></i></button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" style="text-align:center;padding:20px;color:var(--gri);">Kayıt bulunamadı</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

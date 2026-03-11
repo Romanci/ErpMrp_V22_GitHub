@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Kullanici Yonetimi - ERP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>👤 Kullanici Yonetimi</h1>
+    <div>
+        <a href="{{ url_for('kullanici.kullanici_ekle') }}" class="btn btn-primary">Yeni Kullanici</a>
+        <a href="{{ url_for('kullanici.rol_liste') }}" class="btn btn-secondary">Roller</a>
+    </div>
+</div>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Kullanici Adi</th>
+            <th>Ad Soyad</th>
+            <th>Departman</th>
+            <th>Email</th>
+            <th>Rol</th>
+            <th>Son Giris</th>
+            <th>Islemler</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for k in kullanicilar %}
+        <tr>
+            <td><strong>{{ k.kullanici_adi }}</strong></td>
+            <td>{{ k.tam_ad }}</td>
+            <td>{{ k.departman or '-' }}</td>
+            <td>{{ k.email or '-' }}</td>
+            <td>
+                {% if k.roller %}
+                    <span class="status-badge devam">{{ k.roller[0].rol.rol_adi }}</span>
+                {% else %}
+                    <span class="status-badge iptal">Rol Yok</span>
+                {% endif %}
+            </td>
+            <td>{{ k.son_giris or 'Hic giris yapilmadi' }}</td>
+            <td>
+                <a href="{{ url_for('kullanici.kullanici_detay', id=k.id) }}" class="btn btn-sm">Detay</a>
+                <a href="{{ url_for('kullanici.kullanici_duzenle', id=k.id) }}" class="btn btn-sm">Duzenle</a>
+                <form action="{{ url_for('kullanici.kullanici_sil', id=k.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Kullaniciyi devre disi birakmak istediginize emin misiniz?')">
+                    <button type="submit" class="btn btn-sm btn-danger">Devre Disi</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="text-align:center;">Henuz kullanici eklenmemis.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Üretim Emirleri - ERP{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Üretim Emirleri</h1>
+    <div style="display:flex;gap:8px;">
+        <a href="{{ url_for('export.excel_uretim') }}" class="btn btn-ghost btn-sm">
+            <i class="fas fa-file-excel"></i> Excel
+        </a>
+        <a href="{{ url_for('mrp.mrp_analiz') }}" class="btn btn-ghost btn-sm" style="border-color:#8b5cf6;color:#8b5cf6;">
+            <i class="fas fa-calculator"></i> MRP
+        </a>
+        <a href="{{ url_for('uretim.uretim_emri_ekle') }}" class="btn btn-primary btn-sm">+ Yeni Emir</a>
+    </div>
+</div>
+
+<!-- Filtreler -->
+<div class="card" style="margin-bottom:16px;">
+    <form method="GET" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+        <div class="form-group" style="margin:0;min-width:140px;">
+            <label style="font-size:11px;color:var(--color-muted);text-transform:uppercase;">Durum</label>
+            <select name="durum" class="form-select" style="width:100%;" onchange="this.form.submit()">
+                <option value="">Tümü</option>
+                <option value="beklemede" {% if request.args.get('durum')=='beklemede' %}selected{% endif %}>Beklemede</option>
+                <option value="devam" {% if request.args.get('durum')=='devam' %}selected{% endif %}>Devam</option>
+                <option value="tamamlandi" {% if request.args.get('durum')=='tamamlandi' %}selected{% endif %}>Tamamlandı</option>
+                <option value="iptal" {% if request.args.get('durum')=='iptal' %}selected{% endif %}>İptal</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin:0;min-width:140px;">
+            <label style="font-size:11px;color:var(--color-muted);text-transform:uppercase;">Öncelik</label>
+            <select name="oncelik" class="form-select" style="width:100%;" onchange="this.form.submit()">
+                <option value="">Tümü</option>
+                <option value="acil" {% if request.args.get('oncelik')=='acil' %}selected{% endif %}>Acil</option>
+                <option value="yuksek" {% if request.args.get('oncelik')=='yuksek' %}selected{% endif %}>Yüksek</option>
+                <option value="normal" {% if request.args.get('oncelik')=='normal' %}selected{% endif %}>Normal</option>
+                <option value="dusuk" {% if request.args.get('oncelik')=='dusuk' %}selected{% endif %}>Düşük</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin:0;min-width:180px;">
+            <label style="font-size:11px;color:var(--color-muted);text-transform:uppercase;">Ürün Ara</label>
+            <input type="text" name="ara" value="{{ request.args.get('ara','') }}"
+                   class="form-control" placeholder="Emir no veya ürün adı..." style="width:100%;">
+        </div>
+        <button type="submit" class="btn btn-ghost btn-sm" style="margin-bottom:1px;">Filtrele</button>
+        {% if request.args %}<a href="{{ url_for('uretim.uretim_emri_liste') }}" class="btn btn-ghost btn-sm" style="margin-bottom:1px;">Temizle ✕</a>{% endif %}
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Emirler
+            {% if emirler %}<span class="status-badge info" style="margin-left:8px;">{{ emirler|length }} kayıt</span>{% endif %}
+        </h3>
+    </div>
+    <div class="table-container" style="box-shadow:none;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Emir No</th><th>Ürün</th><th style="text-align:right;">Miktar</th>
+                    <th>Planlanan Başlangıç</th><th>Planlanan Bitiş</th>
+                    <th>Öncelik</th><th>Durum</th><th>İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emir in emirler %}
+                <tr>
+                    <td><strong>{{ emir.emir_no }}</strong></td>
+                    <td>{{ emir.urun.urun_adi if emir.urun else '—' }}</td>
+                    <td style="text-align:right;">{{ emir.miktar }} {{ emir.urun.birim if emir.urun else '' }}</td>
+                    <td>{{ emir.planlanan_baslangic or '—' }}</td>
+                    <td>{{ emir.planlanan_bitis or '—' }}</td>
+                    <td>
+                        <span class="status-badge {% if emir.oncelik=='acil' %}iptal{% elif emir.oncelik=='yuksek' %}devam{% else %}beklemede{% endif %}">
+                            {{ emir.oncelik.upper() }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="status-badge {% if emir.durum=='tamamlandi' %}acik{% elif emir.durum=='devam' %}devam{% elif emir.durum=='iptal' %}iptal{% else %}beklemede{% endif %}">
+                            {{ emir.durum.upper() }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('uretim.uretim_emri_detay', id=emir.id) }}" class="btn btn-ghost btn-sm">Detay</a>
+                        {% if emir.durum == 'beklemede' %}
+                        <form action="{{ url_for('uretim.uretim_durum_guncelle', id=emir.id, yeni_durum='devam') }}"
+                              method="POST" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-success">Başlat</button>
+                        </form>
+                        {% elif emir.durum == 'devam' %}
+                        <form action="{{ url_for('uretim.uretim_durum_guncelle', id=emir.id, yeni_durum='tamamlandi') }}"
+                              method="POST" style="display:inline;"
+                              onsubmit="return confirm('Üretim emri tamamlandı olarak işaretlensin mi?')">
+                            <button type="submit" class="btn btn-sm btn-primary">Tamamla</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--color-muted);">
+                    Üretim emri bulunamadı.
+                    {% if not request.args %}<a href="{{ url_for('uretim.uretim_emri_ekle') }}">İlk emri oluştur →</a>{% endif %}
+                </td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

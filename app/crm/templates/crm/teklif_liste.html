@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Teklifler{% endblock %}
+{% block page_title %}Teklif Listesi{% endblock %}
+{% block content %}
+<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
+    <a href="{{ url_for('crm.teklif_form') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Yeni Teklif</a>
+    <form method="GET" style="display:flex;gap:6px;flex-wrap:wrap;">
+        <select name="musteri_id" class="form-select" style="width:180px;" onchange="this.form.submit()">
+            <option value="">Tüm Müşteriler</option>
+            {% for m in musteriler %}<option value="{{ m.id }}" {% if m.id==secili_musteri %}selected{% endif %}>{{ m.unvan }}</option>{% endfor %}
+        </select>
+        <select name="durum" class="form-select" style="width:130px;" onchange="this.form.submit()">
+            <option value="">Tüm Durumlar</option>
+            {% for d in ['taslak','gonderildi','kabul','red','iptal'] %}
+            <option value="{{ d }}" {% if d==secili_durum %}selected{% endif %}>{{ d|capitalize }}</option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+<div class="card">
+    <div class="table-container">
+        <table class="data-table">
+            <thead><tr><th>No</th><th>Müşteri</th><th>Başlık</th><th>Tarih</th><th>Geçerlilik</th><th>Toplam</th><th>Durum</th><th>İşlem</th></tr></thead>
+            <tbody>
+            {% for t in teklifler %}
+            <tr>
+                <td style="font-family:monospace;font-size:12px;">{{ t.teklif_no }}</td>
+                <td>{{ t.musteri.unvan if t.musteri else '?' }}</td>
+                <td style="font-weight:500;">{{ t.baslik or '—' }}</td>
+                <td style="font-size:12px;">{{ t.tarih }}</td>
+                <td style="font-size:12px;">{{ t.gecerlilik or '—' }}</td>
+                <td style="font-weight:700;">{{ "%.2f"|format(t.genel_toplam) }} {{ t.para_birimi }}</td>
+                <td>
+                    <span class="status-badge {% if t.durum=='kabul' %}acik{% elif t.durum in ('red','iptal') %}iptal{% elif t.durum=='gonderildi' %}beklemede{% else %}{% endif %}">
+                        {{ t.durum }}
+                    </span>
+                </td>
+                <td style="display:flex;gap:4px;">
+                    <a href="{{ url_for('crm.teklif_detay', id=t.id) }}" class="btn btn-ghost btn-sm"><i class="fas fa-eye"></i></a>
+                    <a href="{{ url_for('crm.teklif_form', id=t.id) }}" class="btn btn-ghost btn-sm"><i class="fas fa-edit"></i></a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" style="text-align:center;padding:24px;color:var(--gri);">Teklif bulunamadı</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

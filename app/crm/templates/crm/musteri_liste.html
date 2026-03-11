@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Müşteriler{% endblock %}
+{% block page_title %}Müşteri Listesi{% endblock %}
+{% block content %}
+<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+    <a href="{{ url_for('crm.musteri_form') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Yeni Müşteri</a>
+    <form method="GET" style="display:flex;gap:6px;flex:1;">
+        <input type="text" name="q" value="{{ q }}" class="form-input" placeholder="Müşteri ara..." style="max-width:240px;">
+        <button class="btn btn-ghost"><i class="fas fa-search"></i></button>
+    </form>
+</div>
+<div class="card">
+    <div class="table-container">
+        <table class="data-table">
+            <thead><tr><th>Kod</th><th>Ünvan</th><th>Tür</th><th>Şehir</th><th>Telefon</th><th>Teklif</th><th>İşlem</th></tr></thead>
+            <tbody>
+            {% for m in musteriler %}
+            <tr>
+                <td style="font-weight:600;font-size:12px;">{{ m.musteri_kodu }}</td>
+                <td><a href="{{ url_for('crm.musteri_detay', id=m.id) }}" style="font-weight:500;">{{ m.unvan }}</a></td>
+                <td><span class="status-badge {% if m.tur=='firma' %}acik{% else %}beklemede{% endif %}">{{ m.tur }}</span></td>
+                <td>{{ m.sehir or '—' }}</td>
+                <td style="font-size:12px;">{{ m.telefon or '—' }}</td>
+                <td>{{ m.teklifler|length }}</td>
+                <td style="display:flex;gap:4px;">
+                    <a href="{{ url_for('crm.musteri_detay', id=m.id) }}" class="btn btn-ghost btn-sm"><i class="fas fa-eye"></i></a>
+                    <a href="{{ url_for('crm.musteri_form', id=m.id) }}" class="btn btn-ghost btn-sm"><i class="fas fa-edit"></i></a>
+                    <a href="{{ url_for('crm.teklif_form') }}?musteri_id={{ m.id }}" class="btn btn-ghost btn-sm" title="Yeni Teklif"><i class="fas fa-file-invoice"></i></a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" style="text-align:center;padding:24px;color:var(--gri);">Müşteri bulunamadı</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

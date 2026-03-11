@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Vardiya Atamaları{% endblock %}
+{% block page_title %}Vardiya Atamaları{% endblock %}
+{% block content %}
+<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
+    <form method="GET" style="display:flex;gap:6px;align-items:center;">
+        <label style="font-size:13px;color:var(--gri);">Ay:</label>
+        <input type="month" name="ay" class="form-input" value="{{ secili_ay }}" style="width:160px;" onchange="this.form.submit()">
+    </form>
+</div>
+<div class="grid grid-2" style="gap:16px;">
+    <!-- Atama Formu -->
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-plus"></i> Vardiya Ata</h3></div>
+        <form method="POST" action="{{ url_for('vardiya.atama_kaydet') }}" style="padding:16px;">
+            <input type="hidden" name="secili_ay" value="{{ secili_ay }}">
+            <div class="form-group">
+                <label class="form-label">Personel *</label>
+                <select name="personel_id" class="form-select" required>
+                    <option value="">— Seçiniz —</option>
+                    {% for p in personeller %}
+                    <option value="{{ p.id }}">{{ p.tam_ad }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Vardiya *</label>
+                <select name="vardiya_id" class="form-select" required>
+                    <option value="">— Seçiniz —</option>
+                    {% for t in tanimlar %}
+                    <option value="{{ t.id }}">{{ t.ad }} ({{ t.baslangic }}-{{ t.bitis }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tarih *</label>
+                <input type="text" name="tarih" class="datepicker form-input" required placeholder="GG.AA.YYYY">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Not</label>
+                <input type="text" name="notlar" class="form-input" placeholder="Opsiyonel">
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Ata</button>
+        </form>
+    </div>
+    <!-- Atama Listesi -->
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-calendar"></i> Bu Aydaki Atamalar</h3></div>
+        <div class="table-container" style="max-height:400px;overflow-y:auto;">
+            <table class="data-table">
+                <thead><tr><th>Tarih</th><th>Personel</th><th>Vardiya</th></tr></thead>
+                <tbody>
+                {% for a in atamalar|sort(attribute='tarih') %}
+                <tr>
+                    <td style="font-size:12px;font-weight:600;">{{ a.tarih }}</td>
+                    <td style="font-size:12px;">{{ a.personel.tam_ad if a.personel else '?' }}</td>
+                    <td>
+                        {% if a.vardiya %}
+                        <span style="background:{{ a.vardiya.renk }}22;color:{{ a.vardiya.renk }};padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">
+                            {{ a.vardiya.ad }}
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3" style="text-align:center;color:var(--gri);padding:16px;">Bu ayda atama yok</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

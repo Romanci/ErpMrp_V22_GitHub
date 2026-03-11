@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}Yedekleme{% endblock %}
+{% block page_title %}Veritabanı Yedekleme{% endblock %}
+{% block content %}
+
+<div class="grid grid-2" style="gap:16px;margin-bottom:16px;">
+
+    <!-- Yedek Al -->
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-database"></i> Yedek Al</h3></div>
+        <div style="padding:20px;">
+            <p style="font-size:13px;color:var(--gri);margin-bottom:16px;">
+                Tüm veritabanı (SQLite) sıkıştırılmış ZIP formatında yedeklenir.
+                Son 30 yedek otomatik saklanır, eskiler silinir.
+            </p>
+            <form method="POST" action="{{ url_for('yedek.yedek_al') }}">
+                <button type="submit" class="btn btn-primary" style="width:100%;">
+                    <i class="fas fa-save"></i> Şimdi Yedek Al
+                </button>
+            </form>
+            <div style="margin-top:12px;padding:10px;background:rgba(34,197,94,0.08);border-radius:6px;font-size:12px;">
+                <i class="fas fa-info-circle" style="color:var(--yesil);"></i>
+                Yedekler <code>yedekler/</code> klasöründe saklanır.
+                Önemli işlemlerden önce mutlaka yedek alın.
+            </div>
+        </div>
+    </div>
+
+    <!-- Geri Yükle -->
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-upload"></i> Dışarıdan Geri Yükle</h3></div>
+        <div style="padding:20px;">
+            <p style="font-size:13px;color:var(--gri);margin-bottom:16px;">
+                Bilgisayarınızdaki <code>.zip</code> yedek dosyasından geri yükleyin.
+            </p>
+            <div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:6px;padding:10px;margin-bottom:12px;font-size:12px;color:#7f1d1d;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Uyarı:</strong> Geri yükleme mevcut verilerin üzerine yazar. Bu işlem geri alınamaz!
+                Önce yedek alın.
+            </div>
+            <form method="POST" action="{{ url_for('yedek.geri_yukle') }}" enctype="multipart/form-data"
+                  onsubmit="return confirm('Geri yükleme yapılacak. Mevcut veriler silinecek. Devam edilsin mi?')">
+                <div class="form-group">
+                    <input type="file" name="yedek_dosya" class="form-input" accept=".zip" required style="padding:6px;">
+                </div>
+                <button type="submit" class="btn btn-danger" style="width:100%;">
+                    <i class="fas fa-redo"></i> Geri Yükle
+                </button>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<!-- Otomatik Yedek Hatırlatıcı -->
+<div class="card" style="margin-bottom:16px;background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.2);">
+    <div style="padding:14px 20px;display:flex;align-items:center;gap:12px;">
+        <i class="fas fa-clock" style="color:var(--mavi);font-size:18px;"></i>
+        <div style="flex:1;">
+            <div style="font-weight:600;font-size:13px;">Otomatik Yedekleme</div>
+            <div style="font-size:12px;color:var(--gri);">
+                Sunucuda cron ile her gece otomatik yedek alabilirsiniz:<br>
+                <code style="background:var(--gri-acik);padding:2px 6px;border-radius:3px;font-size:11px;">0 2 * * * curl -X POST http://localhost:5000/api/yedek/otomatik</code>
+            </div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="anlikYedek()">
+            <i class="fas fa-play"></i> API Testi
+        </button>
+        <span id="api-sonuc" style="font-size:12px;"></span>
+    </div>
+</div>
+
+<!-- Yedek Listesi -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-list"></i> Mevcut Yedekler ({{ yedekler|length }})</h3>
+    </div>
+    {% if yedekler %}
+    <div class="table-container">
+        <table class="data-table">
+            <thead><tr><th>#</th><th>Dosya Adı</th><th>Tarih</th><th>Boyut</th><th>İşlem</th></tr></thead>
+            <tbody>
+            {% for y in yedekler %}
+            <tr>
+                <td style="color:var(--gri);">{{ loop.index }}</td>
+                <td style="font-family:monospace;font-size:12px;">{{ y.dosya_adi }}</td>
+                <td>{{ y.tarih }}</td>
+                <td>{{ y.boyut_kb }} KB</td>
+                <td style="display:flex;gap:6px;">
+                    <a href="{{ url_for('yedek.yedek_indir', dosya_adi=y.dosya_adi) }}" class="btn btn-ghost btn-sm">
+                        <i class="fas fa-download"></i> İndir
+                    </a>
+                    <form method="POST" action="{{ url_for('yedek.geri_yukle') }}"
+                          onsubmit="return confirm('{{ y.dosya_adi }} yedeğinden geri yüklensin mi? Mevcut veriler silinir!')">
+                        <input type="hidden" name="secili_yedek" value="{{ y.dosya_adi }}">
+                        <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--mavi);">
+                            <i class="fas fa-redo"></i> Yükle
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ url_for('yedek.yedek_sil', dosya_adi=y.dosya_adi) }}"
+                          onsubmit="return confirm('Yedek silinsin mi?')">
+                        <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--kirmizi);">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="padding:32px;text-align:center;color:var(--gri);">
+        <i class="fas fa-database" style="font-size:32px;display:block;margin-bottom:8px;opacity:0.3;"></i>
+        Henüz yedek alınmamış. Yukarıdan "Şimdi Yedek Al" butonuna tıklayın.
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function anlikYedek() {
+    const el = document.getElementById('api-sonuc');
+    el.textContent = 'Yedek alınıyor...';
+    fetch('/api/yedek/otomatik', {method:'POST'})
+        .then(r => r.json())
+        .then(d => {
+            el.textContent = d.basarili ? `✓ ${d.dosya} (${d.boyut_kb}KB)` : `✗ ${d.mesaj}`;
+            el.style.color = d.basarili ? 'var(--yesil)' : 'var(--kirmizi)';
+            if (d.basarili) setTimeout(() => location.reload(), 1500);
+        })
+        .catch(() => { el.textContent = 'Bağlantı hatası'; el.style.color='var(--kirmizi)'; });
+}
+</script>
+{% endblock %}

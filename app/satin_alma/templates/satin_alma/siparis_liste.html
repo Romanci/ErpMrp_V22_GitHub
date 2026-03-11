@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Satın Alma Siparişleri - ERP{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Satın Alma Siparişleri</h1>
+    <div style="display:flex;gap:8px;">
+        <a href="{{ url_for('export.excel_siparisler') }}" class="btn btn-ghost btn-sm">
+            <i class="fas fa-file-excel"></i> Excel
+        </a>
+        <a href="{{ url_for('satin_alma_siparis.siparis_ekle') }}" class="btn btn-primary btn-sm">+ Yeni Sipariş</a>
+    </div>
+</div>
+
+<!-- Filtreler -->
+<div class="card" style="margin-bottom:16px;">
+    <form method="GET" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+        <div class="form-group" style="margin:0;min-width:150px;">
+            <label style="font-size:11px;color:var(--color-muted);text-transform:uppercase;">Durum</label>
+            <select name="durum" class="form-select" style="width:100%;" onchange="this.form.submit()">
+                <option value="">Tümü</option>
+                <option value="acik" {% if request.args.get('durum')=='acik' %}selected{% endif %}>Açık</option>
+                <option value="kismi" {% if request.args.get('durum')=='kismi' %}selected{% endif %}>Kısmi</option>
+                <option value="tamamlandi" {% if request.args.get('durum')=='tamamlandi' %}selected{% endif %}>Tamamlandı</option>
+                <option value="iptal" {% if request.args.get('durum')=='iptal' %}selected{% endif %}>İptal</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin:0;min-width:180px;">
+            <label style="font-size:11px;color:var(--color-muted);text-transform:uppercase;">Tedarikçi Ara</label>
+            <input type="text" name="ara" class="form-control" value="{{ request.args.get('ara','') }}"
+                   placeholder="Tedarikçi adı veya sipariş no..." style="width:100%;">
+        </div>
+        <div class="form-group" style="margin:0;">
+            <label style="font-size:11px;color:var(--color-muted);text-transform:uppercase;">Başlangıç</label>
+            <input type="date" name="tarih_bas" class="form-control" value="{{ request.args.get('tarih_bas','') }}" style="width:150px;">
+        </div>
+        <div class="form-group" style="margin:0;">
+            <label style="font-size:11px;color:var(--color-muted);text-transform:uppercase;">Bitiş</label>
+            <input type="date" name="tarih_bit" class="form-control" value="{{ request.args.get('tarih_bit','') }}" style="width:150px;">
+        </div>
+        <button type="submit" class="btn btn-ghost btn-sm" style="margin-bottom:1px;">Filtrele</button>
+        {% if request.args %}<a href="{{ url_for('satin_alma_siparis.siparis_liste') }}" class="btn btn-ghost btn-sm" style="margin-bottom:1px;">Temizle ✕</a>{% endif %}
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Siparişler
+            {% if siparisler %}<span class="status-badge info" style="margin-left:8px;">{{ siparisler|length }} kayıt</span>{% endif %}
+        </h3>
+        {% if siparisler %}
+        <span style="font-size:13px;color:var(--color-muted);">
+            Toplam: <strong style="color:var(--color-primary);">{{ "%.2f"|format(siparisler|sum(attribute='toplam_tutar')) }} TL</strong>
+        </span>
+        {% endif %}
+    </div>
+    <div class="table-container" style="box-shadow:none;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Sipariş No</th><th>Tedarikçi</th><th>Tarih</th>
+                    <th>Teslim</th><th style="text-align:right;">Toplam</th>
+                    <th>Durum</th><th>Fatura</th><th>İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for siparis in siparisler %}
+                <tr>
+                    <td><strong>{{ siparis.siparis_no }}</strong></td>
+                    <td>{{ siparis.tedarikci.unvan if siparis.tedarikci else '—' }}</td>
+                    <td>{{ siparis.siparis_tarihi }}</td>
+                    <td>{{ siparis.teslim_tarihi or '—' }}</td>
+                    <td style="text-align:right;font-weight:600;color:var(--color-primary);">
+                        {{ "%.2f"|format(siparis.toplam_tutar) }} {{ siparis.para_birimi }}
+                    </td>
+                    <td>
+                        <span class="status-badge {% if siparis.durum=='tamamlandi' %}acik{% elif siparis.durum=='iptal' %}iptal{% elif siparis.durum=='kismi' %}devam{% else %}beklemede{% endif %}">
+                            {{ siparis.durum.upper() }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if siparis.faturalar %}
+                            <span style="color:var(--color-green);font-size:12px;">✓ {{ siparis.faturalar|length }} fatura</span>
+                        {% else %}
+                            <span style="color:var(--color-muted);font-size:11px;">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('satin_alma_siparis.siparis_detay', id=siparis.id) }}" class="btn btn-ghost btn-sm">Detay</a>
+                        {% if siparis.durum == 'acik' %}
+                        <form action="{{ url_for('satin_alma_siparis.siparis_durum_guncelle', id=siparis.id, yeni_durum='tamamlandi') }}"
+                              method="POST" style="display:inline;"
+                              onsubmit="return confirm('Sipariş tamamlandı olarak işaretlensin mi?')">
+                            <button type="submit" class="btn btn-sm btn-success">✓</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--color-muted);">
+                    Sipariş bulunamadı.
+                    {% if not request.args %}<a href="{{ url_for('satin_alma_siparis.siparis_ekle') }}">İlk siparişi oluştur →</a>{% endif %}
+                </td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

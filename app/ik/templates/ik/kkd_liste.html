@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}KKD Tanımları{% endblock %}
+{% block page_title %}KKD / İş Kıyafeti Tanımları{% endblock %}
+{% block content %}
+<div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+    <a href="{{ url_for('ik.kkd_form') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Yeni Tanım</a>
+</div>
+<div class="card">
+    <div class="table-container">
+        <table class="data-table">
+            <thead><tr><th>Kod</th><th>Ad</th><th>Tür</th><th>Yenileme</th><th>Stok Ürünü</th><th>Toplam Zimmet</th><th>İşlem</th></tr></thead>
+            <tbody>
+            {% for k in tanimlar %}
+            <tr>
+                <td style="font-weight:600;font-size:12px;">{{ k.kod }}</td>
+                <td>{{ k.ad }}</td>
+                <td><span class="status-badge {% if k.tur=='kkd' %}acik{% elif k.tur=='kiyafet' %}beklemede{% else %}iptal{% endif %}">{{ k.tur }}</span></td>
+                <td>{{ k.yenileme_ay }} ay</td>
+                <td style="font-size:12px;">{{ k.stok_urun.urun_adi if k.stok_urun else '—' }}</td>
+                <td>{{ k.zimmetler|selectattr('durum','equalto','aktif')|list|length }} aktif</td>
+                <td style="display:flex;gap:4px;">
+                    <a href="{{ url_for('ik.kkd_form', id=k.id) }}" class="btn btn-ghost btn-sm"><i class="fas fa-edit"></i></a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" style="text-align:center;padding:20px;color:var(--gri);">Tanım eklenmemiş</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

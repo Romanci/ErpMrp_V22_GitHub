@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Sipariş Onay — {{ siparis.siparis_no }}{% endblock %}
+{% block page_title %}Sipariş Onay Ekranı{% endblock %}
+{% block content %}
+<div style="max-width:900px;">
+
+<div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;
+            padding:16px;margin-bottom:20px;">
+    <strong>{{ siparis.siparis_no }}</strong> — {{ siparis.musteri_adi }}<br>
+    <span style="font-size:13px;color:#92400e;">
+        Kaynak: {{ siparis.kaynak_adi }} |
+        Termin: {{ siparis.termin_tarihi or 'Belirtilmemiş' }} |
+        Toplam: {{ '{:,.2f}'.format(siparis.toplam_tutar) }} {{ siparis.para_birimi }}
+    </span>
+</div>
+
+<!-- Stok Analizi -->
+<div class="card" style="margin-bottom:20px;">
+    <div class="card-header"><h3 class="card-title">Stok Durumu Analizi</h3></div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Ürün</th><th>İstenen</th><th>Stokta</th>
+                <th>Durum</th><th>Öneri</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for s in siparis.satirlar %}
+        <tr>
+            <td>{{ s.satir_tanim }}</td>
+            <td>{{ s.miktar }} {{ s.birim }}</td>
+            <td>{{ s.stok_mevcut if s.urun_id else '—' }}</td>
+            <td>
+                {% if not s.urun_id %}
+                <span style="color:#94a3b8;">Stok dışı</span>
+                {% elif s.stok_mevcut >= s.miktar %}
+                <span style="color:#22c55e;font-weight:600;">✓ Yeterli</span>
+                {% else %}
+                <span style="color:#ef4444;font-weight:600;">
+                    ✗ Eksik ({{ s.miktar - s.stok_mevcut }} adet)
+                </span>
+                {% endif %}
+            </td>
+            <td style="font-size:12px;color:#64748b;">
+                {% if s.urun_id and s.stok_mevcut < s.miktar %}
+                Satın alma veya üretim gerekebilir
+                {% elif s.urun_id %}
+                Depodan hazırlanabilir
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Onay Formu -->
+<form method="POST">
+<div class="card" style="padding:20px;">
+    <h4 style="margin-bottom:16px;">Aksiyonları Seçin</h4>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;">
+        <label style="display:flex;align-items:center;gap:8px;padding:12px;
+                      border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;">
+            <input type="checkbox" name="gorev_depo" value="1" checked>
+            <div>
+                <div style="font-weight:600;">📦 Depo Görevi</div>
+                <div style="font-size:12px;color:#64748b;">Hazırlık görevi oluştur</div>
+            </div>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;padding:12px;
+                      border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;">
+            <input type="checkbox" name="gorev_uretim" value="1">
+            <div>
+                <div style="font-weight:600;">🏭 Üretim Görevi</div>
+                <div style="font-size:12px;color:#64748b;">Üretim emri oluştur</div>
+            </div>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;padding:12px;
+                      border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;">
+            <input type="checkbox" name="gorev_satin" value="1">
+            <div>
+                <div style="font-weight:600;">🛒 Satın Alma</div>
+                <div style="font-size:12px;color:#64748b;">Tedarik talebi oluştur</div>
+            </div>
+        </label>
+    </div>
+
+    <div class="form-group">
+        <label class="form-label">Onay Notu (opsiyonel)</label>
+        <textarea name="onay_notu" class="form-input" rows="2"
+                  placeholder="Notunuzu buraya yazın..."></textarea>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:8px;">
+        <button type="submit" name="aksiyon" value="onayla"
+                class="btn btn-primary" style="background:#22c55e;">
+            <i class="fas fa-check"></i> Onayla ve Görevleri Oluştur
+        </button>
+        <button type="submit" name="aksiyon" value="reddet"
+                class="btn btn-sm" style="background:#ef4444;color:white;">
+            <i class="fas fa-times"></i> Reddet
+        </button>
+        <a href="{{ url_for('siparis.siparis_detay', id=siparis.id) }}"
+           class="btn btn-ghost">İptal</a>
+    </div>
+</div>
+</form>
+</div>
+{% endblock %}

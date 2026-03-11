@@ -1,0 +1,44 @@
+<!-- SKT yaklasan partiler raporu -->
+{% extends "base.html" %}
+
+{% block title %}SKT Raporu - ERP{% endblock %}
+
+{% block content %}
+{% block page_title %}Son Kullanma Tarihi Raporu{% endblock %}
+<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><a href="{{ url_for('rapor.mevcut_stok_raporu') }}" class="btn btn-secondary">Tum Stoklar</a></div>
+
+{% if partiler %}
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Parti Kodu</th>
+            <th>Urun</th>
+            <th>Uretim Tarihi</th>
+            <th>Son Kullanma</th>
+            <th>Durum</th>
+            <th>Miktar</th>
+            <th>Depo</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for satir in partiler %}
+        <tr>
+            <td>{{ satir.parti.parti_kodu }}</td>
+            <td>{{ satir.parti.urun.urun_adi if satir.parti.urun else '-' }}</td>
+            <td>{{ satir.parti.uretim_tarihi or '-' }}</td>
+            <td>{{ satir.parti.son_kullanma_tarihi or '-' }}</td>
+            <td class="{{ 'hareket-cikis' if satir.durum == 'Gecti' else 'hareket-transfer' if satir.durum == 'Yaklasiyor' else '' }}">
+                <strong>{{ satir.durum }}</strong>
+            </td>
+            <td>{{ satir.parti.miktar }}</td>
+            <td>{{ satir.parti.depo.depo_adi if satir.parti.depo else '-' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="alert alert-success">
+    SKT'si yaklaşan veya geçmiş parti bulunmuyor.
+</div>
+{% endif %}
+{% endblock %}

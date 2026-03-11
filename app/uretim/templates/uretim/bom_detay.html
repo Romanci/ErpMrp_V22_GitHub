@@ -1,0 +1,85 @@
+﻿<!-- BOM detay ve malzeme ekleme -->
+{% extends "base.html" %}
+
+{% block title %}BOM Detay - {{ bom.urun.urun_adi if bom.urun else 'Bilinmiyor' }} - ERP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>BOM Detay: {{ bom.urun.urun_adi if bom.urun else 'Bilinmiyor' }}</h1>
+    <div>
+        <span class="btn btn-secondary">Versiyon: {{ bom.versiyon }}</span>
+        <a href="{{ url_for('bom.bom_liste') }}" class="btn btn-secondary">Listeye Don</a>
+        <form action="{{ url_for('bom.bom_sil', id=bom.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('BOM silinsin mi?')">
+            <button type="submit" class="btn btn-danger">BOM Sil</button>
+        </form>
+    </div>
+</div>
+
+<div class="form-container" style="margin-bottom: 2rem;">
+    <h3>Malzeme Ekle</h3>
+    <form method="POST" action="{{ url_for('bom.bom_satir_ekle', bom_id=bom.id) }}">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="ham_madde_id">Malzeme</label>
+                <select id="ham_madde_id" name="ham_madde_id" required>
+                    <option value="">Seciniz</option>
+                    {% for urun in urunler %}
+                    <option value="{{ urun.id }}">{{ urun.stok_kodu }} - {{ urun.urun_adi }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="miktar">Miktar</label>
+                <input type="number" step="0.01" id="miktar" name="miktar" required>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="fire_orani">Fire Orani (%)</label>
+                <input type="number" step="0.01" id="fire_orani" name="fire_orani" value="0">
+            </div>
+            <div class="form-group">
+                <label for="operasyon_sirasi">Operasyon Sirasi</label>
+                <input type="number" id="operasyon_sirasi" name="operasyon_sirasi" value="1">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Ekle</button>
+    </form>
+</div>
+
+<h3>Malzeme Listesi</h3>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Sira</th>
+            <th>Malzeme Kodu</th>
+            <th>Malzeme Adi</th>
+            <th>Miktar</th>
+            <th>Fire %</th>
+            <th>Aciklama</th>
+            <th>Islem</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for satir in bom.satirlar %}
+        <tr>
+            <td>{{ satir.operasyon_sirasi }}</td>
+            <td>{{ satir.ham_madde.stok_kodu if satir.ham_madde else '-' }}</td>
+            <td>{{ satir.ham_madde.urun_adi if satir.ham_madde else '-' }}</td>
+            <td>{{ satir.miktar }} {{ satir.ham_madde.birim if satir.ham_madde else '' }}</td>
+            <td>%{{ satir.fire_orani }}</td>
+            <td>{{ satir.aciklama or '-' }}</td>
+            <td>
+                <form action="{{ url_for('bom.bom_satir_sil', satir_id=satir.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Malzeme silinsin mi?')">
+                    <button type="submit" class="btn btn-sm btn-danger">Sil</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="7">Henüz malzeme eklenmemis.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

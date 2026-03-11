@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}{% if sube.id %}Şube Düzenle{% else %}Yeni Şube{% endif %}{% endblock %}
+{% block page_title %}{% if sube.id %}{{ sube.sube_adi }} — Düzenle{% else %}Yeni Şube{% endif %}{% endblock %}
+{% block content %}
+<form method="POST" style="max-width:700px;">
+<div class="card">
+    <div class="card-header"><h3 class="card-title"><i class="fas fa-building"></i> Şube Bilgileri</h3></div>
+    <div style="padding:20px;">
+        <div class="grid grid-2" style="gap:12px;">
+            <div class="form-group">
+                <label class="form-label">Şube Kodu *</label>
+                <input type="text" name="sube_kodu" class="form-input" value="{{ sube.sube_kodu or '' }}" required placeholder="MRK, IST1, IZM...">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Şube Adı *</label>
+                <input type="text" name="sube_adi" class="form-input" value="{{ sube.sube_adi or '' }}" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Şehir</label>
+                <input type="text" name="sehir" class="form-input" value="{{ sube.sehir or '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Şube Müdürü</label>
+                <input type="text" name="mudur" class="form-input" value="{{ sube.mudur or '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Telefon</label>
+                <input type="text" name="telefon" class="form-input" value="{{ sube.telefon or '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">E-posta</label>
+                <input type="email" name="email" class="form-input" value="{{ sube.email or '' }}">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Adres</label>
+            <textarea name="adres" class="form-input" rows="2">{{ sube.adres or '' }}</textarea>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+            <input type="checkbox" name="merkez_mi" id="merkez_mi" value="1" {% if sube.merkez_mi %}checked{% endif %} style="width:16px;height:16px;">
+            <label for="merkez_mi" style="font-size:13px;cursor:pointer;">Bu şube merkez şubedir</label>
+        </div>
+    </div>
+</div>
+<div style="display:flex;gap:8px;margin-top:4px;">
+    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Kaydet</button>
+    <a href="{{ url_for('sube.sube_liste') }}" class="btn btn-ghost">İptal</a>
+</div>
+</form>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Zimmet Listesi{% endblock %}
+{% block page_title %}KKD / Zimmet Listesi{% endblock %}
+{% block content %}
+<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+    <form method="GET" style="display:flex;gap:8px;">
+        <select name="durum" class="form-select" style="width:140px;" onchange="this.form.submit()">
+            <option value="">Tüm Durumlar</option>
+            {% for d in ['aktif','iade_edildi','kirik','bozuk','ozelligini_kaybetti'] %}
+            <option value="{{ d }}" {% if d==secili_durum %}selected{% endif %}>{{ d.replace('_',' ')|title }}</option>
+            {% endfor %}
+        </select>
+        <a href="{{ url_for('ik.zimmet_liste', uyari='1') }}" class="btn {% if uyari %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">
+            <i class="fas fa-exclamation-triangle" style="color:var(--sari);"></i> Yenileme Gerekiyor
+        </a>
+    </form>
+</div>
+<div class="card">
+    <div class="table-container">
+        <table class="data-table">
+            <thead><tr><th>Personel</th><th>KKD / Kıyafet</th><th>Miktar</th><th>Beden</th><th>Veriliş</th><th>Yenileme</th><th>Durum</th><th>İşlem</th></tr></thead>
+            <tbody>
+            {% for z in zimmetler %}
+            <tr style="{% if z.yenileme_gerekiyor %}background:rgba(245,197,24,0.06);{% endif %}">
+                <td><a href="{{ url_for('ik.personel_detay', id=z.personel_id) }}">{{ z.personel.tam_ad if z.personel else '?' }}</a></td>
+                <td style="font-weight:500;">{{ z.kkd.ad if z.kkd else '?' }}
+                    {% if z.yenileme_gerekiyor %}<i class="fas fa-exclamation-circle" style="color:var(--sari);"></i>{% endif %}
+                </td>
+                <td>{{ z.miktar }}</td>
+                <td>{{ z.beden or '—' }}</td>
+                <td style="font-size:12px;">{{ z.verilis_tarihi }}</td>
+                <td style="font-size:12px;">{{ z.yenileme_tarihi or '—' }}</td>
+                <td><span class="status-badge {% if z.durum=='aktif' %}acik{% elif z.durum=='iade_edildi' %}beklemede{% else %}iptal{% endif %}" style="font-size:10px;">{{ z.durum.replace('_',' ') }}</span></td>
+                <td style="display:flex;gap:4px;">
+                    {% if z.durum == 'aktif' %}
+                    <form method="POST" action="{{ url_for('ik.zimmet_yenile', id=z.id) }}" onsubmit="return confirm('Yenileme verilsin mi?')">
+                        <input type="hidden" name="eski_durum" value="kirik">
+                        <button class="btn btn-ghost btn-sm" title="Yenile"><i class="fas fa-sync" style="color:var(--sari);"></i></button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" style="text-align:center;padding:20px;color:var(--gri);">Kayıt bulunamadı</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

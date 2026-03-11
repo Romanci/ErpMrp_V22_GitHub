@@ -1,0 +1,47 @@
+﻿<!-- Tezgah listesi -->
+{% extends "base.html" %}
+
+{% block title %}Tezgahlar - ERP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Tezgahlar</h1>
+    <a href="{{ url_for('tezgah.tezgah_ekle') }}" class="btn btn-primary">Yeni Tezgah</a>
+</div>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Kod</th>
+            <th>Ad</th>
+            <th>Tip</th>
+            <th>Marka/Model</th>
+            <th>Lokasyon</th>
+            <th>Kapasite</th>
+            <th>Sonraki Bakim</th>
+            <th>Durum</th>
+            <th>Islemler</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for tezgah in tezgahlar %}
+        <tr>
+            <td>{{ tezgah.tezgah_kodu }}</td>
+            <td>{{ tezgah.tezgah_adi }}</td>
+            <td>{{ tezgah.tezgah_tipi or '-' }}</td>
+            <td>{{ tezgah.marka or '' }}{% if tezgah.model %} / {{ tezgah.model }}{% endif %}</td>
+            <td>{{ tezgah.lokasyon or '-' }}</td>
+            <td>{{ tezgah.kapasite }} saat</td>
+            <td class="{{ 'hareket-cikis' if tezgah.sonraki_bakim else '' }}">{{ tezgah.sonraki_bakim or '-' }}</td>
+            <td class="durum-{{ tezgah.durum }}">{{ tezgah.durum.upper() }}</td>
+            <td>
+                <a href="{{ url_for('tezgah.tezgah_duzenle', id=tezgah.id) }}" class="btn btn-sm">Duzenle</a>
+                <form action="{{ url_for('tezgah.tezgah_sil', id=tezgah.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Silmek istediginize emin misiniz?')">
+                    <button type="submit" class="btn btn-sm btn-danger">Sil</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

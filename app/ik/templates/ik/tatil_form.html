@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{% if tatil.id %}Tatil Düzenle{% else %}Yeni Tatil{% endif %}{% endblock %}
+{% block page_title %}{% if tatil.id %}Tatil Düzenle{% else %}Yeni Tatil{% endif %}{% endblock %}
+{% block content %}
+<form method="POST" style="max-width:500px;">
+<div class="card">
+    <div class="card-header"><h3 class="card-title"><i class="fas fa-calendar-alt"></i> Tatil Bilgileri</h3></div>
+    <div style="padding:20px;">
+        <div class="form-group">
+            <label class="form-label">Tatil Adı *</label>
+            <input type="text" name="ad" class="form-input" value="{{ tatil.ad or '' }}" required>
+        </div>
+        <div class="grid grid-2" style="gap:10px;">
+            <div class="form-group">
+                <label class="form-label">Başlangıç Tarihi *</label>
+                <input type="text" name="tarih" class="datepicker form-input" value="{{ tatil.tarih or '' }}" placeholder="GG.AA.YYYY" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Bitiş Tarihi</label>
+                <input type="text" name="bitis_tarihi" class="datepicker form-input" value="{{ tatil.bitis_tarihi or '' }}" placeholder="GG.AA.YYYY">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tür</label>
+                <select name="tur" class="form-select">
+                    <option value="resmi" {% if tatil.tur=='resmi' %}selected{% endif %}>Resmi Tatil</option>
+                    <option value="dini" {% if tatil.tur=='dini' %}selected{% endif %}>Dini Bayram</option>
+                    <option value="firma" {% if tatil.tur=='firma' %}selected{% endif %}>Firma Tatili</option>
+                </select>
+            </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+            <input type="checkbox" name="yillik_tekrar" id="yillik_tekrar" value="1" {% if tatil.yillik_tekrar %}checked{% endif %}>
+            <label for="yillik_tekrar" style="font-size:13px;cursor:pointer;">Her yıl tekrarla</label>
+        </div>
+        <div class="form-group" style="margin-top:10px;">
+            <label class="form-label">Açıklama</label>
+            <input type="text" name="aciklama" class="form-input" value="{{ tatil.aciklama or '' }}">
+        </div>
+    </div>
+</div>
+<div style="display:flex;gap:8px;margin-top:8px;">
+    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Kaydet</button>
+    <a href="{{ url_for('ik.tatil_liste') }}" class="btn btn-ghost">İptal</a>
+</div>
+</form>
+{% endblock %}

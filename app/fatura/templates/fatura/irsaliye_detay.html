@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}{{ irsaliye.irsaliye_no }}{% endblock %}
+{% block page_title %}İrsaliye: {{ irsaliye.irsaliye_no }}{% endblock %}
+{% block content %}
+<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+    <a href="{{ url_for('fatura.irsaliye_liste') }}" class="btn btn-ghost btn-sm">← Geri</a>
+    {% for d in ['yolda', 'teslim', 'iptal'] %}
+    {% if irsaliye.durum != d %}
+    <form method="post" action="{{ url_for('fatura.irsaliye_durum', id=irsaliye.id, durum=d) }}">
+        <button class="btn btn-sm {% if d == 'teslim' %}btn-primary{% else %}btn-ghost{% endif %}"
+                style="{% if d == 'iptal' %}color:var(--color-red);{% endif %}">
+            {{ {'yolda':'Yola Çıktı','teslim':'Teslim Edildi','iptal':'İptal'}[d] }}
+        </button>
+    </form>
+    {% endif %}
+    {% endfor %}
+    <button onclick="window.print()" class="btn btn-ghost btn-sm"><i class="fas fa-print"></i> Yazdır</button>
+</div>
+
+<div class="card" id="irsaliye-belge">
+    <div style="padding:24px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid var(--color-border);">
+            <div>
+                <h2 style="margin:0;">{{ 'GİRİŞ' if irsaliye.irsaliye_tipi == 'giris' else 'ÇIKIŞ' }} İRSALİYESİ</h2>
+                <div style="color:var(--color-muted);">{{ irsaliye.irsaliye_no }}</div>
+                <span class="status-badge {% if irsaliye.durum=='teslim' %}acik{% elif irsaliye.durum=='iptal' %}iptal{% elif irsaliye.durum=='yolda' %}devam{% else %}beklemede{% endif %}">
+                    {{ irsaliye.durum | upper }}
+                </span>
+            </div>
+            <div style="text-align:right;font-size:13px;">
+                <div><strong>Tarih:</strong> {{ irsaliye.irsaliye_tarihi }}</div>
+                {% if irsaliye.arac_plaka %}<div><strong>Araç:</strong> {{ irsaliye.arac_plaka }}</div>{% endif %}
+                {% if irsaliye.sofor %}<div><strong>Şoför:</strong> {{ irsaliye.sofor }}</div>{% endif %}
+            </div>
+        </div>
+
+        <div class="grid grid-2" style="margin-bottom:24px;">
+            <div>
+                <div style="font-size:11px;color:var(--color-muted);">{{ 'TEDARİKÇİ' if irsaliye.irsaliye_tipi == 'giris' else 'MÜŞTERİ' }}</div>
+                <div style="font-weight:600;">{{ irsaliye.tedarikci.unvan if irsaliye.tedarikci else irsaliye.musteri_adi or '-' }}</div>
+            </div>
+            {% if irsaliye.teslim_adresi %}
+            <div>
+                <div style="font-size:11px;color:var(--color-muted);">TESLİM ADRESİ</div>
+                <div>{{ irsaliye.teslim_adresi }}</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <table class="data-table" style="margin-bottom:16px;">
+            <thead><tr><th>#</th><th>Ürün / Açıklama</th><th>Miktar</th><th>Birim</th><th>Not</th></tr></thead>
+            <tbody>
+            {% for s in irsaliye.satirlar %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ s.satir_tanim }}</td>
+                <td style="font-weight:600;">{{ s.miktar }}</td>
+                <td>{{ s.birim }}</td>
+                <td style="font-size:12px;color:var(--color-muted);">{{ s.aciklama or '' }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" style="text-align:center;color:var(--color-muted);">Kalem eklenmedi</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Kalem Ekle -->
+{% if irsaliye.durum == 'hazirlaniyor' %}
+<div class="card" style="margin-top:16px;">
+    <div class="card-header"><h3 class="card-title">Kalem Ekle</h3></div>
+    <form method="post" action="{{ url_for('fatura.irsaliye_satir_ekle', irsaliye_id=irsaliye.id) }}" style="padding:16px;">
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:8px;align-items:flex-end;">
+            <div>
+                <label class="form-label" style="font-size:11px;">Ürün</label>
+                <select name="urun_id" class="form-select" style="font-size:12px;">
+                    <option value="">— Serbest —</option>
+                    {% for u in urunler %}<option value="{{ u.id }}">{{ u.urun_adi }}</option>{% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="form-label" style="font-size:11px;">Açıklama</label>
+                <input type="text" name="tanim" class="form-input" style="font-size:12px;">
+            </div>
+            <div>
+                <label class="form-label" style="font-size:11px;">Miktar</label>
+                <input type="number" step="0.001" name="miktar" class="form-input" style="font-size:12px;" value="1" required>
+            </div>
+            <div>
+                <label class="form-label" style="font-size:11px;">Not</label>
+                <input type="text" name="aciklama" class="form-input" style="font-size:12px;">
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Ekle</button>
+        </div>
+    </form>
+</div>
+{% endif %}
+
+<style>
+@media print {
+    .sidebar, .top-header, .flash-messages, form, .btn { display: none !important; }
+    .main-content { margin: 0 !important; }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,81 @@
+﻿<!-- Tedarikci ekleme/duzenleme formu -->
+{% extends "base.html" %}
+
+{% block title %}{{ 'Tedarikci Duzenle' if tedarikci else 'Yeni Tedarikci' }} - ERP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{{ 'Tedarikci Duzenle' if tedarikci else 'Yeni Tedarikci' }}</h1>
+    <a href="{{ url_for('tedarikci.tedarikci_liste') }}" class="btn btn-secondary">Listeye Don</a>
+</div>
+
+<form method="POST" class="form-container">
+    <div class="form-row">
+        <div class="form-group">
+            <label for="tedarikci_kodu">Tedarikci Kodu *</label>
+            <input type="text" id="tedarikci_kodu" name="tedarikci_kodu" value="{{ tedarikci.tedarikci_kodu if tedarikci else '' }}" required>
+        </div>
+        <div class="form-group">
+            <label for="unvan">Unvan *</label>
+            <input type="text" id="unvan" name="unvan" value="{{ tedarikci.unvan if tedarikci else '' }}" required>
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label for="yetkili_adi">Yetkili Adi</label>
+            <input type="text" id="yetkili_adi" name="yetkili_adi" value="{{ tedarikci.yetkili_adi if tedarikci else '' }}">
+        </div>
+        <div class="form-group">
+            <label for="telefon">Telefon</label>
+            <input type="text" id="telefon" name="telefon" value="{{ tedarikci.telefon if tedarikci else '' }}">
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" value="{{ tedarikci.email if tedarikci else '' }}">
+        </div>
+        <div class="form-group">
+            <label for="para_birimi">Para Birimi</label>
+            <select id="para_birimi" name="para_birimi">
+                <option value="TL" {{ 'selected' if tedarikci and tedarikci.para_birimi == 'TL' else '' }}>TL</option>
+                <option value="USD" {{ 'selected' if tedarikci and tedarikci.para_birimi == 'USD' else '' }}>USD</option>
+                <option value="EUR" {{ 'selected' if tedarikci and tedarikci.para_birimi == 'EUR' else '' }}>EUR</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="adres">Adres</label>
+        <textarea id="adres" name="adres" rows="2">{{ tedarikci.adres if tedarikci else '' }}</textarea>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label for="vergi_dairesi">Vergi Dairesi</label>
+            <input type="text" id="vergi_dairesi" name="vergi_dairesi" value="{{ tedarikci.vergi_dairesi if tedarikci else '' }}">
+        </div>
+        <div class="form-group">
+            <label for="vergi_no">Vergi No</label>
+            <input type="text" id="vergi_no" name="vergi_no" value="{{ tedarikci.vergi_no if tedarikci else '' }}">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="banka_bilgisi">Banka Bilgisi (IBAN vb.)</label>
+        <textarea id="banka_bilgisi" name="banka_bilgisi" rows="2">{{ tedarikci.banka_bilgisi if tedarikci else '' }}</textarea>
+    </div>
+
+    <div class="form-group">
+        <label for="notlar">Notlar</label>
+        <textarea id="notlar" name="notlar" rows="2">{{ tedarikci.notlar if tedarikci else '' }}</textarea>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Kaydet</button>
+        <a href="{{ url_for('tedarikci.tedarikci_liste') }}" class="btn btn-secondary">Iptal</a>
+    </div>
+</form>
+{% endblock %}

@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block title %}{{ fatura.fatura_no }}{% endblock %}
+{% block page_title %}Fatura: {{ fatura.fatura_no }}{% endblock %}
+{% block content %}
+
+<!-- Aksiyonlar -->
+<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+    <a href="{{ url_for('fatura.fatura_liste') }}" class="btn btn-ghost btn-sm">← Geri</a>
+    {% if fatura.durum == 'taslak' %}
+    <form method="post" action="{{ url_for('fatura.fatura_durum', id=fatura.id, durum='kesildi') }}">
+        <button class="btn btn-primary btn-sm">Faturayı Kes</button>
+    </form>
+    {% endif %}
+    {% if fatura.durum == 'kesildi' %}
+    <form method="post" action="{{ url_for('fatura.fatura_durum', id=fatura.id, durum='odendi') }}">
+        <button class="btn btn-sm" style="background:var(--color-green);color:white;">Ödendi İşaretle</button>
+    </form>
+    {% endif %}
+    {% if fatura.durum not in ['iptal', 'odendi'] %}
+    <form method="post" action="{{ url_for('fatura.fatura_durum', id=fatura.id, durum='iptal') }}"
+          onsubmit="return confirm('Fatura iptal edilsin mi?')">
+        <button class="btn btn-sm" style="background:var(--color-red);color:white;">İptal Et</button>
+    </form>
+    {% endif %}
+    <button onclick="window.print()" class="btn btn-ghost btn-sm"><i class="fas fa-print"></i> Yazdır</button>
+    <form method="post" action="{{ url_for('fatura.fatura_sil', id=fatura.id) }}"
+          onsubmit="return confirm('Fatura silinsin mi?')" style="margin-left:auto;">
+        <button class="btn btn-ghost btn-sm" style="color:var(--color-red);">Sil</button>
+    </form>
+</div>
+
+<!-- Fatura Belgesi -->
+<div class="card" id="fatura-belge">
+    <div style="padding:24px;">
+        <!-- Baslik -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid var(--color-border);">
+            <div>
+                <h2 style="margin:0;color:var(--color-primary);">{{ 'ALIŞ FATURASI' if fatura.fatura_tipi == 'alis' else 'SATIŞ FATURASI' }}</h2>
+                <div style="color:var(--color-muted);font-size:13px;">{{ fatura.fatura_no }}</div>
+                <div style="margin-top:8px;">
+                    <span class="status-badge {% if fatura.durum=='odendi' %}acik{% elif fatura.durum=='iptal' %}iptal{% elif fatura.durum=='kesildi' %}devam{% else %}beklemede{% endif %}">
+                        {{ fatura.durum | upper }}
+                    </span>
+                </div>
+            </div>
+            <div style="text-align:right;font-size:13px;">
+                <div><strong>Tarih:</strong> {{ fatura.fatura_tarihi }}</div>
+                {% if fatura.vade_tarihi %}<div><strong>Vade:</strong> {{ fatura.vade_tarihi }}</div>{% endif %}
+                {% if fatura.odeme_tarihi %}<div><strong>Ödeme:</strong> {{ fatura.odeme_tarihi }}</div>{% endif %}
+            </div>
+        </div>
+
+        <!-- Taraflar -->
+        <div class="grid grid-2" style="margin-bottom:24px;">
+            <div>
+                <div style="font-size:11px;color:var(--color-muted);margin-bottom:4px;">{{ 'TEDARİKÇİ' if fatura.fatura_tipi == 'alis' else 'MÜŞTERİ' }}</div>
+                <div style="font-weight:600;">
+                    {% if fatura.tedarikci %}{{ fatura.tedarikci.unvan }}
+                    {% else %}{{ fatura.musteri_adi or '-' }}{% endif %}
+                </div>
+                {% if fatura.tedarikci and fatura.tedarikci.vergi_no %}
+                <div style="font-size:12px;color:var(--color-muted);">VKN: {{ fatura.tedarikci.vergi_no }}</div>
+                {% elif fatura.musteri_vergi_no %}
+                <div style="font-size:12px;color:var(--color-muted);">VKN: {{ fatura.musteri_vergi_no }}</div>
+                {% endif %}
+                {% if fatura.musteri_adres %}<div style="font-size:12px;margin-top:4px;">{{ fatura.musteri_adres }}</div>{% endif %}
+            </div>
+            {% if fatura.siparis %}
+            <div>
+                <div style="font-size:11px;color:var(--color-muted);margin-bottom:4px;">BAĞLI SİPARİŞ</div>
+                <a href="{{ url_for('siparis.siparis_detay', id=fatura.siparis_id) }}" style="font-weight:600;">
+                    {{ fatura.siparis.siparis_no }}
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Kalemler Tablosu -->
+        <table class="data-table" style="margin-bottom:16px;">
+            <thead>
+                <tr>
+                    <th>#</th><th>Ürün / Açıklama</th><th>Proje</th><th>Miktar</th><th>Birim</th>
+                    <th>Birim Fiyat</th><th>İndirim %</th><th>KDV %</th><th>Toplam</th>
+                    {% if fatura.durum == 'taslak' %}<th></th>{% endif %}
+                </tr>
+            </thead>
+            <tbody>
+            {% for satir in fatura.satirlar %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ satir.satir_tanim }}</td>
+                <td><span style="font-size:11px;background:#f1f5f9;padding:2px 6px;border-radius:4px;">{{ satir.proje_kodu or '—' }}</span></td>
+                <td>{{ satir.miktar }}</td>
+                <td>{{ satir.birim }}</td>
+                <td>{{ '%.4f' | format(satir.birim_fiyat) }}</td>
+                <td>{{ satir.indirim_orani }}%</td>
+                <td>{{ satir.kdv_orani }}%</td>
+                <td style="font-weight:600;">{{ '%.2f' | format(satir.satir_toplam) }} {{ fatura.para_birimi }}</td>
+                {% if fatura.durum == 'taslak' %}
+                <td>
+                    <form method="post" action="{{ url_for('fatura.fatura_satir_sil', satir_id=satir.id) }}">
+                        <button class="btn btn-sm" style="background:var(--color-red);color:white;padding:2px 8px;">×</button>
+                    </form>
+                </td>
+                {% endif %}
+            </tr>
+            {% else %}
+            <tr><td colspan="9" style="text-align:center;color:var(--color-muted);">Kalem eklenmedi</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Toplam Kutusu -->
+        <div style="display:flex;justify-content:flex-end;">
+            <div style="min-width:280px;border:1px solid var(--color-border);border-radius:8px;padding:16px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                    <span>Ara Toplam:</span><span>{{ '%.2f' | format(fatura.ara_toplam) }} {{ fatura.para_birimi }}</span>
+                </div>
+                {% if fatura.toplam_indirim %}
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px;color:var(--color-red);">
+                    <span>İndirim:</span><span>-{{ '%.2f' | format(fatura.toplam_indirim) }} {{ fatura.para_birimi }}</span>
+                </div>
+                {% endif %}
+                <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
+                    <span>KDV:</span><span>{{ '%.2f' | format(fatura.toplam_kdv) }} {{ fatura.para_birimi }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:1.1rem;font-weight:700;padding-top:8px;border-top:2px solid var(--color-border);">
+                    <span>GENEL TOPLAM:</span>
+                    <span style="color:var(--color-primary);">{{ '%.2f' | format(fatura.genel_toplam) }} {{ fatura.para_birimi }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Kalem Ekle (sadece taslak) -->
+{% if fatura.durum == 'taslak' %}
+<div class="card" style="margin-top:16px;">
+    <div class="card-header"><h3 class="card-title">Kalem Ekle</h3></div>
+    <form method="post" action="{{ url_for('fatura.fatura_satir_ekle', fatura_id=fatura.id) }}" style="padding:16px;">
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr 1fr auto;gap:8px;align-items:flex-end;">
+            <div>
+                <label class="form-label" style="font-size:11px;">Ürün</label>
+                <select name="urun_id" class="form-select" style="font-size:12px;">
+                    <option value="">— Serbest Giriş —</option>
+                    {% for u in urunler %}
+                    <option value="{{ u.id }}">{{ u.urun_adi }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="form-label" style="font-size:11px;">Açıklama</label>
+                <input type="text" name="tanim" class="form-input" style="font-size:12px;" placeholder="Serbest tanim">
+            </div>
+            <div>
+                <label class="form-label" style="font-size:11px;">Proje Kodu</label>
+                <input type="text" name="proje_kodu" class="form-input" style="font-size:12px;" placeholder="TÜPRAŞ-2026">
+            </div>
+            <div>
+                <label class="form-label" style="font-size:11px;">Miktar</label>
+                <input type="number" step="0.001" name="miktar" class="form-input" style="font-size:12px;" value="1" required>
+            </div>
+            <div>
+                <label class="form-label" style="font-size:11px;">Birim Fiyat</label>
+                <input type="number" step="0.0001" name="birim_fiyat" class="form-input" style="font-size:12px;" value="0" required>
+            </div>
+            <div>
+                <label class="form-label" style="font-size:11px;">İndirim %</label>
+                <input type="number" step="0.01" name="indirim_orani" class="form-input" style="font-size:12px;" value="0">
+            </div>
+            <div>
+                <label class="form-label" style="font-size:11px;">KDV %</label>
+                <input type="number" step="1" name="kdv_orani" class="form-input" style="font-size:12px;" value="18">
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Ekle</button>
+        </div>
+    </form>
+</div>
+{% endif %}
+
+<style>
+@media print {
+    .sidebar, .top-header, .flash-messages, #aksiyonlar, form { display: none !important; }
+    .main-content { margin: 0 !important; padding: 0 !important; }
+    #fatura-belge { box-shadow: none !important; border: none !important; }
+}
+</style>
+{% endblock %}

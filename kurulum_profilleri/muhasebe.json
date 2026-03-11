@@ -1,0 +1,9 @@
+{
+  "profil_adi": "Muhasebe",
+  "aciklama": "Fatura, satın alma, stok görüntüleme",
+  "moduller": {
+    "stok": true, "satin_alma": true, "uretim": false, "fatura": true,
+    "ik": false, "bakim": false, "crm": true, "kalite": false,
+    "dokuman": true, "arac": false, "vardiya": false, "muhasebe": true
+  }
+}

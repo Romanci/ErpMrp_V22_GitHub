@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Kalite Kontrolleri{% endblock %}
+{% block page_title %}Kalite Kontrol Listesi{% endblock %}
+{% block content %}
+<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
+    <a href="{{ url_for('kalite.kontrol_form') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Yeni Kontrol</a>
+    <form method="GET" style="display:flex;gap:6px;flex-wrap:wrap;">
+        <select name="tur" class="form-select" style="width:180px;" onchange="this.form.submit()">
+            <option value="">Tüm Türler</option>
+            {% for k,v in tur_adi.items() %}
+            <option value="{{ k }}" {% if k==secili_tur %}selected{% endif %}>{{ v }}</option>
+            {% endfor %}
+        </select>
+        <select name="sonuc" class="form-select" style="width:150px;" onchange="this.form.submit()">
+            <option value="">Tüm Sonuçlar</option>
+            {% for s in ['beklemede','kabul','kosullu_kabul','ret'] %}
+            <option value="{{ s }}" {% if s==secili_sonuc %}selected{% endif %}>{{ s|replace('_',' ')|title }}</option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+<div class="card">
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Kontrol No</th><th>Tür</th><th>Ürün</th><th>Tedarikçi</th>
+                    <th>Tarih</th><th>Kontrol</th><th>Kabul</th><th>Ret</th><th>Sonuç</th><th></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for k in kontroller %}
+            <tr>
+                <td style="font-family:monospace;font-size:12px;font-weight:600;">{{ k.kontrol_no }}</td>
+                <td><span class="status-badge {% if k.tur=='gelen_malzeme' %}beklemede{% elif k.tur=='uretim_ara' %}acik{% else %}{% endif %}">{{ tur_adi.get(k.tur, k.tur) }}</span></td>
+                <td>{{ k.urun.urun_adi if k.urun else '—' }}</td>
+                <td style="font-size:12px;">{{ k.tedarikci.unvan if k.tedarikci else '—' }}</td>
+                <td style="font-size:12px;">{{ k.tarih }}</td>
+                <td style="text-align:right;">{{ k.kontrol_miktari|int }}</td>
+                <td style="text-align:right;color:var(--yesil);font-weight:600;">{{ k.kabul_miktari|int }}</td>
+                <td style="text-align:right;color:var(--kirmizi);font-weight:600;">{{ k.ret_miktari|int }}</td>
+                <td>
+                    <span class="status-badge {% if k.sonuc=='kabul' %}acik{% elif k.sonuc=='ret' %}iptal{% elif k.sonuc=='kosullu_kabul' %}beklemede{% else %}{% endif %}">
+                        {{ k.sonuc|replace('_',' ')|title }}
+                    </span>
+                </td>
+                <td><a href="{{ url_for('kalite.kontrol_form', id=k.id) }}" class="btn btn-ghost btn-sm"><i class="fas fa-edit"></i></a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="10" style="text-align:center;padding:24px;color:var(--gri);">Kontrol kaydı yok</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

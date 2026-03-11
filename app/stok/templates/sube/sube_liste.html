@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Şubeler{% endblock %}
+{% block page_title %}Şube Yönetimi{% endblock %}
+{% block content %}
+<div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+    <a href="{{ url_for('sube.sube_form') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Yeni Şube</a>
+</div>
+
+{% set toplam_depo = namespace(n=0) %}
+{% set toplam_personel = namespace(n=0) %}
+{% for s in subeler %}
+  {% set toplam_depo.n = toplam_depo.n + (s.depolar|selectattr('aktif','equalto',1)|list|length) %}
+  {% set toplam_personel.n = toplam_personel.n + (s.personeller|selectattr('aktif','equalto',1)|list|length) %}
+{% endfor %}
+<div class="stats-grid" style="margin-bottom:20px;">
+    <div class="stat-card stok">
+        <div class="stat-icon"><i class="fas fa-building"></i></div>
+        <div class="stat-value">{{ subeler|length }}</div>
+        <div class="stat-label">Toplam Şube</div>
+    </div>
+    <div class="stat-card satin-alma">
+        <div class="stat-icon"><i class="fas fa-warehouse"></i></div>
+        <div class="stat-value">{{ toplam_depo.n }}</div>
+        <div class="stat-label">Toplam Depo</div>
+    </div>
+    <div class="stat-card uretim">
+        <div class="stat-icon"><i class="fas fa-users"></i></div>
+        <div class="stat-value">{{ toplam_personel.n }}</div>
+        <div class="stat-label">Toplam Personel</div>
+    </div>
+</div>
+
+<div class="grid grid-3" style="gap:16px;">
+{% for s in subeler %}
+<div class="card" style="{% if s.merkez_mi %}border-left:4px solid var(--sari);{% endif %}">
+    <div class="card-header">
+        <div>
+            <span style="font-weight:700;">{{ s.sube_adi }}</span>
+            {% if s.merkez_mi %}<span style="background:rgba(245,197,24,0.2);color:#a16207;font-size:10px;padding:2px 6px;border-radius:20px;margin-left:6px;font-weight:700;">MERKEZ</span>{% endif %}
+        </div>
+        <span style="font-size:11px;color:var(--gri);font-weight:600;">{{ s.sube_kodu }}</span>
+    </div>
+    <div style="padding:14px;">
+        {% if s.sehir %}<div style="font-size:13px;margin-bottom:6px;"><i class="fas fa-map-marker-alt" style="color:var(--gri);width:16px;"></i> {{ s.sehir }}</div>{% endif %}
+        {% if s.telefon %}<div style="font-size:13px;margin-bottom:6px;"><i class="fas fa-phone" style="color:var(--gri);width:16px;"></i> {{ s.telefon }}</div>{% endif %}
+        {% if s.mudur %}<div style="font-size:13px;margin-bottom:6px;"><i class="fas fa-user-tie" style="color:var(--gri);width:16px;"></i> {{ s.mudur }}</div>{% endif %}
+        <div style="display:flex;gap:12px;margin-top:10px;padding-top:10px;border-top:1px solid var(--gri-kenar);">
+            <span style="font-size:12px;color:var(--gri);"><i class="fas fa-warehouse"></i> {{ s.depolar|selectattr('aktif','equalto',1)|list|length }} depo</span>
+            <span style="font-size:12px;color:var(--gri);"><i class="fas fa-users"></i> {{ s.personeller|selectattr('aktif','equalto',1)|list|length }} personel</span>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:10px;">
+            <a href="{{ url_for('sube.sube_detay', id=s.id) }}" class="btn btn-ghost btn-sm"><i class="fas fa-eye"></i> Detay</a>
+            <a href="{{ url_for('sube.sube_form', id=s.id) }}" class="btn btn-ghost btn-sm"><i class="fas fa-edit"></i></a>
+            {% if not s.merkez_mi %}
+            <form method="POST" action="{{ url_for('sube.sube_sil', id=s.id) }}" style="display:inline;" onsubmit="return confirm('Şubeyi pasife al?')">
+                <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--kirmizi);"><i class="fas fa-trash"></i></button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% else %}
+<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--gri);">
+    <i class="fas fa-building" style="font-size:32px;margin-bottom:8px;display:block;"></i>
+    Henüz şube eklenmemiş. <a href="{{ url_for('sube.sube_form') }}">İlk şubeyi oluştur</a>
+</div>
+{% endfor %}
+</div>
+{% endblock %}

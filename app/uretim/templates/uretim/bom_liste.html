@@ -1,0 +1,36 @@
+﻿<!-- BOM listesi -->
+{% extends "base.html" %}
+
+{% block title %}BOM (Urun Agaci) - ERP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>BOM - Urun Agaclari</h1>
+    <a href="{{ url_for('bom.bom_ekle') }}" class="btn btn-primary">Yeni BOM</a>
+</div>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Urun</th>
+            <th>Versiyon</th>
+            <th>Malzeme Sayisi</th>
+            <th>Aciklama</th>
+            <th>Islemler</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for bom in bomlar %}
+        <tr>
+            <td>{{ bom.urun.urun_adi if bom.urun else '-' }}</td>
+            <td>{{ bom.versiyon }}</td>
+            <td>{{ bom.satirlar|length }}</td>
+            <td>{{ bom.aciklama or '-' }}</td>
+            <td>
+                <a href="{{ url_for('bom.bom_detay', id=bom.id) }}" class="btn btn-sm">Detay</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

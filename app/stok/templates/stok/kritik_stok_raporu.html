@@ -1,0 +1,72 @@
+<!-- Kritik stok raporu -->
+{% extends "base.html" %}
+
+{% block title %}Kritik Stok Raporu - ERP{% endblock %}
+
+{% block content %}
+{% block page_title %}Kritik Stok Raporu{% endblock %}
+<div class="page-header">
+    <h1>Kritik Stok Raporu</h1>
+    <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost btn-sm" onclick="kritikStokMailGonder(this)"
+                style="border-color:var(--color-red);color:var(--color-red);">
+            <i class="fas fa-envelope"></i> E-posta Gönder
+        </button>
+        <a href="{{ url_for('export.excel_stok') }}" class="btn btn-ghost btn-sm">
+            <i class="fas fa-file-excel"></i> Excel
+        </a>
+        <a href="{{ url_for('export.pdf_stok') }}" class="btn btn-ghost btn-sm">
+            <i class="fas fa-file-pdf"></i> PDF
+        </a>
+        <a href="{{ url_for('rapor.mevcut_stok_raporu') }}" class="btn btn-secondary btn-sm">Tüm Stoklar</a>
+    </div>
+</div>
+<div id="mail-sonuc" style="display:none;padding:8px 14px;border-radius:6px;margin-bottom:12px;font-size:13px;"></div>
+
+<script>
+function kritikStokMailGonder(btn) {
+    const sonuc = document.getElementById('mail-sonuc');
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gönderiliyor...';
+    fetch('/api/bildirim-email-gonder', {method:'POST'})
+    .then(r=>r.json()).then(d=>{
+        sonuc.style.display = 'block';
+        sonuc.style.background = d.ok ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)';
+        sonuc.style.color = d.ok ? '#15803d' : '#dc2626';
+        sonuc.style.border = `1px solid ${d.ok ? '#86efac' : '#fca5a5'}`;
+        sonuc.innerHTML = (d.ok ? '✓ ' : '✗ ') + d.mesaj;
+        btn.disabled = false; btn.innerHTML = orig;
+    }).catch(()=>{ btn.disabled=false; btn.innerHTML=orig; });
+}
+</script>
+
+{% if kritik_urunler %}
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Stok Kodu</th>
+            <th>Urun Adi</th>
+            <th>Mevcut Stok</th>
+            <th>Min. Stok</th>
+            <th>Eksik Miktar</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for satir in kritik_urunler %}
+        <tr class="kritik-stok">
+            <td>{{ satir.urun.stok_kodu }}</td>
+            <td>{{ satir.urun.urun_adi }}</td>
+            <td class="hareket-cikis"><strong>{{ satir.mevcut }}</strong></td>
+            <td>{{ satir.min_stok }}</td>
+            <td class="hareket-cikis"><strong>{{ satir.eksik }}</strong></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="alert alert-success">
+    Kritik stokta ürün bulunmuyor. Tüm ürünler yeterli seviyede.
+</div>
+{% endif %}
+{% endblock %}

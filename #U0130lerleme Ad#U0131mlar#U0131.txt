@@ -1,0 +1,63 @@
+1. gün
+
+Ýlerleme Adýmlarý:
+? Kurallar kaydedildi
+? Frontend: Hibrit
+? Sektör: Gýda makine imalatý
+? Baþlangýç modülü: Stok (tamamlandý)
+? Veri modeli onaylandý
+? Dizin yapýsý oluþturuldu (app/stok/templates/ ve app/stok/static/)
+? Dizin oluþturma kodu yazýldý
+? Tüm Stok modelleri yazýldý
+? Modeller __init__.py'ye eklendi
+? Routes yazýldý
+? HTML þablonlarý yazýldý
+? CSS dosyalarý yazýldý
+? JS dosyasý yazýldý
+? Ana dosyalar yazýldý
+? Tüm kodlar tamamlandý
+? Test baþarýlý (tüm özellikler çalýþýyor)
+? Stok modülü tamamlandý
+? Sýradaki modül seçilecek (ÝK veya Satýn Alma)
+
+
+2. gün
+
+Ýlerleme Adýmlarý:
+? Kurallar kaydedildi
+? Frontend: Hibrit
+? Sektör: Gýda makine imalatý
+? Baþlangýç modülü: Stok (tamamlandý)
+? Satýn Alma modülü (tamamlandý)
+? Üretim modülü yazýldý (UretimEmri, Tezgah, BOM modelleri)
+? Routes yazýldý (uretim, tezgah, bom)
+? HTML þablonlarý yazýldý (uretim, tezgah, bom)
+? CSS yazýldý (uretim.css)
+? app/init.py güncellendi (uretim blueprintleri)
+? base.html güncellendi (menüye Üretim eklendi)
+
+3. gün
+
+Ilerleme Adýmlarý:
+? Kurallar kaydedildi
+? Frontend: Hibrit
+? Sektör: Gýda makine imalatý
+? Mevcut yapý görüldü
+? app/stok/static/css/main.css oluþturuldu (ana tema)
+? app/stok/templates/base.html oluþturuldu (ana þablon)
+? app/stok/templates/dashboard.html oluþturuldu (dashboard)
+? app/stok/static/css/stok.css oluþturuldu (stok modülü stilleri)
+? app/satin_alma/static/css/satin_alma.css oluþturuldu (satin alma stilleri)
+? app/uretim/static/css/uretim.css oluþturuldu (uretim stilleri)
+? app/stok/templates/stok/urun_liste.html oluþturuldu (örnek liste)
+? app/satin_alma/templates/satin_alma/siparis_liste.html oluþturuldu (örnek liste)
+? app/uretim/templates/uretim/uretim_emri_liste.html oluþturuldu (örnek liste)
+? app/__init__.py güncellendi (blueprint kayýtlarý)
+? app/routes.py oluþturuldu (dashboard route)
+? app/stok/routes/__init__.py oluþturuldu (stok blueprint)
+? app/stok/routes/urun_routes.py oluþturuldu (ürün route'larý)
+? config.py oluþturuldu (ayarlar)
+? run.py oluþturuldu (baþlatma)
+? requirements.txt oluþturuldu (baðýmlýlýklar)
+? app/stok/models/__init__.py oluþturuldu (modeller init)
+? app/stok/models/urun.py oluþturuldu (ürün modeli)

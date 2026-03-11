@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Sistem Ayarları{% endblock %}
+{% block page_title %}Sistem Ayarları{% endblock %}
+{% block content %}
+<form method="POST">
+<div class="grid grid-2" style="gap:20px;">
+
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-building"></i> Firma Bilgileri</h3></div>
+        <div style="padding:20px;">
+            <div class="form-group">
+                <label class="form-label">Firma Logosu</label>
+                {% if ayarlar.get('firma_logo') %}
+                <div style="margin-bottom:8px;padding:8px;background:var(--gri-acik);border-radius:6px;display:flex;align-items:center;gap:12px;">
+                    <img src="{{ url_for('static', filename='img/' + ayarlar.get('firma_logo')) }}"
+                         style="height:40px;object-fit:contain;" alt="Logo">
+                    <div>
+                        <div style="font-size:12px;font-weight:600;">{{ ayarlar.get('firma_logo') }}</div>
+                        <a href="{{ url_for('ayar.logo_sil') }}" onclick="return confirm('Logo silinsin mi?')"
+                           style="font-size:11px;color:var(--kirmizi);">Logoyu Kaldır</a>
+                    </div>
+                </div>
+                {% endif %}
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <form method="POST" enctype="multipart/form-data" action="{{ url_for('ayar.logo_yukle') }}" style="flex:1;">
+                        <input type="file" name="logo" accept=".png,.jpg,.jpeg,.svg,.webp"
+                               class="form-input" style="padding:6px;">
+                        <button type="submit" class="btn btn-ghost btn-sm" style="margin-top:6px;">
+                            <i class="fas fa-upload"></i> Logo Yükle
+                        </button>
+                    </form>
+                </div>
+                <small style="color:var(--gri);font-size:11px;">PNG, JPG veya SVG · Önerilen boyut: 200×60 px</small>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Firma Adı *</label>
+                <input type="text" name="firma_adi" class="form-input" value="{{ ayarlar.get('firma_adi','NANMAK') }}" required>
+                <small style="color:var(--gri);font-size:11px;">Header'da büyük harfle görünür</small>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Alt Başlık</label>
+                <input type="text" name="firma_alt_baslik" class="form-input" value="{{ ayarlar.get('firma_alt_baslik','Yönetim Sistemi') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Sayfa Başlığı (Tarayıcı Sekmesi)</label>
+                <input type="text" name="sayfa_baslik" class="form-input" value="{{ ayarlar.get('sayfa_baslik','NANMAK ERP') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Vergi No</label>
+                <input type="text" name="firma_vergi_no" class="form-input" value="{{ ayarlar.get('firma_vergi_no','') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Vergi Dairesi</label>
+                <input type="text" name="firma_vergi_dairesi" class="form-input" value="{{ ayarlar.get('firma_vergi_dairesi','') }}">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-phone"></i> İletişim</h3></div>
+        <div style="padding:20px;">
+            <div class="form-group">
+                <label class="form-label">Adres</label>
+                <textarea name="firma_adres" class="form-input" rows="3">{{ ayarlar.get('firma_adres','') }}</textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Telefon</label>
+                <input type="text" name="firma_telefon" class="form-input" value="{{ ayarlar.get('firma_telefon','') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">E-posta</label>
+                <input type="email" name="firma_email" class="form-input" value="{{ ayarlar.get('firma_email','') }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Web Sitesi</label>
+                <input type="text" name="firma_web" class="form-input" value="{{ ayarlar.get('firma_web','') }}" placeholder="https://...">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-sliders-h"></i> Sistem Parametreleri</h3></div>
+        <div style="padding:20px;">
+            <div class="form-group">
+                <label class="form-label">Varsayılan KDV Oranı (%)</label>
+                <input type="number" name="kdv_orani" class="form-input" value="{{ ayarlar.get('kdv_orani','18') }}" min="0" max="100">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Varsayılan Para Birimi</label>
+                <select name="para_birimi" class="form-select">
+                    {% for pb in ['TL','USD','EUR','GBP'] %}
+                    <option value="{{ pb }}" {% if ayarlar.get('para_birimi','TL') == pb %}selected{% endif %}>{{ pb }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">SKT Uyarı Süresi (gün)</label>
+                <input type="number" name="stok_uyari_gunu" class="form-input" value="{{ ayarlar.get('stok_uyari_gunu','7') }}" min="1">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Bakım Uyarı Süresi (gün)</label>
+                <input type="number" name="bakim_uyari_gunu" class="form-input" value="{{ ayarlar.get('bakim_uyari_gunu','7') }}" min="1">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-eye"></i> Header Önizleme</h3></div>
+        <div style="padding:20px;">
+            <div style="background:#0f0f1a;padding:18px 24px;border-radius:8px;text-align:center;">
+                <div style="font-size:1.2rem;font-weight:800;color:#f5c518;letter-spacing:4px;" id="prev-firma">{{ ayarlar.get('firma_adi','NANMAK') }}</div>
+                <div style="font-size:10px;color:#475569;letter-spacing:2px;text-transform:uppercase;margin-top:2px;" id="prev-alt">{{ ayarlar.get('firma_alt_baslik','Yönetim Sistemi') }}</div>
+            </div>
+            <p style="font-size:11px;color:var(--gri);margin-top:10px;text-align:center;">Kaydedince tüm sayfalarda bu şekilde görünür</p>
+        </div>
+    </div>
+
+</div>
+<div style="margin-top:4px;display:flex;gap:8px;">
+    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Ayarları Kaydet</button>
+    <a href="/" class="btn btn-ghost">İptal</a>
+</div>
+</form>
+<script>
+document.querySelector('[name="firma_adi"]').addEventListener('input', function() {
+    document.getElementById('prev-firma').textContent = this.value || 'NANMAK';
+});
+document.querySelector('[name="firma_alt_baslik"]').addEventListener('input', function() {
+    document.getElementById('prev-alt').textContent = this.value;
+});
+</script>
+{% endblock %}

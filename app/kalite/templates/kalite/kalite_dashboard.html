@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Kalite Dashboard{% endblock %}
+{% block page_title %}Kalite Kontrol{% endblock %}
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card stok">
+        <div class="stat-icon"><i class="fas fa-clipboard-list"></i></div>
+        <div class="stat-value">{{ toplam }}</div>
+        <div class="stat-label">Toplam Kontrol</div>
+    </div>
+    <div class="stat-card" style="--accent:var(--sari);">
+        <div class="stat-icon"><i class="fas fa-clock"></i></div>
+        <div class="stat-value" {% if bekleyen %}style="color:var(--sari);"{% endif %}>{{ bekleyen }}</div>
+        <div class="stat-label">Beklemede</div>
+    </div>
+    <div class="stat-card" style="--accent:var(--yesil);">
+        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="stat-value" style="color:var(--yesil);">{{ kabul }}</div>
+        <div class="stat-label">Kabul</div>
+    </div>
+    <div class="stat-card" style="--accent:var(--kirmizi);">
+        <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
+        <div class="stat-value" {% if ret %}style="color:var(--kirmizi);"{% endif %}>{{ ret }}</div>
+        <div class="stat-label">Ret</div>
+    </div>
+</div>
+<div class="grid grid-2" style="gap:16px;margin-top:16px;">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-list"></i> Son Kontroller</h3>
+            <a href="{{ url_for('kalite.kontrol_form') }}" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Yeni</a>
+        </div>
+        <div class="table-container">
+            <table class="data-table">
+                <thead><tr><th>No</th><th>Tür</th><th>Ürün</th><th>Tarih</th><th>Sonuç</th></tr></thead>
+                <tbody>
+                {% for k in son_kontroller %}
+                <tr>
+                    <td style="font-family:monospace;font-size:11px;"><a href="{{ url_for('kalite.kontrol_form', id=k.id) }}">{{ k.kontrol_no }}</a></td>
+                    <td style="font-size:11px;">{{ tur_adi.get(k.tur, k.tur) }}</td>
+                    <td style="font-size:12px;">{{ k.urun.urun_adi if k.urun else '—' }}</td>
+                    <td style="font-size:11px;">{{ k.tarih }}</td>
+                    <td><span class="status-badge {% if k.sonuc=='kabul' %}acik{% elif k.sonuc=='ret' %}iptal{% elif k.sonuc=='beklemede' %}beklemede{% endif %}">{{ k.sonuc }}</span></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" style="text-align:center;color:var(--gri);padding:16px;">Kontrol kaydı yok</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-certificate"></i> Sertifika Uyarıları</h3>
+            <a href="{{ url_for('kalite.sertifika_liste') }}" class="btn btn-ghost btn-sm">Tümü</a>
+        </div>
+        <div style="padding:12px;">
+            {% for s in suresi_biten %}
+            <div style="padding:8px;border-left:3px solid {% if s.suresi_doldu_mu %}var(--kirmizi){% else %}var(--sari){% endif %};margin-bottom:6px;background:var(--gri-acik);border-radius:0 6px 6px 0;">
+                <div style="font-size:13px;font-weight:600;">{{ s.ad }}</div>
+                <div style="font-size:11px;color:{% if s.suresi_doldu_mu %}var(--kirmizi){% else %}var(--sari){% endif %};">
+                    {% if s.suresi_doldu_mu %}⚠ Süresi doldu{% else %}⏰ {{ s.bitis }} — yaklaşıyor{% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div style="color:var(--gri);font-size:13px;padding:8px;text-align:center;">
+                <i class="fas fa-check-circle" style="color:var(--yesil);margin-right:6px;"></i>Tüm sertifikalar geçerli
+            </div>
+            {% endfor %}
+        </div>
+        <div style="padding:12px;border-top:1px solid var(--gri-kenar);display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <a href="{{ url_for('kalite.kontrol_liste') }}" style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--gri-acik);border-radius:6px;text-decoration:none;color:inherit;font-size:12px;font-weight:500;">
+                <i class="fas fa-list" style="color:var(--sari);"></i> Kontrol Listesi
+            </a>
+            <a href="{{ url_for('kalite.sertifika_form') }}" style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--gri-acik);border-radius:6px;text-decoration:none;color:inherit;font-size:12px;font-weight:500;">
+                <i class="fas fa-plus" style="color:var(--sari);"></i> Yeni Sertifika
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

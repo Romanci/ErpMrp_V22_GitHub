@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}{% if kontrol.id %}Kontrol Düzenle{% else %}Yeni Kontrol{% endif %}{% endblock %}
+{% block page_title %}{% if kontrol.id %}Kontrol Düzenle{% else %}Yeni Kalite Kontrol{% endif %}{% endblock %}
+{% block content %}
+<form method="POST">
+<div class="grid grid-2" style="gap:16px;">
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-clipboard-check"></i> Kontrol Bilgileri</h3></div>
+        <div style="padding:16px;">
+            <div class="grid grid-2" style="gap:10px;">
+                <div class="form-group">
+                    <label class="form-label">Kontrol Türü *</label>
+                    <select name="tur" class="form-select" required>
+                        {% for k,v in tur_adi.items() %}
+                        <option value="{{ k }}" {% if kontrol.tur==k %}selected{% endif %}>{{ v }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tarih *</label>
+                    <input type="text" name="tarih" class="datepicker form-input" value="{{ kontrol.tarih or '' }}" placeholder="GG.AA.YYYY" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Ürün</label>
+                    <select name="urun_id" class="form-select">
+                        <option value="">— Seçiniz —</option>
+                        {% for u in urunler %}
+                        <option value="{{ u.id }}" {% if kontrol.urun_id==u.id %}selected{% endif %}>{{ u.urun_adi }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tedarikçi</label>
+                    <select name="tedarikci_id" class="form-select">
+                        <option value="">— Seçiniz —</option>
+                        {% for t in tedarikciler %}
+                        <option value="{{ t.id }}" {% if kontrol.tedarikci_id==t.id %}selected{% endif %}>{{ t.unvan }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Parti / Seri No</label>
+                    <input type="text" name="parti_no" class="form-input" value="{{ kontrol.parti_no or '' }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Sonuç</label>
+                    <select name="sonuc" class="form-select">
+                        {% for s,a in [('beklemede','Beklemede'),('kabul','Kabul'),('kosullu_kabul','Koşullu Kabul'),('ret','Ret')] %}
+                        <option value="{{ s }}" {% if kontrol.sonuc==s %}selected{% endif %}>{{ a }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-balance-scale"></i> Miktar & Notlar</h3></div>
+        <div style="padding:16px;">
+            <div class="grid grid-2" style="gap:10px;">
+                <div class="form-group">
+                    <label class="form-label">Kontrol Miktarı</label>
+                    <input type="number" name="kontrol_miktari" class="form-input" value="{{ kontrol.kontrol_miktari or 0 }}" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="color:var(--yesil);">Kabul Miktarı</label>
+                    <input type="number" name="kabul_miktari" class="form-input" value="{{ kontrol.kabul_miktari or 0 }}" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="color:var(--kirmizi);">Ret Miktarı</label>
+                    <input type="number" name="ret_miktari" class="form-input" value="{{ kontrol.ret_miktari or 0 }}" step="0.01">
+                </div>
+            </div>
+            <div class="form-group" style="margin-top:10px;">
+                <label class="form-label">Notlar / Gözlem</label>
+                <textarea name="notlar" class="form-input" rows="5">{{ kontrol.notlar or '' }}</textarea>
+            </div>
+        </div>
+    </div>
+</div>
+<div style="display:flex;gap:8px;margin-top:10px;">
+    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Kaydet</button>
+    <a href="{{ url_for('kalite.kontrol_liste') }}" class="btn btn-ghost">İptal</a>
+</div>
+</form>
+{% endblock %}

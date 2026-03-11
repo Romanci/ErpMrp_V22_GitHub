@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Muhasebe Listesi{% endblock %}
+{% block page_title %}Gelir / Gider Listesi{% endblock %}
+{% block content %}
+
+<!-- Özet -->
+<div class="grid grid-3" style="margin-bottom:20px;">
+    <div class="card" style="padding:16px;text-align:center;">
+        <div style="color:#22c55e;font-size:20px;font-weight:700;">
+            {{ '{:,.2f}'.format(ozet.gelir) }} ₺
+        </div>
+        <div style="font-size:12px;color:#64748b;">Toplam Gelir</div>
+    </div>
+    <div class="card" style="padding:16px;text-align:center;">
+        <div style="color:#ef4444;font-size:20px;font-weight:700;">
+            {{ '{:,.2f}'.format(ozet.gider) }} ₺
+        </div>
+        <div style="font-size:12px;color:#64748b;">Toplam Gider</div>
+    </div>
+    <div class="card" style="padding:16px;text-align:center;">
+        <div style="color:{{ '#22c55e' if ozet.kar >= 0 else '#ef4444' }};font-size:20px;font-weight:700;">
+            {{ '{:,.2f}'.format(ozet.kar) }} ₺
+        </div>
+        <div style="font-size:12px;color:#64748b;">Kar / Zarar</div>
+    </div>
+</div>
+
+<!-- Filtreler -->
+<div class="card">
+    <div class="card-header">
+        <form method="GET" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+            <div>
+                <label class="form-label" style="font-size:11px;">Tür</label>
+                <select name="tur" class="form-select" style="width:120px;">
+                    <option value="">Tümü</option>
+                    <option value="gelir" {{ 'selected' if secili_tur == 'gelir' }}>Gelir</option>
+                    <option value="gider" {{ 'selected' if secili_tur == 'gider' }}>Gider</option>
+                </select>
+            </div>
+            <div>
+                <label class="form-label" style="font-size:11px;">Yıl</label>
+                <select name="yil" class="form-select" style="width:100px;">
+                    {% for y in range(2024, 2028) %}
+                    <option value="{{ y }}" {{ 'selected' if secili_yil == y|string }}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="form-label" style="font-size:11px;">Ay</label>
+                <select name="ay" class="form-select" style="width:120px;">
+                    <option value="">Tüm Aylar</option>
+                    {% for m, madi in [(1,'Ocak'),(2,'Şubat'),(3,'Mart'),(4,'Nisan'),
+                        (5,'Mayıs'),(6,'Haziran'),(7,'Temmuz'),(8,'Ağustos'),
+                        (9,'Eylül'),(10,'Ekim'),(11,'Kasım'),(12,'Aralık')] %}
+                    <option value="{{ m }}" {{ 'selected' if secili_ay == m|string }}>{{ madi }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="form-label" style="font-size:11px;">Proje</label>
+                <select name="proje_id" class="form-select" style="width:160px;">
+                    <option value="">Tüm Projeler</option>
+                    {% for p in projeler %}
+                    <option value="{{ p.id }}" {{ 'selected' if secili_proje == p.id|string }}>
+                        {{ p.proje_no }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Filtrele</button>
+            <a href="{{ url_for('muhasebe.muhasebe_liste') }}" class="btn btn-ghost btn-sm">Temizle</a>
+        </form>
+        <a href="{{ url_for('muhasebe.muhasebe_yeni') }}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus"></i> Yeni Giriş
+        </a>
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Tarih</th><th>Tür</th><th>Kategori</th><th>Açıklama</th>
+                <th>Kaynak</th><th>Proje</th><th>Tutar</th><th></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for k in kalemler %}
+        <tr>
+            <td>{{ k.tarih }}</td>
+            <td>
+                <span style="background:{{ k.tur_rengi }};color:white;
+                             padding:2px 8px;border-radius:10px;font-size:11px;">
+                    {{ k.tur_adi }}
+                </span>
+            </td>
+            <td style="font-size:12px;">{{ k.kategori or '—' }}</td>
+            <td>{{ k.aciklama }}</td>
+            <td style="font-size:11px;color:#64748b;">
+                {{ {'fatura':'📄 Fatura','satin_alma':'🛒 Satın Alma',
+                    'elle':'✏️ Elle'}.get(k.kaynak, k.kaynak or '—') }}
+                {% if k.fatura_no %}
+                <span style="color:#3b82f6;">{{ k.fatura_no }}</span>
+                {% endif %}
+            </td>
+            <td style="font-size:11px;">
+                {{ k.proje.proje_no if k.proje else '—' }}
+            </td>
+            <td style="font-weight:600;color:{{ k.tur_rengi }};">
+                {{ '+' if k.tur == 'gelir' else '-' }}{{ '{:,.2f}'.format(k.tutar) }} {{ k.para_birimi }}
+            </td>
+            <td>
+                {% if k.kaynak == 'elle' %}
+                <form method="POST" action="{{ url_for('muhasebe.muhasebe_sil', id=k.id) }}"
+                      onsubmit="return confirm('Silinsin mi?')">
+                    <button class="btn btn-sm" style="background:#ef4444;color:white;padding:2px 8px;">×</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:32px;">
+            Kayıt bulunamadı.
+        </td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Profilim{% endblock %}
+{% block page_title %}Profilim{% endblock %}
+{% block content %}
+<div class="grid grid-2" style="gap:20px;max-width:900px;">
+
+    <!-- Profil Bilgileri -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-user"></i> Kişisel Bilgiler</h3>
+        </div>
+        <div style="padding:24px;">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--gri-kenar);">
+                <div style="width:64px;height:64px;background:var(--sari);color:var(--siyah);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;flex-shrink:0;">
+                    {{ kullanici.ad[:1] | upper }}
+                </div>
+                <div>
+                    <div style="font-size:1.1rem;font-weight:700;">{{ kullanici.ad }} {{ kullanici.soyad }}</div>
+                    <div style="color:var(--gri);font-size:13px;">{{ kullanici.kullanici_adi }}</div>
+                    <div style="margin-top:4px;">
+                        {% if kullanici.roller %}
+                        {% for kr in kullanici.roller %}
+                        <span style="background:rgba(245,197,24,0.15);color:#a16207;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;">{{ kr.rol.rol_adi | upper }}</span>
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <form method="POST">
+                <input type="hidden" name="aksiyon" value="bilgi">
+                <div class="grid grid-2" style="gap:12px;">
+                    <div class="form-group">
+                        <label class="form-label">Ad</label>
+                        <input type="text" name="ad" class="form-input" value="{{ kullanici.ad }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Soyad</label>
+                        <input type="text" name="soyad" class="form-input" value="{{ kullanici.soyad }}" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">E-posta</label>
+                    <input type="email" name="email" class="form-input" value="{{ kullanici.email or '' }}">
+                </div>
+                <div class="grid grid-2" style="gap:12px;">
+                    <div class="form-group">
+                        <label class="form-label">Telefon</label>
+                        <input type="text" name="telefon" class="form-input" value="{{ kullanici.telefon or '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Departman</label>
+                        <input type="text" name="departman" class="form-input" value="{{ kullanici.departman or '' }}">
+                    </div>
+                </div>
+                <div style="font-size:12px;color:var(--gri);margin-bottom:12px;">
+                    <i class="fas fa-clock"></i> Son giriş: {{ kullanici.son_giris or 'Bilinmiyor' }} &nbsp;|&nbsp;
+                    <i class="fas fa-calendar"></i> Kayıt: {{ kullanici.olusturma_tarihi }}
+                </div>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Bilgileri Kaydet</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Şifre Değiştir -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-lock"></i> Şifre Değiştir</h3>
+        </div>
+        <div style="padding:24px;">
+            <form method="POST">
+                <input type="hidden" name="aksiyon" value="sifre">
+                <div class="form-group">
+                    <label class="form-label">Mevcut Şifre</label>
+                    <input type="password" name="mevcut_sifre" class="form-input" required autocomplete="current-password">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Yeni Şifre</label>
+                    <input type="password" name="yeni_sifre" class="form-input" required minlength="6" autocomplete="new-password">
+                    <small style="color:var(--gri);font-size:11px;">En az 6 karakter</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Yeni Şifre (Tekrar)</label>
+                    <input type="password" name="sifre_tekrar" class="form-input" required autocomplete="new-password">
+                </div>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-key"></i> Şifreyi Değiştir</button>
+            </form>
+
+            <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--gri-kenar);">
+                <div style="font-size:12px;color:var(--gri);">
+                    <i class="fas fa-shield-alt"></i> Güvenlik önerileri:
+                    <ul style="margin:6px 0 0 16px;line-height:1.8;">
+                        <li>En az 8 karakter kullanın</li>
+                        <li>Harf, rakam ve özel karakter karıştırın</li>
+                        <li>Şifrenizi kimseyle paylaşmayın</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

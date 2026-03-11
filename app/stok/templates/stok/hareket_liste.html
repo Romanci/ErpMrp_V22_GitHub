@@ -1,0 +1,86 @@
+<!-- Stok hareketleri listesi -->
+{% extends "base.html" %}
+
+{% block title %}Stok Hareketleri - ERP{% endblock %}
+
+{% block content %}
+{% block page_title %}Stok Hareketleri{% endblock %}
+<div class="page-header">
+    <h1>Stok Hareketleri</h1>
+    <div style="display:flex;gap:8px;">
+        <a href="{{ url_for('export.excel_hareketler') }}" class="btn btn-ghost btn-sm">
+            <i class="fas fa-file-excel"></i> Excel
+        </a>
+        <a href="{{ url_for('hareket.stok_giris') }}" class="btn btn-primary btn-sm">+ Giriş</a>
+        <a href="{{ url_for('hareket.stok_cikis') }}" class="btn btn-sm" style="background:var(--color-red);color:white;">+ Çıkış</a>
+        <a href="{{ url_for('hareket.stok_transfer') }}" class="btn btn-ghost btn-sm">Transfer</a>
+    </div>
+</div>
+
+<!-- Filtreler -->
+<div class="card" style="margin-bottom:16px;">
+    <form method="GET" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+        <div class="form-group" style="margin:0;min-width:140px;">
+            <label style="font-size:11px;color:var(--color-muted);text-transform:uppercase;">Hareket Tipi</label>
+            <select name="tip" class="form-select" style="width:100%;" onchange="this.form.submit()">
+                <option value="">Tümü</option>
+                <option value="giris" {% if request.args.get('tip')=='giris' %}selected{% endif %}>Giriş</option>
+                <option value="cikis" {% if request.args.get('tip')=='cikis' %}selected{% endif %}>Çıkış</option>
+                <option value="transfer" {% if request.args.get('tip')=='transfer' %}selected{% endif %}>Transfer</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin:0;min-width:200px;">
+            <label style="font-size:11px;color:var(--color-muted);text-transform:uppercase;">Ürün / Referans Ara</label>
+            <input type="text" name="ara" value="{{ request.args.get('ara','') }}"
+                   class="form-control" placeholder="Ürün adı, stok kodu..." style="width:100%;">
+        </div>
+        <button type="submit" class="btn btn-ghost btn-sm" style="margin-bottom:1px;">Filtrele</button>
+        {% if request.args %}<a href="{{ url_for('hareket.hareket_liste') }}" class="btn btn-ghost btn-sm" style="margin-bottom:1px;">Temizle ✕</a>{% endif %}
+    </form>
+</div>
+
+{% if hareketler %}
+<div style="display:flex;gap:24px;padding:8px 0 12px;flex-wrap:wrap;">
+    <span style="font-size:13px;color:var(--color-muted);">
+        Toplam: <strong>{{ hareketler|length }} hareket</strong>
+    </span>
+    <span style="font-size:13px;color:var(--color-green);">
+        Giriş: <strong>{{ hareketler|selectattr('hareket_tipi','equalto','giris')|list|length }}</strong>
+    </span>
+    <span style="font-size:13px;color:var(--color-red);">
+        Çıkış: <strong>{{ hareketler|selectattr('hareket_tipi','equalto','cikis')|list|length }}</strong>
+    </span>
+</div>
+{% endif %}
+
+<div class="card">
+<div class="table-container" style="box-shadow:none;">
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Tarih</th>
+            <th>Urun</th>
+            <th>Depo</th>
+            <th>Tip</th>
+            <th>Miktar</th>
+            <th>Referans</th>
+            <th>Aciklama</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for h in hareketler %}
+        <tr>
+            <td>{{ h.tarih }}</td>
+            <td>{{ h.urun.urun_adi if h.urun else '-' }}</td>
+            <td>{{ h.depo.depo_adi if h.depo else '-' }}</td>
+            <td class="hareket-{{ h.hareket_tipi }}">{{ h.hareket_tipi.upper() }}</td>
+            <td>{{ h.miktar }} {{ h.urun.birim if h.urun else '' }}</td>
+            <td>{{ h.referans_tipi or '-' }}</td>
+            <td>{{ h.aciklama or '-' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+</div>
+{% endblock %}

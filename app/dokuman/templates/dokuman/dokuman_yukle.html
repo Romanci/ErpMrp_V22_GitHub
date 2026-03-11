@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Doküman Yükle{% endblock %}
+{% block page_title %}Doküman Yükle{% endblock %}
+{% block content %}
+<form method="POST" enctype="multipart/form-data">
+<div class="grid grid-2" style="gap:16px;max-width:900px;">
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-upload"></i> Dosya & Bilgiler</h3></div>
+        <div style="padding:16px;">
+            <!-- Dosya seçici -->
+            <div class="form-group">
+                <label class="form-label">Dosya *</label>
+                <div id="drop-zone" style="border:2px dashed var(--gri-kenar);border-radius:8px;padding:32px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--gri-acik);">
+                    <i class="fas fa-cloud-upload-alt" style="font-size:32px;color:var(--gri);margin-bottom:8px;display:block;"></i>
+                    <div style="font-size:13px;color:var(--gri);">Dosyayı buraya sürükleyin veya</div>
+                    <label style="cursor:pointer;color:var(--sari);font-size:13px;font-weight:600;margin-top:4px;display:inline-block;">
+                        dosya seçin
+                        <input type="file" name="dosya" id="dosya-input" style="display:none;" accept=".pdf,.docx,.doc,.xlsx,.xls,.pptx,.png,.jpg,.jpeg,.dwg,.txt">
+                    </label>
+                    <div id="dosya-adi" style="margin-top:8px;font-size:12px;color:var(--yesil);"></div>
+                </div>
+                <div style="font-size:11px;color:var(--gri);margin-top:4px;">PDF, Word, Excel, PowerPoint, PNG, JPG, DWG, TXT — maks 50MB</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Başlık *</label>
+                <input type="text" name="baslik" class="form-input" required placeholder="Doküman adı">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Revizyon</label>
+                <input type="text" name="revizyon" class="form-input" value="1.0" style="width:100px;">
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-tags"></i> Sınıflandırma</h3></div>
+        <div style="padding:16px;">
+            <div class="form-group">
+                <label class="form-label">Kategori *</label>
+                <select name="kategori" class="form-select">
+                    {% for k,a in kategoriler %}
+                    <option value="{{ k }}">{{ a }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Geçerlilik Tarihi</label>
+                <input type="text" name="gecerlilik_tarihi" class="datepicker form-input" placeholder="GG.AA.YYYY (opsiyonel)">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Personel (opsiyonel)</label>
+                <select name="personel_id" class="form-select">
+                    <option value="">— Bağlı personel yok —</option>
+                    {% for p in personeller %}
+                    <option value="{{ p.id }}">{{ p.tam_ad }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Ürün (opsiyonel)</label>
+                <select name="urun_id" class="form-select">
+                    <option value="">— Bağlı ürün yok —</option>
+                    {% for u in urunler %}
+                    <option value="{{ u.id }}">{{ u.urun_adi }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Etiketler</label>
+                <input type="text" name="etiketler" class="form-input" placeholder="kalite, sözleşme, 2024 (virgülle ayırın)">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Açıklama</label>
+                <textarea name="aciklama" class="form-input" rows="3" placeholder="Kısa açıklama..."></textarea>
+            </div>
+        </div>
+    </div>
+</div>
+<div style="display:flex;gap:8px;margin-top:10px;">
+    <button type="submit" class="btn btn-primary"><i class="fas fa-upload"></i> Yükle</button>
+    <a href="{{ url_for('dokuman.dokuman_liste') }}" class="btn btn-ghost">İptal</a>
+</div>
+</form>
+<script>
+const dz = document.getElementById('drop-zone');
+const inp = document.getElementById('dosya-input');
+const lbl = document.getElementById('dosya-adi');
+inp.addEventListener('change', () => { if(inp.files[0]) { lbl.textContent = inp.files[0].name; dz.style.borderColor='var(--yesil)'; } });
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.style.borderColor='var(--sari)'; });
+dz.addEventListener('dragleave', () => { dz.style.borderColor='var(--gri-kenar)'; });
+dz.addEventListener('drop', e => { e.preventDefault(); inp.files = e.dataTransfer.files; if(inp.files[0]) { lbl.textContent=inp.files[0].name; dz.style.borderColor='var(--yesil)'; } });
+</script>
+{% endblock %}

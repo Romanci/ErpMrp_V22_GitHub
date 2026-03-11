@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}Gelişmiş Raporlar{% endblock %}
+{% block page_title %}Gelişmiş Raporlar{% endblock %}
+{% block content %}
+
+<!-- Filtreler -->
+<div class="card" style="margin-bottom:16px;">
+    <div style="padding:14px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <span style="font-weight:600;font-size:13px;">Tarih Aralığı:</span>
+        {% for g, etiket in [(7,'Son 7 Gün'),(30,'Son 30 Gün'),(90,'Son 90 Gün'),(365,'Son 1 Yıl')] %}
+        <button class="btn {% if loop.index==2 %}btn-primary{% else %}btn-ghost{% endif %} btn-sm filtre-btn" data-gun="{{ g }}">{{ etiket }}</button>
+        {% endfor %}
+        <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;">
+            <span style="font-size:12px;color:var(--gri);align-self:center;">PDF İndir:</span>
+            {% for tur, etiket in [('stok','Stok'),('siparis','Sipariş'),('uretim','Üretim'),('personel','Personel'),('kritik-stok','Kritik Stok')] %}
+            <a href="{{ url_for('gelismis_rapor.pdf_rapor', tur=tur) }}" class="btn btn-ghost btn-sm" target="_blank">
+                <i class="fas fa-file-pdf" style="color:#dc2626;"></i> {{ etiket }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Grafik Grid -->
+<div class="grid grid-2" style="gap:16px;margin-bottom:16px;">
+
+    <!-- Stok Hareketleri -->
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-boxes"></i> Stok Hareketleri</h3></div>
+        <div style="padding:16px;"><canvas id="stokChart" height="200"></canvas></div>
+    </div>
+
+    <!-- Satın Alma Durum -->
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-shopping-cart"></i> Sipariş Durum Dağılımı</h3></div>
+        <div style="padding:16px;"><canvas id="siparisChart" height="200"></canvas></div>
+    </div>
+
+    <!-- Aylık Satın Alma -->
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-chart-bar"></i> Aylık Satın Alma Tutarı</h3></div>
+        <div style="padding:16px;"><canvas id="aylikChart" height="200"></canvas></div>
+    </div>
+
+    <!-- Üretim Emirleri -->
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-industry"></i> Üretim Emri Durumları</h3></div>
+        <div style="padding:16px;"><canvas id="uretimChart" height="200"></canvas></div>
+    </div>
+
+</div>
+
+<!-- Kritik Stok Tablosu -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-exclamation-triangle" style="color:var(--kirmizi);"></i> Kritik Stok Listesi</h3>
+        <a href="{{ url_for('gelismis_rapor.pdf_rapor', tur='kritik-stok') }}" class="btn btn-ghost btn-sm" target="_blank">
+            <i class="fas fa-file-pdf" style="color:#dc2626;"></i> PDF
+        </a>
+    </div>
+    <div class="table-container">
+        <table class="data-table" id="kritik-tablo">
+            <thead><tr><th>Stok Kodu</th><th>Ürün Adı</th><th>Mevcut</th><th>Minimum</th><th>Doluluk</th></tr></thead>
+            <tbody id="kritik-body"><tr><td colspan="5" style="text-align:center;padding:20px;color:var(--gri);">Yükleniyor...</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+const RENKLER = ['#f5c518','#3b82f6','#22c55e','#ef4444','#8b5cf6','#f97316','#06b6d4','#ec4899'];
+let aktifGun = 30;
+let stokChart, siparisChart, aylikChart, uretimChart;
+
+function chart(id, tip, data, options={}) {
+    const ctx = document.getElementById(id).getContext('2d');
+    return new Chart(ctx, {type: tip, data, options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {legend: {position:'bottom', labels:{font:{size:11}, color:'#64748b'}}},
+        ...options
+    }});
+}
+
+function guncelle(gun) {
+    aktifGun = gun;
+
+    // Stok hareketleri
+    fetch('/api/rapor/stok-hareketler?gun=' + gun)
+        .then(r => r.json()).then(d => {
+            if (stokChart) stokChart.destroy();
+            stokChart = chart('stokChart', 'line', {
+                labels: d.etiketler.filter((_, i) => i % Math.ceil(d.etiketler.length/10) === 0 || i === d.etiketler.length-1),
+                datasets: [
+                    {label:'Giriş', data: d.giris.filter((_, i) => i % Math.ceil(d.giris.length/10) === 0 || i === d.giris.length-1),
+                     borderColor:'#22c55e', backgroundColor:'rgba(34,197,94,0.1)', tension:0.3, fill:true},
+                    {label:'Çıkış', data: d.cikis.filter((_, i) => i % Math.ceil(d.cikis.length/10) === 0 || i === d.cikis.length-1),
+                     borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,0.1)', tension:0.3, fill:true},
+                ]
+            }, {scales: {x:{ticks:{font:{size:9}}}, y:{beginAtZero:true}}});
+        });
+
+    // Satın alma
+    fetch('/api/rapor/satin-alma-ozet?gun=' + gun)
+        .then(r => r.json()).then(d => {
+            if (siparisChart) siparisChart.destroy();
+            siparisChart = chart('siparisChart', 'doughnut', {
+                labels: d.durum_etiketler,
+                datasets: [{data: d.durum_verileri, backgroundColor: RENKLER}]
+            });
+            if (aylikChart) aylikChart.destroy();
+            aylikChart = chart('aylikChart', 'bar', {
+                labels: d.ay_etiketler,
+                datasets: [{label:'Tutar (TL)', data: d.ay_verileri,
+                    backgroundColor:'rgba(59,130,246,0.7)', borderColor:'#3b82f6', borderWidth:1}]
+            }, {scales: {y:{beginAtZero:true}}});
+        });
+
+    // Üretim
+    fetch('/api/rapor/uretim-ozet?gun=' + gun)
+        .then(r => r.json()).then(d => {
+            if (uretimChart) uretimChart.destroy();
+            uretimChart = chart('uretimChart', 'bar', {
+                labels: d.durum_etiketler,
+                datasets: [{label:'Emir Sayısı', data: d.durum_verileri,
+                    backgroundColor: RENKLER}]
+            }, {indexAxis:'y', scales: {x:{beginAtZero:true}}});
+        });
+
+    // Kritik stok
+    fetch('/api/rapor/kritik-stok')
+        .then(r => r.json()).then(d => {
+            const tbody = document.getElementById('kritik-body');
+            if (!d.kritikler.length) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--gri);"><i class="fas fa-check-circle" style="color:var(--yesil);"></i> Kritik stok yok</td></tr>';
+                return;
+            }
+            tbody.innerHTML = d.kritikler.map(k => `
+                <tr>
+                    <td style="font-weight:600;">${k.kod}</td>
+                    <td>${k.ad}</td>
+                    <td style="color:var(--kirmizi);font-weight:700;">${k.mevcut} ${k.birim}</td>
+                    <td>${k.min} ${k.birim}</td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="flex:1;background:#fee2e2;border-radius:4px;height:8px;">
+                                <div style="background:var(--kirmizi);height:8px;border-radius:4px;width:${Math.min(k.oran,100)}%;"></div>
+                            </div>
+                            <span style="font-size:11px;color:var(--kirmizi);min-width:36px;">%${k.oran}</span>
+                        </div>
+                    </td>
+                </tr>`).join('');
+        });
+}
+
+// Filtre butonları
+document.querySelectorAll('.filtre-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.filtre-btn').forEach(b => b.classList.replace('btn-primary','btn-ghost'));
+        this.classList.replace('btn-ghost','btn-primary');
+        guncelle(parseInt(this.dataset.gun));
+    });
+});
+
+// İlk yükleme
+guncelle(30);
+</script>
+{% endblock %}

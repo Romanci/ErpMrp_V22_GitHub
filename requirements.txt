@@ -1,0 +1,32 @@
+# ERP v21 — Python Bağımlılıkları
+# Kurulum: pip install -r requirements.txt
+
+# Web Framework
+Flask>=2.3.0
+Flask-SQLAlchemy>=3.0.0
+Flask-WTF>=1.1.0
+WTForms>=3.0.0
+Werkzeug>=2.3.0
+
+# Excel / Rapor
+openpyxl>=3.1.0
+reportlab>=4.0.0
+
+# Barkod / QR
+python-barcode>=0.14.0
+qrcode[pil]>=7.4.0
+Pillow>=10.0.0
+
+# E-posta
+Flask-Mail>=0.9.1
+requests>=2.31.0
+
+# Tarih
+python-dateutil>=2.8.0
+
+# SSL/HTTPS
+pyopenssl>=23.2.0
+cryptography>=41.0.0
+
+# ZKTeco parmak izi (opsiyonel)
+# pyzk>=0.9

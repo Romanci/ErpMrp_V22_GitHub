@@ -1,0 +1,49 @@
+ERP v21 - KURULUM REHBERI
+==========================
+
+A) EXE OLUSTURMA (Sadece 1 kez - sizin bilgisayarinizda)
+-----------------------------------------------------------
+1. exe_olustur.bat cift tiklayin
+2. Islem tamamlaninca dist\ klasoru acilir
+3. dist\ERP_v21_Kurulum.exe dosyasi olusur
+4. Bu EXE'yi USB'ye alin
+
+B) YENI BILGISAYARA KURULUM (Python gerekmez - EXE ile)
+-----------------------------------------------------------
+1. USB'deki ERP_v21_Kurulum.exe'yi calistirin
+2. Sihirbaz acilir:
+   - Yeni Kurulum secin
+   - Kurulum dizini secin (ornek: C:\ERP\erp_v21)
+   - Lazim olan modulleri secin
+   - Kurulumu Baslat butonuna tiklayin
+3. Masaustunde ERP v21 kisayolu olusur
+
+C) GUNCELLEME
+-----------------------------------------------------------
+1. Yeni ERP_v21_Kurulum.exe'yi calistirin
+2. Guncelleme secenegini secin
+3. Mevcut kurulum dizinini gosterin
+4. Veriler otomatik korunur
+
+D) MODULLERI DEGISTIRME
+-----------------------------------------------------------
+Kurulu sistemde:
+  python setup.py --liste    -> Aktif modulleri goster
+  python setup.py            -> Modul degistirme sihirbazi
+  python setup.py --tum      -> Tum modulleri ac
+
+E) VARSAYILAN GIRIS
+-----------------------------------------------------------
+Kullanici adi : admin
+Sifre         : admin123
+Ilk giristen sonra sifreyi degistirin!
+
+F) ONEMLI DOSYALAR
+-----------------------------------------------------------
+exe_olustur.bat              -> EXE olustur
+kurulum.bat                  -> Python kutuphanelerini kur
+baslat.bat                   -> Sistemi baslat
+veritabani_guncelle.py       -> Veritabani guncelle
+guncelleme_paketi_hazirla.bat -> Guncelleme ZIP'i olustur
+moduller.json                -> Modul acma/kapama
+database.db                  -> VERITABANI - SILMEYIN!

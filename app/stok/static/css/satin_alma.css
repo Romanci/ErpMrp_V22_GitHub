@@ -1,0 +1,292 @@
+﻿/*
+ * ERP MRP v0.4 - Satin Alma Modulu Ozel Stilleri
+ * Bu dosya satin alma modulune ait sayfalarin ozel stillerini icerir
+ * Ana renk: Mavi (#3b82f6)
+ */
+
+/* === SATIN ALMA MODULU RENK VURGULARI === */
+.module-satin-alma .page-title {
+    color: var(--color-blue);
+}
+
+/* Satin alma kartlari icin mavi vurgu */
+.purchase-card {
+    border-left: 4px solid var(--color-blue);
+}
+
+/* === SIPARIS DURUM RENKLERI === */
+/* Siparis durumlarina gore farkli renkler */
+.siparis-durum-beklemede {
+    color: var(--color-yellow);
+}
+
+.siparis-durum-onaylandi {
+    color: var(--color-blue);
+}
+
+.siparis-durum-tamamlandi {
+    color: var(--color-green);
+}
+
+.siparis-durum-iptal {
+    color: var(--color-red);
+}
+
+/* === SIPARIS KARTI === */
+.siparis-card {
+    background-color: var(--color-card);
+    border-radius: var(--card-radius);
+    border: 1px solid var(--color-border);
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.siparis-header {
+    padding: 20px;
+    background-color: var(--color-bg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.siparis-no {
+    font-family: 'Courier New', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--color-blue);
+}
+
+.siparis-tedarikci {
+    font-size: 14px;
+    color: var(--color-text-light);
+    margin-top: 4px;
+}
+
+.siparis-body {
+    padding: 20px;
+}
+
+.siparis-items {
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+.siparis-items th {
+    text-align: left;
+    padding: 12px;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--color-text-light);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.siparis-items td {
+    padding: 12px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.siparis-footer {
+    padding: 16px 20px;
+    background-color: var(--color-bg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.siparis-total {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+/* === TEDARIKCI KARTLARI === */
+.tedarikci-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 24px;
+}
+
+.tedarikci-card {
+    background-color: var(--color-card);
+    border-radius: var(--card-radius);
+    padding: 24px;
+    border: 1px solid var(--color-border);
+    transition: all 0.3s ease;
+}
+
+.tedarikci-card:hover {
+    border-color: var(--color-blue);
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+}
+
+.tedarikci-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.tedarikci-logo {
+    width: 60px;
+    height: 60px;
+    background-color: var(--color-bg);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: var(--color-blue);
+}
+
+.tedarikci-info h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 4px;
+}
+
+.tedarikci-info p {
+    font-size: 13px;
+    color: var(--color-text-light);
+}
+
+.tedarikci-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-border);
+}
+
+.tedarikci-stat {
+    text-align: center;
+}
+
+.tedarikci-stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--color-blue);
+}
+
+.tedarikci-stat-label {
+    font-size: 12px;
+    color: var(--color-text-light);
+}
+
+/* === SIPARIS FORMU === */
+.siparis-form-section {
+    background-color: var(--color-bg);
+    padding: 24px;
+    border-radius: var(--card-radius);
+    margin-bottom: 24px;
+}
+
+.form-section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--color-blue);
+}
+
+/* Dinamik urun ekleme tablosu */
+.urun-ekle-table {
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+.urun-ekle-table th {
+    text-align: left;
+    padding: 12px;
+    background-color: var(--color-card);
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--color-text-light);
+}
+
+.urun-ekle-table td {
+    padding: 12px;
+    background-color: var(--color-card);
+}
+
+.urun-ekle-table tr:nth-child(even) td {
+    background-color: var(--color-bg);
+}
+
+/* Toplam tutar alani */
+.total-section {
+    background-color: var(--color-blue);
+    color: white;
+    padding: 20px;
+    border-radius: var(--card-radius);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 24px;
+}
+
+.total-label {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.total-value {
+    font-size: 28px;
+    font-weight: 700;
+}
+
+/* === ONAY AKISI === */
+.approval-flow {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 24px 0;
+}
+
+.approval-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.approval-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-bg);
+    color: var(--color-text-light);
+    border: 2px solid var(--color-border);
+}
+
+.approval-step.completed .approval-icon {
+    background-color: var(--color-green);
+    color: white;
+    border-color: var(--color-green);
+}
+
+.approval-step.current .approval-icon {
+    background-color: var(--color-blue);
+    color: white;
+    border-color: var(--color-blue);
+}
+
+.approval-label {
+    font-size: 12px;
+    color: var(--color-text-light);
+}
+
+.approval-connector {
+    flex: 1;
+    height: 2px;
+    background-color: var(--color-border);
+}
+
+.approval-step.completed + .approval-connector {
+    background-color: var(--color-green);
+}

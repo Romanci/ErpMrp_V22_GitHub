@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Projeler{% endblock %}
+{% block page_title %}Proje Listesi{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <a href="{{ url_for('proje.proje_liste') }}"
+               class="btn btn-sm {{ 'btn-primary' if not secili_asama else 'btn-ghost' }}">Tümü</a>
+            {% for asama_key, asama_label in asamalar %}
+            <a href="{{ url_for('proje.proje_liste') }}?asama={{ asama_key }}"
+               class="btn btn-sm {{ 'btn-primary' if secili_asama == asama_key else 'btn-ghost' }}"
+               style="border-left:3px solid {{ asama_renk[asama_key] }};">
+                {{ asama_label }}
+            </a>
+            {% endfor %}
+        </div>
+        <a href="{{ url_for('proje.proje_form') }}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus"></i> Yeni Proje
+        </a>
+    </div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Proje No</th><th>Proje Adı</th><th>Müşteri</th>
+                <th>Aşama</th><th>Başlangıç</th><th>Bitiş</th>
+                <th>Bütçe</th><th>Görevler</th><th></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for p in projeler %}
+        <tr>
+            <td><strong>{{ p.proje_no }}</strong></td>
+            <td>{{ p.proje_adi }}</td>
+            <td>{{ p.musteri_adi }}</td>
+            <td>
+                <span style="background:{{ p.asama_rengi }};color:white;
+                             padding:3px 10px;border-radius:12px;font-size:12px;">
+                    {{ p.asama_adi }}
+                </span>
+            </td>
+            <td>{{ p.baslangic_tarihi or '—' }}</td>
+            <td>{{ p.bitis_tarihi or '—' }}</td>
+            <td>{{ '{:,.2f}'.format(p.planlanan_maliyet) }} {{ p.para_birimi }}</td>
+            <td>
+                {% if p.tamamlanmamis_gorev_sayisi > 0 %}
+                <span style="background:#fef3c7;color:#92400e;padding:2px 8px;
+                             border-radius:10px;font-size:12px;">
+                    {{ p.tamamlanmamis_gorev_sayisi }} bekliyor
+                </span>
+                {% else %}<span style="color:#94a3b8;">—</span>{% endif %}
+            </td>
+            <td><a href="{{ url_for('proje.proje_detay', id=p.id) }}"
+                   class="btn btn-ghost btn-sm">Detay</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="9" style="text-align:center;color:#94a3b8;padding:32px;">
+            Proje bulunamadı.
+        </td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

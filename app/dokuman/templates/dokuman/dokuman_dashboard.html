@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Doküman Yönetimi{% endblock %}
+{% block page_title %}Doküman Yönetimi{% endblock %}
+{% block content %}
+<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+    <a href="{{ url_for('dokuman.dokuman_liste') }}" class="btn btn-primary"><i class="fas fa-list"></i> Tüm Dokümanlar</a>
+    <a href="{{ url_for('dokuman.dokuman_yukle') }}" class="btn btn-ghost"><i class="fas fa-upload"></i> Doküman Yükle</a>
+</div>
+{% set kategoriler_bilgi = [
+    ('personel','Personel Belgeleri','fa-id-card','Sözleşmeler, SGK, kimlik'),
+    ('urun','Ürün / SDS','fa-box','Teknik çizimler, güvenlik bilgi formları'),
+    ('kalite','Kalite Sertifikaları','fa-certificate','ISO, CE, TSE belgeleri'),
+    ('arac','Araç / Bakım','fa-truck','Araç belgeleri, bakım kayıtları'),
+    ('kys','KYS Dökümanları','fa-sitemap','Prosedürler, talimatlar, formlar'),
+    ('el_kitabi','Kalite El Kitabı','fa-book','El kitabı ve politikalar'),
+    ('resmi','Resmi Evraklar','fa-landmark','Noterde imzalı, resmi yazışmalar'),
+    ('genel','Genel Firma','fa-building','Diğer firma belgeleri'),
+] %}
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">
+    {% for kod, ad, ikon, aciklama in kategoriler_bilgi %}
+    <a href="{{ url_for('dokuman.dokuman_liste') }}?kategori={{ kod }}" style="text-decoration:none;">
+        <div class="card" style="padding:16px;transition:all 0.15s;cursor:pointer;" onmouseover="this.style.borderColor='var(--sari)'" onmouseout="this.style.borderColor='var(--gri-kenar)'">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+                <div style="width:36px;height:36px;border-radius:8px;background:rgba(245,197,24,0.1);display:flex;align-items:center;justify-content:center;">
+                    <i class="fas {{ ikon }}" style="color:var(--sari);font-size:15px;"></i>
+                </div>
+                <div style="font-weight:600;font-size:13px;color:var(--yazi);">{{ ad }}</div>
+            </div>
+            <div style="font-size:11px;color:var(--gri);">{{ aciklama }}</div>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% endblock %}

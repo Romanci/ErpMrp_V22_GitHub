@@ -1,0 +1,96 @@
+﻿<!-- Uretim emri detay ve operasyon takibi -->
+{% extends "base.html" %}
+
+{% block title %}Uretim Emri Detay #{{ emir.emir_no }} - ERP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Uretim Emri Detay #{{ emir.emir_no }}</h1>
+    <div>
+        <span class="btn btn-secondary">Urun: {{ emir.urun.urun_adi if emir.urun else '-' }}</span>
+        <span class="btn btn-secondary">Miktar: {{ emir.miktar }}</span>
+        <span class="btn btn-secondary">Durum: {{ emir.durum.upper() }}</span>
+        <a href="{{ url_for('uretim.uretim_emri_liste') }}" class="btn btn-secondary">Listeye Don</a>
+    </div>
+</div>
+
+{% if emir.durum != 'tamamlandi' %}
+<div class="form-container" style="margin-bottom: 2rem;">
+    <h3>Operasyon Ekle</h3>
+    <form method="POST" action="{{ url_for('uretim.operasyon_ekle', emir_id=emir.id) }}">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="operasyon_sirasi">Sira</label>
+                <input type="number" id="operasyon_sirasi" name="operasyon_sirasi" value="{{ emir.operasyonlar|length + 1 }}" required>
+            </div>
+            <div class="form-group">
+                <label for="operasyon_adi">Operasyon Adi</label>
+                <input type="text" id="operasyon_adi" name="operasyon_adi" required>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="tezgah_id">Tezgah</label>
+                <select id="tezgah_id" name="tezgah_id">
+                    <option value="">Seciniz</option>
+                    {% for tezgah in tezgahlar %}
+                    <option value="{{ tezgah.id }}">{{ tezgah.tezgah_adi }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="planlanan_sure">Planlanan Sure (dk)</label>
+                <input type="number" id="planlanan_sure" name="planlanan_sure">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Ekle</button>
+    </form>
+</div>
+{% endif %}
+
+<h3>Operasyonlar</h3>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Sira</th>
+            <th>Operasyon</th>
+            <th>Tezgah</th>
+            <th>Planlanan Sure</th>
+            <th>Gerceklesen Sure</th>
+            <th>Fire</th>
+            <th>Durum</th>
+            <th>Islemler</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for op in emir.operasyonlar %}
+        <tr>
+            <td>{{ op.operasyon_sirasi }}</td>
+            <td>{{ op.operasyon_adi }}</td>
+            <td>{{ op.tezgah.tezgah_adi if op.tezgah else '-' }}</td>
+            <td>{{ op.planlanan_sure }} dk</td>
+            <td>{{ op.gerceklesen_sure }} dk</td>
+            <td>{{ op.fire_miktari }}</td>
+            <td class="durum-{{ op.durum }}">{{ op.durum.upper() }}</td>
+            <td>
+                {% if op.durum == 'beklemede' %}
+                <form action="{{ url_for('uretim.operasyon_baslat', id=op.id) }}" method="POST" style="display:inline;">
+                    <button type="submit" class="btn btn-sm btn-success">Baslat</button>
+                </form>
+                {% elif op.durum == 'devam' %}
+                <form action="{{ url_for('uretim.operasyon_bitir', id=op.id) }}" method="POST" style="display:inline;">
+                    <input type="number" step="0.01" name="fire_miktari" placeholder="Fire" style="width:60px;">
+                    <input type="number" name="gerceklesen_sure" placeholder="Sure (dk)" style="width:80px;">
+                    <button type="submit" class="btn btn-sm btn-primary">Bitir</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="8">Henüz operasyon eklenmemis.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

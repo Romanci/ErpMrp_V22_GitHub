@@ -1,0 +1,70 @@
+<!-- Sayim detay ve urun sayma -->
+{% extends "base.html" %}
+
+{% block title %}Sayim Detay #{{ sayim.id }} - ERP{% endblock %}
+
+{% block content %}
+{% block page_title %}Sayim Detay #{{ sayim.id }}{% endblock %}
+<div class="page-header">
+    <h1>Sayim Detay #{{ sayim.id }}</h1>
+    <div>
+        <span class="btn btn-secondary">Depo: {{ sayim.depo.depo_adi if sayim.depo else '-' }}</span>
+        <span class="btn btn-secondary">Durum: {{ 'Kapali' if sayim.durum == 'kapali' else 'Acik' }}</span>
+        <a href="{{ url_for('sayim.sayim_liste') }}" class="btn btn-secondary">Listeye Don</a>
+    </div>
+</div>
+
+{% if sayim.durum == 'acik' %}
+<div class="form-container" style="margin-bottom: 2rem;">
+    <h3>Urun Say</h3>
+    <form method="POST" action="{{ url_for('sayim.sayim_satir_ekle', sayim_id=sayim.id) }}">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="urun_id">Urun</label>
+                <select id="urun_id" name="urun_id" required>
+                    <option value="">Seciniz</option>
+                    {% for urun in urunler %}
+                    <option value="{{ urun.id }}">{{ urun.stok_kodu }} - {{ urun.urun_adi }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="sayilan_miktar">Sayilan Miktar</label>
+                <input type="number" step="0.01" id="sayilan_miktar" name="sayilan_miktar" required>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Kaydet</button>
+    </form>
+</div>
+{% endif %}
+
+<h3>Sayim Sonuclari</h3>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Urun</th>
+            <th>Sistem Miktar</th>
+            <th>Sayilan Miktar</th>
+            <th>Fark</th>
+            <th>Durum</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for duzeltme in sayim.duzeltmeler %}
+        <tr>
+            <td>{{ duzeltme.urun.urun_adi if duzeltme.urun else '-' }}</td>
+            <td>{{ duzeltme.sistem_miktar }}</td>
+            <td>{{ duzeltme.sayilan_miktar }}</td>
+            <td>{{ duzeltme.fark }}</td>
+            <td class="{{ 'hareket-giris' if duzeltme.fark > 0 else 'hareket-cikis' if duzeltme.fark < 0 else '' }}">
+                {{ duzeltme.fark_tipi() }}
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="5">Henüz ürün sayılmamış.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}{{ urun.urun_adi }} - Maliyet{% endblock %}
+{% block page_title %}{{ urun.urun_adi }} — Maliyet Kartı{% endblock %}
+{% block content %}
+
+<!-- Miktar secici -->
+<div class="card" style="margin-bottom:16px;">
+    <div style="padding:12px 20px;display:flex;align-items:center;gap:12px;">
+        <span style="font-size:13px;">Üretim miktarı için hesapla:</span>
+        <form method="get" style="display:flex;gap:8px;align-items:center;">
+            <input type="number" name="miktar" value="{{ miktar }}" min="0.001" step="0.001"
+                   class="form-input" style="width:100px;">
+            <span>{{ urun.birim }}</span>
+            <button type="submit" class="btn btn-primary btn-sm">Hesapla</button>
+        </form>
+    </div>
+</div>
+
+{% if sonuc %}
+<!-- Maliyet Ozeti -->
+<div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
+    <div class="stat-card stok">
+        <div class="stat-icon"><i class="fas fa-boxes"></i></div>
+        <div class="stat-value" style="font-size:1.4rem;">{{ '%.4f' | format(sonuc.toplam_malzeme) }}</div>
+        <div class="stat-label">Malzeme Maliyeti (TL)</div>
+        <span class="stat-change">{{ miktar }} {{ urun.birim }} için</span>
+    </div>
+    <div class="stat-card satin-alma">
+        <div class="stat-icon"><i class="fas fa-tag"></i></div>
+        <div class="stat-value" style="font-size:1.4rem;">{{ '%.4f' | format(urun.satis_fiyati) if urun.satis_fiyati else '-' }}</div>
+        <div class="stat-label">Satış Fiyatı (TL)</div>
+        <span class="stat-change">Adet başı</span>
+    </div>
+    {% if urun.satis_fiyati and urun.satis_fiyati > 0 %}
+    {% set kar = (urun.satis_fiyati * miktar) - sonuc.toplam_malzeme %}
+    {% set marj = kar / (urun.satis_fiyati * miktar) * 100 %}
+    <div class="stat-card {% if kar > 0 %}stok{% else %}kritik{% endif %}">
+        <div class="stat-icon"><i class="fas fa-chart-bar"></i></div>
+        <div class="stat-value" style="font-size:1.4rem;">{{ '%.2f' | format(kar) }}</div>
+        <div class="stat-label">Brüt Kâr (TL)</div>
+        <span class="stat-change {% if kar > 0 %}positive{% else %}negative{% endif %}">Marj: %{{ '%.1f' | format(marj) }}</span>
+    </div>
+    {% endif %}
+    <div class="stat-card uretim">
+        <div class="stat-icon"><i class="fas fa-layer-group"></i></div>
+        <div class="stat-value" style="font-size:1.4rem;">{{ sonuc.satirlar | length }}</div>
+        <div class="stat-label">BOM Kalemi</div>
+        <span class="stat-change">v{{ sonuc.bom.versiyon }}</span>
+    </div>
+</div>
+
+<!-- Malzeme Detay -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Malzeme Maliyet Dökümü</h3>
+        <span style="font-size:12px;color:var(--color-muted);">{{ miktar }} {{ urun.birim }} üretim için</span>
+    </div>
+    <div class="table-container" style="box-shadow:none;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Malzeme</th><th>BOM Miktarı</th><th>Fire %</th>
+                    <th>Gereken Miktar</th><th>Birim Fiyat</th><th>Maliyet</th><th>Oran %</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for s in sonuc.satirlar | sort(attribute='satir_maliyet', reverse=True) %}
+            <tr>
+                <td>
+                    <strong>{{ s.urun.urun_adi }}</strong>
+                    <div style="font-size:11px;color:var(--color-muted);">{{ s.urun.stok_kodu }}</div>
+                </td>
+                <td>{{ s.bom_miktar }} {{ s.urun.birim }}</td>
+                <td>{{ s.fire_orani }}%</td>
+                <td style="font-weight:600;">{{ s.gereken_miktar }} {{ s.urun.birim }}</td>
+                <td>{{ '%.4f' | format(s.birim_fiyat) }} TL
+                    <span style="font-size:10px;color:var(--color-muted);">({{ s.fiyat_kaynak }})</span>
+                </td>
+                <td style="font-weight:700;">{{ '%.4f' | format(s.satir_maliyet) }} TL</td>
+                <td>
+                    {% if sonuc.toplam_malzeme > 0 %}
+                    {% set oran = (s.satir_maliyet / sonuc.toplam_malzeme * 100) %}
+                    <div style="display:flex;align-items:center;gap:6px;">
+                        <div style="flex:1;background:#e5e7eb;border-radius:9999px;height:6px;">
+                            <div style="width:{{ oran }}%;background:var(--color-primary);height:6px;border-radius:9999px;"></div>
+                        </div>
+                        <span style="font-size:11px;">{{ '%.1f' | format(oran) }}%</span>
+                    </div>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr style="font-weight:700;background:var(--color-bg-alt);">
+                    <td colspan="5" style="text-align:right;">TOPLAM MALİYET:</td>
+                    <td colspan="2" style="color:var(--color-primary);font-size:1.05rem;">
+                        {{ '%.4f' | format(sonuc.toplam_malzeme) }} TL
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+{% else %}
+<div class="card">
+    <div style="text-align:center;padding:48px;color:var(--color-muted);">
+        <i class="fas fa-exclamation-circle" style="font-size:3rem;display:block;margin-bottom:16px;color:var(--color-yellow);"></i>
+        <h3>BOM Tanımlanmamış</h3>
+        <p>Bu ürün için maliyet hesaplanabilmesi için önce <a href="{{ url_for('bom.bom_ekle') }}">BOM tanımlanmalıdır</a>.</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Gecmis Uretim Maliyetleri -->
+{% if emir_maliyetleri %}
+<div class="card" style="margin-top:16px;">
+    <div class="card-header"><h3 class="card-title">Geçmiş Üretim Emirleri — Maliyet</h3></div>
+    <div class="table-container" style="box-shadow:none;">
+        <table class="data-table">
+            <thead><tr><th>Emir No</th><th>Miktar</th><th>Durum</th><th>Hesaplanan Maliyet</th></tr></thead>
+            <tbody>
+            {% for item in emir_maliyetleri %}
+            <tr>
+                <td><a href="{{ url_for('uretim.uretim_emri_detay', id=item.emir.id) }}">{{ item.emir.emir_no }}</a></td>
+                <td>{{ item.emir.miktar }} {{ urun.birim }}</td>
+                <td><span class="status-badge {{ item.emir.durum }}">{{ item.emir.durum }}</span></td>
+                <td style="font-weight:600;">{{ '%.4f' | format(item.maliyet) }} TL</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

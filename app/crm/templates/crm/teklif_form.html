@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}{% if teklif.id %}Teklif Düzenle{% else %}Yeni Teklif{% endif %}{% endblock %}
+{% block page_title %}{% if teklif.id %}Teklif Düzenle — {{ teklif.teklif_no }}{% else %}Yeni Teklif{% endif %}{% endblock %}
+{% block content %}
+<form method="POST" id="teklif-form">
+<div class="grid grid-2" style="gap:16px;margin-bottom:16px;">
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-file-invoice"></i> Teklif Bilgileri</h3></div>
+        <div style="padding:16px;">
+            <div class="form-group">
+                <label class="form-label">Müşteri *</label>
+                <select name="musteri_id" class="form-select" required>
+                    <option value="">— Seçiniz —</option>
+                    {% for m in musteriler %}
+                    <option value="{{ m.id }}" {% if teklif.musteri_id==m.id or request.args.get('musteri_id')==m.id|string %}selected{% endif %}>{{ m.unvan }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Başlık</label>
+                <input type="text" name="baslik" class="form-input" value="{{ teklif.baslik or '' }}" placeholder="Teklif konusu...">
+            </div>
+            <div class="grid grid-2" style="gap:10px;">
+                <div class="form-group">
+                    <label class="form-label">Teklif Tarihi</label>
+                    <input type="text" name="tarih" class="datepicker form-input" value="{{ teklif.tarih or '' }}" placeholder="GG.AA.YYYY">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Geçerlilik</label>
+                    <input type="text" name="gecerlilik" class="datepicker form-input" value="{{ teklif.gecerlilik or '' }}" placeholder="GG.AA.YYYY">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Para Birimi</label>
+                    <select name="para_birimi" class="form-select">
+                        {% for pb in ['TRY','USD','EUR','GBP'] %}
+                        <option value="{{ pb }}" {% if teklif.para_birimi==pb %}selected{% endif %}>{{ pb }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">KDV %</label>
+                    <select name="kdv_orani" class="form-select">
+                        {% for k in [0, 1, 10, 20] %}
+                        <option value="{{ k }}" {% if (teklif.kdv_orani or 20)|int==k %}selected{% endif %}>%{{ k }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Durum</label>
+                    <select name="durum" class="form-select">
+                        {% for d,a in [('taslak','Taslak'),('gonderildi','Gönderildi'),('kabul','Kabul'),('red','Red'),('iptal','İptal')] %}
+                        <option value="{{ d }}" {% if teklif.durum==d %}selected{% endif %}>{{ a }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Notlar</label>
+                <textarea name="notlar" class="form-input" rows="2">{{ teklif.notlar or '' }}</textarea>
+            </div>
+        </div>
+    </div>
+    <!-- Satırlar -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-list"></i> Teklif Kalemleri</h3>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="satirEkle()"><i class="fas fa-plus"></i> Satır</button>
+        </div>
+        <div id="satirlar" style="padding:10px;max-height:380px;overflow-y:auto;">
+            {% if teklif.satirlar %}
+            {% for s in teklif.satirlar|sort(attribute='sira') %}
+            <div class="satir-row" style="display:grid;grid-template-columns:2fr 60px 90px 90px 60px;gap:5px;margin-bottom:6px;align-items:end;">
+                <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Tanım</label><input type="text" name="tanim" class="form-input form-input-sm" value="{{ s.tanim }}" required></div>
+                <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Birim</label><input type="text" name="birim" class="form-input form-input-sm" value="{{ s.birim }}"></div>
+                <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Miktar</label><input type="number" name="miktar" class="form-input form-input-sm" value="{{ s.miktar }}" step="0.01" onchange="hesapla(this)"></div>
+                <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Birim Fiyat</label><input type="number" name="birim_fiyat" class="form-input form-input-sm" value="{{ s.birim_fiyat }}" step="0.01" onchange="hesapla(this)"></div>
+                <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;color:var(--kirmizi);">İsk%</label><input type="number" name="iskonto" class="form-input form-input-sm" value="{{ s.iskonto }}" step="0.1" min="0" max="100" onchange="hesapla(this)"></div>
+                <button type="button" onclick="this.closest('.satir-row').remove();toplamHesapla()" style="background:none;border:none;cursor:pointer;color:var(--kirmizi);padding:4px;" title="Sil"><i class="fas fa-times"></i></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+        <div style="padding:10px;border-top:1px solid var(--gri-kenar);text-align:right;font-size:13px;">
+            <div style="display:flex;justify-content:flex-end;gap:20px;color:var(--gri);">
+                <span>Ara toplam: <strong id="ara-toplam" style="color:var(--yazi);">0.00</strong></span>
+                <span>KDV: <strong id="kdv-tutari" style="color:var(--yazi);">0.00</strong></span>
+                <span style="font-size:15px;">TOPLAM: <strong id="genel-toplam" style="color:var(--sari);font-size:16px;">0.00</strong></span>
+            </div>
+        </div>
+    </div>
+</div>
+<div style="display:flex;gap:8px;">
+    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Kaydet</button>
+    <a href="{{ url_for('crm.teklif_liste') }}" class="btn btn-ghost">İptal</a>
+</div>
+</form>
+<style>.form-input-sm { padding:5px 8px; font-size:12px; }</style>
+<script>
+function satirEkle() {
+    const div = document.createElement('div');
+    div.className = 'satir-row';
+    div.style.cssText = 'display:grid;grid-template-columns:2fr 60px 90px 90px 60px;gap:5px;margin-bottom:6px;align-items:end;';
+    div.innerHTML = `
+        <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Tanım</label><input type="text" name="tanim" class="form-input form-input-sm" required></div>
+        <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Birim</label><input type="text" name="birim" class="form-input form-input-sm" value="Adet"></div>
+        <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Miktar</label><input type="number" name="miktar" class="form-input form-input-sm" value="1" step="0.01" onchange="hesapla(this)"></div>
+        <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;">Birim Fiyat</label><input type="number" name="birim_fiyat" class="form-input form-input-sm" value="0" step="0.01" onchange="hesapla(this)"></div>
+        <div class="form-group" style="margin:0;"><label class="form-label" style="font-size:10px;color:var(--kirmizi);">İsk%</label><input type="number" name="iskonto" class="form-input form-input-sm" value="0" step="0.1" min="0" max="100" onchange="hesapla(this)"></div>
+        <button type="button" onclick="this.closest('.satir-row').remove();toplamHesapla()" style="background:none;border:none;cursor:pointer;color:var(--kirmizi);padding:4px;"><i class="fas fa-times"></i></button>`;
+    document.getElementById('satirlar').appendChild(div);
+}
+function hesapla(inp) { toplamHesapla(); }
+function toplamHesapla() {
+    let ara = 0;
+    document.querySelectorAll('.satir-row').forEach(function(row) {
+        const m = parseFloat(row.querySelector('[name=miktar]')?.value) || 0;
+        const f = parseFloat(row.querySelector('[name=birim_fiyat]')?.value) || 0;
+        const i = parseFloat(row.querySelector('[name=iskonto]')?.value) || 0;
+        ara += m * f * (1 - i/100);
+    });
+    const kdvOran = parseFloat(document.querySelector('[name=kdv_orani]')?.value) || 20;
+    const kdv = ara * kdvOran / 100;
+    document.getElementById('ara-toplam').textContent = ara.toFixed(2);
+    document.getElementById('kdv-tutari').textContent = kdv.toFixed(2);
+    document.getElementById('genel-toplam').textContent = (ara + kdv).toFixed(2);
+}
+document.addEventListener('DOMContentLoaded', toplamHesapla);
+document.querySelector('[name=kdv_orani]')?.addEventListener('change', toplamHesapla);
+</script>
+{% endblock %}

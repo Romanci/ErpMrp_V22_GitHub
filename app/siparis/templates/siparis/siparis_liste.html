@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Sipariş Listesi{% endblock %}
+{% block page_title %}Sipariş Listesi{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <a href="{{ url_for('siparis.siparis_liste') }}"
+               class="btn btn-sm {{ 'btn-primary' if not secili_durum else 'btn-ghost' }}">Tümü</a>
+            {% for d_key, d_adi, d_renk in durumlar %}
+            <a href="{{ url_for('siparis.siparis_liste') }}?durum={{ d_key }}"
+               class="btn btn-sm {{ 'btn-primary' if secili_durum == d_key else 'btn-ghost' }}"
+               style="border-left:3px solid {{ d_renk }};">{{ d_adi }}</a>
+            {% endfor %}
+        </div>
+        <a href="{{ url_for('siparis.siparis_yeni') }}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus"></i> Yeni Sipariş
+        </a>
+    </div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Sipariş No</th><th>Müşteri</th><th>Kaynak</th>
+                <th>Tarih</th><th>Termin</th><th>Tutar</th><th>Durum</th><th></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for e in emirler %}
+        <tr>
+            <td><strong>{{ e.siparis_no }}</strong></td>
+            <td>{{ e.musteri_adi }}</td>
+            <td><span style="font-size:11px;background:#f1f5f9;padding:2px 6px;border-radius:4px;">
+                {{ e.kaynak_adi }}</span></td>
+            <td>{{ e.siparis_tarihi }}</td>
+            <td>{{ e.termin_tarihi or '—' }}</td>
+            <td>{{ '{:,.2f}'.format(e.toplam_tutar) }} {{ e.para_birimi }}</td>
+            <td>
+                <span style="background:{{ e.durum_rengi }};color:white;
+                             padding:3px 10px;border-radius:12px;font-size:12px;">
+                    {{ e.durum_adi }}
+                </span>
+            </td>
+            <td><a href="{{ url_for('siparis.siparis_detay', id=e.id) }}"
+                   class="btn btn-ghost btn-sm">Detay</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:32px;">
+            Sipariş bulunamadı.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

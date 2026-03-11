@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Yeni İrsaliye{% endblock %}
+{% block page_title %}{{ 'Giriş' if tip == 'giris' else 'Çıkış' }} İrsaliyesi{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">İrsaliye Oluştur</h3>
+        <a href="{{ url_for('fatura.irsaliye_liste') }}" class="btn btn-ghost btn-sm">← Geri</a>
+    </div>
+    <form method="POST" style="padding:24px;">
+        <input type="hidden" name="irsaliye_tipi" value="{{ tip }}">
+        <div class="grid grid-2">
+            <div class="form-group">
+                <label class="form-label">İrsaliye No</label>
+                <input type="text" name="irsaliye_no" class="form-input" value="{{ onerilen_no }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tarih</label>
+                <input type="text" name="irsaliye_tarihi" class="datepicker form-input" placeholder="GG.AA.YYYY">
+            </div>
+            {% if tip == 'giris' %}
+            <div class="form-group">
+                <label class="form-label">Tedarikçi</label>
+                <select name="tedarikci_id" class="form-select">
+                    <option value="">Seçiniz</option>
+                    {% for t in tedarikciler %}<option value="{{ t.id }}">{{ t.unvan }}</option>{% endfor %}
+                </select>
+            </div>
+            {% else %}
+            <div class="form-group">
+                <label class="form-label">Müşteri Adı</label>
+                <input type="text" name="musteri_adi" class="form-input">
+            </div>
+            {% endif %}
+            <div class="form-group">
+                <label class="form-label">Araç Plakası</label>
+                <input type="text" name="arac_plaka" class="form-input" placeholder="34 ABC 123">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Şoför</label>
+                <input type="text" name="sofor" class="form-input">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Teslim Adresi</label>
+            <textarea name="teslim_adresi" class="form-input" rows="2"></textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Açıklama</label>
+            <textarea name="aciklama" class="form-input" rows="2"></textarea>
+        </div>
+        <div style="display:flex;gap:8px;">
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Oluştur</button>
+            <a href="{{ url_for('fatura.irsaliye_liste') }}" class="btn btn-ghost">İptal</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

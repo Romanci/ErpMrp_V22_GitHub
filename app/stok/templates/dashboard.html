@@ -1,0 +1,353 @@
+<!--
+    ERP MRP v0.4 - Dashboard (Ana Sayfa)
+    Bu sayfa sistemin ozet bilgilerini, grafikleri ve aktiviteleri gosterir
+    Chart.js kullanarak grafikler cizilir
+-->
+{% extends "base.html" %}
+
+{% block title %}Dashboard - NANMAK ERP{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+    <!-- === ISTATISTIK KARTLARI === -->
+    <!-- 4 ana modulun ozet verileri -->
+    <div class="stats-grid">
+        <!-- Stok karti - Yesil -->
+        <div class="stat-card stok">
+            <div class="stat-icon">
+                <i class="fas fa-box"></i>
+            </div>
+            <div class="stat-value">{{ toplam_urun }}</div>
+            <div class="stat-label">Toplam Urun Kartı</div>
+            <span class="stat-change">
+                Stok Kalemi: {{ toplam_stok_kalemi }}
+            </span>
+        </div>
+        
+        <!-- Satin Alma karti - Mavi -->
+        <div class="stat-card satin-alma">
+            <div class="stat-icon">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <div class="stat-value">{{ aktif_siparis }}</div>
+            <div class="stat-label">Aktif Satın Alma Siparisi</div>
+            <span class="stat-change">
+                Bekleyen siparis
+            </span>
+        </div>
+        
+        <!-- Uretim karti - Sari -->
+        <div class="stat-card uretim">
+            <div class="stat-icon">
+                <i class="fas fa-clipboard-list"></i>
+            </div>
+            <div class="stat-value">{{ devam_eden_uretim }}</div>
+            <div class="stat-label">Devam Eden Uretim</div>
+            <span class="stat-change">
+                Bekleyen: {{ bekleyen_uretim }}
+            </span>
+        </div>
+        
+        <!-- Kritik stok karti - Kirmizi -->
+        <div class="stat-card kritik">
+            <div class="stat-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="stat-value">{{ kritik_stok_sayisi }}</div>
+            <div class="stat-label">Kritik Stok Uyarisi</div>
+            <span class="stat-change {% if skt_uyari > 0 %}negative{% endif %}">
+                SKT Uyarisi: {{ skt_uyari }}
+            </span>
+        </div>
+        <!-- MRP karti -->
+        <div class="stat-card" style="border-left: 4px solid #8b5cf6;">
+            <div class="stat-icon" style="background: #8b5cf6;"><i class="fas fa-calculator"></i></div>
+            <div class="stat-value" style="color:#8b5cf6;">{{ mrp_eksik }}</div>
+            <div class="stat-label">MRP Eksik Malzeme</div>
+            <span class="stat-change {% if mrp_eksik > 0 %}negative{% endif %}">
+                <a href="/uretim/mrp" style="color:inherit;">MRP Analiz →</a>
+            </span>
+        </div>
+    </div>
+    
+    <!-- === GRAFIKLER VE TABLOLAR === -->
+    <div class="grid grid-2">
+        <!-- Stok Hareketleri Grafigi -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Stok Hareketleri</h3>
+                <select class="form-select" style="width: auto;">
+                    <option>Son 7 Gun</option>
+                    <option>Son 30 Gun</option>
+                    <option>Bu Yil</option>
+                </select>
+            </div>
+            <div class="chart-container">
+                <canvas id="stokHareketChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- Kritik Stoklar Listesi -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title" style="color: var(--color-red);">
+                    <i class="fas fa-exclamation-circle"></i> Kritik Stoklar
+                </h3>
+                <a href="{{ url_for('rapor.kritik_stok_raporu') }}" class="btn btn-ghost btn-sm">
+                    Tumunu Gor
+                </a>
+            </div>
+            <div class="table-container" style="box-shadow: none;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Urun Adi</th>
+                            <th>Mevcut</th>
+                            <th>Min.</th>
+                            <th>Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for urun in kritik_stoklar or [] %}
+                        <tr>
+                            <td>{{ urun.ad }}</td>
+                            <td style="color: var(--color-red); font-weight: 600;">{{ urun.miktar }}</td>
+                            <td>{{ urun.min_stok }}</td>
+                            <td>
+                                <span class="status-badge iptal">Kritik</span>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" style="text-align:center; color: var(--color-green);">
+                                <i class="fas fa-check-circle"></i> Tum stoklar yeterli seviyede
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- === SON ISLEMLER VE AKTIVITELER === -->
+    <div class="grid grid-2">
+        <!-- Son Islemler - Gercek Veriler -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Son Islemler</h3>
+            </div>
+            <ul class="activity-list">
+                {% for aktivite in son_aktiviteler %}
+                <li class="activity-item {{ aktivite.tip }}">
+                    <div class="activity-icon">
+                        {% if aktivite.tip == 'success' %}<i class="fas fa-plus"></i>
+                        {% elif aktivite.tip == 'warning' %}<i class="fas fa-minus"></i>
+                        {% else %}<i class="fas fa-exchange-alt"></i>{% endif %}
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">{{ aktivite.baslik }}</div>
+                        <div class="activity-time">{{ aktivite.zaman }}</div>
+                    </div>
+                </li>
+                {% else %}
+                <li class="activity-item info">
+                    <div class="activity-content">
+                        <div class="activity-title">Henuz stok hareketi yok</div>
+                        <div class="activity-time">-</div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+        <!-- Stok Kategorileri -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Stok Kategorileri</h3>
+            </div>
+            <div class="chart-container" style="height: 250px;">
+                <canvas id="kategoriChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aylık Satın Alma + Üretim Durumu -->
+    <div class="grid grid-2" style="margin-top:16px;">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">📈 Aylık Satın Alma Tutarı</h3>
+                <span style="font-size:11px;color:var(--color-muted);">Son 6 ay (TL)</span>
+            </div>
+            <div class="chart-container" style="height:220px;">
+                <canvas id="aylikSiparisChart"></canvas>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">⚙️ Üretim Durumu Dağılımı</h3>
+            </div>
+            <div class="chart-container" style="height:220px;">
+                <canvas id="uretimDurumChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- === HIZLI ERISIM === -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Hizli Erisim</h3>
+        </div>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <a href="{{ url_for('stok.urun_ekle') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Yeni Urun
+            </a>
+            <a href="{{ url_for('siparis.siparis_yeni') }}" class="btn btn-secondary">
+                <i class="fas fa-cart-plus"></i> Yeni Siparis
+            </a>
+            <a href="{{ url_for('uretim.uretim_emri_ekle') }}" class="btn" style="background-color: var(--color-yellow); color: white;">
+                <i class="fas fa-industry"></i> Yeni Uretim Emri
+            </a>
+            <a href="{{ url_for('mrp.mrp_analiz') }}" class="btn" style="background-color: #8b5cf6; color: white;">
+                <i class="fas fa-calculator"></i> MRP Analizi
+            </a>
+            <a href="{{ url_for('sayim.sayim_baslat') }}" class="btn btn-ghost">
+                <i class="fas fa-clipboard-check"></i> Sayim Baslat
+            </a>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js kutuphanesi -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js">
+    // Aylık Satın Alma - Bar Grafik
+    const aylikCtx = document.getElementById('aylikSiparisChart');
+    if (aylikCtx) {
+        new Chart(aylikCtx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: {{ ay_etiketleri | tojson }},
+                datasets: [{
+                    label: 'Satın Alma (TL)',
+                    data: {{ ay_siparis_tutar | tojson }},
+                    backgroundColor: 'rgba(59,130,246,0.7)',
+                    borderColor: '#3b82f6',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' },
+                         ticks: { callback: v => v.toLocaleString('tr-TR') + ' ₺' }},
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    // Üretim Durum Dağılımı - Pie
+    const uretimCtx = document.getElementById('uretimDurumChart');
+    if (uretimCtx) {
+        const uretimVeri = {{ uretim_durum_veri | tojson }};
+        new Chart(uretimCtx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: {{ uretim_durum_etiket | tojson }},
+                datasets: [{
+                    data: uretimVeri,
+                    backgroundColor: ['#f59e0b','#3b82f6','#10b981','#ef4444'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right', labels: { font: { size: 11 } } }
+                },
+                cutout: '65%'
+            }
+        });
+    }
+</script>
+
+<script>
+    // Stok Hareketleri - Cizgi Grafigi (GERCEK VERI)
+    const stokCtx = document.getElementById('stokHareketChart').getContext('2d');
+    new Chart(stokCtx, {
+        type: 'line',
+        data: {
+            labels: {{ gun_etiketleri | tojson }},
+            datasets: [{
+                label: 'Giris',
+                data: {{ giris_verileri | tojson }},
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                tension: 0.4,
+                fill: true
+            }, {
+                label: 'Cikis',
+                data: {{ cikis_verileri | tojson }},
+                borderColor: '#ef4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top' },
+                title: {
+                    display: true,
+                    text: 'Son 7 Gün',
+                    color: '#6b7280',
+                    font: { size: 11 }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+    
+    // Kategori Dagilimi - Pasta Grafigi (GERCEK VERI)
+    const kategoriCtx = document.getElementById('kategoriChart').getContext('2d');
+    const kategoriLabels = {{ kategori_etiketleri | tojson }};
+    const kategoriData = {{ kategori_verileri | tojson }};
+    const renkPaleti = ['#10b981','#3b82f6','#f59e0b','#ef4444','#6b7280','#8b5cf6','#ec4899','#14b8a6'];
+    new Chart(kategoriCtx, {
+        type: 'doughnut',
+        data: {
+            labels: kategoriLabels.length > 0 ? kategoriLabels : ['Henuz urun yok'],
+            datasets: [{
+                data: kategoriData.length > 0 ? kategoriData : [1],
+                backgroundColor: renkPaleti.slice(0, Math.max(kategoriData.length, 1)),
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'right' },
+                title: {
+                    display: true,
+                    text: 'Ürün Sayısına Göre',
+                    color: '#6b7280',
+                    font: { size: 11 }
+                }
+            },
+            cutout: '70%'
+        }
+    });
+</script>
+{% endblock %}

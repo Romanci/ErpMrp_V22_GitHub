@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Rol Yonetimi - ERP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>🔑 Rol Yonetimi</h1>
+    <div>
+        <a href="{{ url_for('kullanici.rol_ekle') }}" class="btn btn-primary">Yeni Rol</a>
+        <a href="{{ url_for('kullanici.kullanici_liste') }}" class="btn btn-secondary">Kullanicilar</a>
+    </div>
+</div>
+
+<div class="grid grid-2">
+    {% for rol in roller %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title" style="color: var(--sari);">{{ rol.rol_adi.upper() }}</h3>
+            <a href="{{ url_for('kullanici.rol_duzenle', id=rol.id) }}" class="btn btn-sm">Duzenle</a>
+        </div>
+        <div class="card-body">
+            {% if rol.aciklama %}<p style="margin-bottom: 0.75rem; color: var(--gri);">{{ rol.aciklama }}</p>{% endif %}
+            <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.75rem;">
+                {% if rol.stok_erisim %}<span class="status-badge devam">Stok ✓</span>{% else %}<span class="status-badge iptal">Stok ✗</span>{% endif %}
+                {% if rol.satin_alma_erisim %}<span class="status-badge devam">Satin Alma ✓</span>{% else %}<span class="status-badge iptal">Satin Alma ✗</span>{% endif %}
+                {% if rol.uretim_erisim %}<span class="status-badge devam">Uretim ✓</span>{% else %}<span class="status-badge iptal">Uretim ✗</span>{% endif %}
+                {% if rol.ik_erisim %}<span class="status-badge devam">IK ✓</span>{% else %}<span class="status-badge iptal">IK ✗</span>{% endif %}
+                {% if rol.bakim_erisim %}<span class="status-badge devam">Bakim ✓</span>{% else %}<span class="status-badge iptal">Bakim ✗</span>{% endif %}
+            </div>
+            <div style="display: flex; gap: 0.4rem;">
+                {% if rol.yazma_izni %}<span class="status-badge tamamlandi">Yazma ✓</span>{% else %}<span class="status-badge beklemede">Salt Okuma</span>{% endif %}
+                {% if rol.silme_izni %}<span class="status-badge tamamlandi">Silme ✓</span>{% else %}<span class="status-badge iptal">Silme ✗</span>{% endif %}
+            </div>
+            <p style="margin-top: 0.75rem; color: var(--gri); font-size: 0.85rem;">
+                Bu role atanmis {{ rol.kullanici_roller|length }} kullanici
+            </p>
+        </div>
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="card-body"><p>Henuz rol tanimlanmamis.</p></div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

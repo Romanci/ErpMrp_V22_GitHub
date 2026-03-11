@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Rol Duzenle' if rol else 'Yeni Rol' }} - ERP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{{ 'Rol Duzenle' if rol else 'Yeni Rol' }}</h1>
+    <a href="{{ url_for('kullanici.rol_liste') }}" class="btn btn-secondary">Listeye Don</a>
+</div>
+
+<form method="POST" class="form-container">
+    <div class="form-row">
+        <div class="form-group">
+            <label for="rol_adi">Rol Adi *</label>
+            <input type="text" id="rol_adi" name="rol_adi" value="{{ rol.rol_adi if rol else '' }}" required
+                   placeholder="ornek: operator, mudur, okuyucu">
+        </div>
+        <div class="form-group">
+            <label for="aciklama">Aciklama</label>
+            <input type="text" id="aciklama" name="aciklama" value="{{ rol.aciklama if rol else '' }}"
+                   placeholder="Bu rolun kisaca tanimi">
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header"><h3 class="card-title">Modul Erisim Izinleri</h3></div>
+        <div class="card-body">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                {% set checkboxlar = [
+                    ('stok_erisim', 'Stok Modulu', rol.stok_erisim if rol else True),
+                    ('satin_alma_erisim', 'Satin Alma Modulu', rol.satin_alma_erisim if rol else True),
+                    ('uretim_erisim', 'Uretim Modulu', rol.uretim_erisim if rol else True),
+                    ('ik_erisim', 'IK Modulu', rol.ik_erisim if rol else False),
+                    ('bakim_erisim', 'Bakim Modulu', rol.bakim_erisim if rol else False),
+                ] %}
+                {% for name, label, checked in checkboxlar %}
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.5rem; background: var(--siyah-acik); border-radius: 6px; color: white;">
+                    <input type="checkbox" name="{{ name }}" value="1" {{ 'checked' if checked else '' }}>
+                    {{ label }}
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header"><h3 class="card-title">Islem Izinleri</h3></div>
+        <div class="card-body">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.75rem; background: var(--siyah-acik); border-radius: 6px; color: white;">
+                    <input type="checkbox" name="yazma_izni" value="1" {{ 'checked' if (not rol or rol.yazma_izni) else '' }}>
+                    Yazma / Guncelleme Izni
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.75rem; background: var(--siyah-acik); border-radius: 6px; color: white;">
+                    <input type="checkbox" name="silme_izni" value="1" {{ 'checked' if rol and rol.silme_izni else '' }}>
+                    Silme Izni
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Kaydet</button>
+        <a href="{{ url_for('kullanici.rol_liste') }}" class="btn btn-secondary">Iptal</a>
+    </div>
+</form>
+{% endblock %}

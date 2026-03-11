@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Araç & Ekipman{% endblock %}
+{% block page_title %}Araç & Ekipman Takibi{% endblock %}
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card stok">
+        <div class="stat-icon"><i class="fas fa-truck"></i></div>
+        <div class="stat-value">{{ araclar|length }}</div>
+        <div class="stat-label">Kayıtlı Araç/Ekipman</div>
+    </div>
+    <div class="stat-card" style="--accent:var(--kirmizi);">
+        <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="stat-value" {% if uyarilar %}style="color:var(--kirmizi);"{% endif %}>{{ uyarilar|length }}</div>
+        <div class="stat-label">Muayene Uyarısı</div>
+    </div>
+</div>
+<div style="display:flex;gap:8px;margin:16px 0 12px;">
+    <a href="{{ url_for('arac.arac_form') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Yeni Araç/Ekipman</a>
+    <a href="{{ url_for('arac.arac_liste') }}" class="btn btn-ghost"><i class="fas fa-list"></i> Tüm Liste</a>
+</div>
+{% if uyarilar %}
+<div style="background:rgba(239,68,68,0.08);border:1px solid var(--kirmizi);border-radius:8px;padding:12px 16px;margin-bottom:16px;">
+    <div style="font-weight:600;color:var(--kirmizi);margin-bottom:8px;"><i class="fas fa-exclamation-triangle"></i> Muayene Tarihi Yaklaşan Araçlar</div>
+    {% for a in uyarilar %}
+    <div style="padding:6px 0;border-bottom:1px solid rgba(239,68,68,0.2);display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-weight:600;">{{ a.plaka }} — {{ a.marka }} {{ a.model }}</span>
+        <span style="color:var(--sari);font-size:12px;font-weight:600;">⏰ {{ a.muayene_tarihi }}</span>
+        <a href="{{ url_for('arac.arac_detay', id=a.id) }}" class="btn btn-ghost btn-sm">Detay</a>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+<div class="card">
+    <div class="card-header"><h3 class="card-title"><i class="fas fa-list"></i> Araç / Ekipman Listesi</h3></div>
+    <div class="table-container">
+        <table class="data-table">
+            <thead><tr><th>Plaka/Kod</th><th>Marka/Model</th><th>Tür</th><th>Sorumlu</th><th>Muayene</th><th>Sigorta</th><th></th></tr></thead>
+            <tbody>
+            {% for a in araclar %}
+            <tr>
+                <td style="font-weight:700;font-family:monospace;">{{ a.plaka or '—' }}</td>
+                <td>{{ a.marka or '' }} {{ a.model or '' }}</td>
+                <td><span class="status-badge">{{ a.tur.replace('_',' ')|title }}</span></td>
+                <td style="font-size:12px;">{{ a.sorumlu.tam_ad if a.sorumlu else '—' }}</td>
+                <td style="font-size:12px;{% if a.muayene_uyari %}color:var(--sari);font-weight:600;{% endif %}">{{ a.muayene_tarihi or '—' }}</td>
+                <td style="font-size:12px;">{{ a.sigorta_tarihi or '—' }}</td>
+                <td>
+                    <a href="{{ url_for('arac.arac_detay', id=a.id) }}" class="btn btn-ghost btn-sm"><i class="fas fa-eye"></i></a>
+                    <a href="{{ url_for('arac.arac_form', id=a.id) }}" class="btn btn-ghost btn-sm"><i class="fas fa-edit"></i></a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--gri);">Araç/ekipman kaydı yok</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

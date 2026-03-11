@@ -1,0 +1,43 @@
+<!-- Parti listesi -->
+{% extends "base.html" %}
+
+{% block title %}Parti Takibi - ERP{% endblock %}
+
+{% block content %}
+{% block page_title %}Parti Takibi{% endblock %}
+<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><a href="{{ url_for('parti.parti_ekle') }}" class="btn btn-primary">Yeni Parti</a></div>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Parti Kodu</th>
+            <th>Urun</th>
+            <th>Uretim Tarihi</th>
+            <th>Son Kullanma</th>
+            <th>SKT Durumu</th>
+            <th>Miktar</th>
+            <th>Depo</th>
+            <th>Islemler</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for parti in partiler %}
+        <tr>
+            <td>{{ parti.parti_kodu }}</td>
+            <td>{{ parti.urun.urun_adi if parti.urun else '-' }}</td>
+            <td>{{ parti.uretim_tarihi or '-' }}</td>
+            <td>{{ parti.son_kullanma_tarihi or '-' }}</td>
+            <td class="skt-{{ parti.skt_durumu()|lower }}">{{ parti.skt_durumu() }}</td>
+            <td>{{ parti.miktar }} {{ parti.urun.birim if parti.urun else '' }}</td>
+            <td>{{ parti.depo.depo_adi if parti.depo else '-' }}</td>
+            <td>
+                <a href="{{ url_for('parti.parti_duzenle', id=parti.id) }}" class="btn btn-sm">Duzenle</a>
+                <form action="{{ url_for('parti.parti_sil', id=parti.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Silmek istediginize emin misiniz?')">
+                    <button type="submit" class="btn btn-sm btn-danger">Sil</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

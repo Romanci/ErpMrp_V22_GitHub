@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}Faturalar{% endblock %}
+{% block page_title %}Fatura Yönetimi{% endblock %}
+{% block content %}
+
+<!-- Filtre + Aksiyon Satırı -->
+<div class="card" style="margin-bottom:16px;">
+    <form method="GET" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+        <div class="form-group" style="margin:0;min-width:140px;">
+            <label style="font-size:11px;color:var(--color-muted);text-transform:uppercase;">Tür</label>
+            <select name="tip" class="form-select" style="width:100%;" onchange="this.form.submit()">
+                <option value="">Tümü</option>
+                <option value="alis" {% if request.args.get('tip')=='alis' %}selected{% endif %}>Alış</option>
+                <option value="satis" {% if request.args.get('tip')=='satis' %}selected{% endif %}>Satış</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin:0;min-width:140px;">
+            <label style="font-size:11px;color:var(--color-muted);text-transform:uppercase;">Durum</label>
+            <select name="durum" class="form-select" style="width:100%;" onchange="this.form.submit()">
+                <option value="">Tümü</option>
+                <option value="taslak" {% if request.args.get('durum')=='taslak' %}selected{% endif %}>Taslak</option>
+                <option value="kesildi" {% if request.args.get('durum')=='kesildi' %}selected{% endif %}>Kesildi</option>
+                <option value="odendi" {% if request.args.get('durum')=='odendi' %}selected{% endif %}>Ödendi</option>
+                <option value="iptal" {% if request.args.get('durum')=='iptal' %}selected{% endif %}>İptal</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin:0;">
+            <label style="font-size:11px;color:var(--color-muted);text-transform:uppercase;">Başlangıç</label>
+            <input type="date" name="tarih_bas" class="form-control" value="{{ request.args.get('tarih_bas','') }}" style="width:150px;">
+        </div>
+        <div class="form-group" style="margin:0;">
+            <label style="font-size:11px;color:var(--color-muted);text-transform:uppercase;">Bitiş</label>
+            <input type="date" name="tarih_bit" class="form-control" value="{{ request.args.get('tarih_bit','') }}" style="width:150px;">
+        </div>
+        <button type="submit" class="btn btn-ghost btn-sm" style="margin-bottom:1px;">Filtrele</button>
+        {% if request.args %}
+        <a href="{{ url_for('fatura.fatura_liste') }}" class="btn btn-ghost btn-sm" style="margin-bottom:1px;">Temizle ✕</a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Faturalar
+            {% if faturalar %}<span class="status-badge info" style="margin-left:8px;">{{ faturalar|length }} kayıt</span>{% endif %}
+        </h3>
+        <div style="display:flex;gap:8px;">
+            <a href="{{ url_for('export.excel_faturalar') }}{% if request.query_string %}?{{ request.query_string.decode() }}{% endif %}"
+               class="btn btn-ghost btn-sm"><i class="fas fa-file-excel"></i> Excel</a>
+            <a href="{{ url_for('fatura.fatura_ekle', tip='alis') }}" class="btn btn-ghost btn-sm">+ Alış Faturası</a>
+            <a href="{{ url_for('fatura.fatura_ekle', tip='satis') }}" class="btn btn-primary btn-sm">+ Satış Faturası</a>
+        </div>
+    </div>
+
+    <!-- Özet satırı -->
+    {% if faturalar %}
+    <div style="display:flex;gap:24px;padding:12px 16px;border-bottom:1px solid var(--gri-kenar);flex-wrap:wrap;">
+        <span style="font-size:13px;color:var(--color-muted);">
+            Toplam: <strong style="color:var(--color-primary);">{{ "%.2f"|format(faturalar|sum(attribute='genel_toplam')) }} TL</strong>
+        </span>
+        <span style="font-size:13px;color:var(--color-muted);">
+            Ödenmemiş: <strong style="color:var(--color-red);">
+                {{ "%.2f"|format(faturalar|selectattr('durum','ne','odendi')|selectattr('durum','ne','iptal')|map(attribute='genel_toplam')|sum) }} TL
+            </strong>
+        </span>
+        <span style="font-size:13px;color:var(--color-muted);">
+            Ödenen: <strong style="color:var(--color-green);">
+                {{ "%.2f"|format(faturalar|selectattr('durum','equalto','odendi')|map(attribute='genel_toplam')|sum) }} TL
+            </strong>
+        </span>
+    </div>
+    {% endif %}
+
+    <div class="table-container" style="box-shadow:none;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Fatura No</th><th>Tür</th><th>Tarih</th>
+                    <th>Taraf</th><th style="text-align:right;">Toplam</th>
+                    <th>Durum</th><th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for f in faturalar %}
+            <tr>
+                <td><strong>{{ f.fatura_no }}</strong>
+                    {% if f.siparis_id %}<span style="font-size:10px;color:var(--color-muted);display:block;">📦 Sipariş bağlı</span>{% endif %}
+                </td>
+                <td>
+                    <span class="status-badge {% if f.fatura_tipi=='alis' %}beklemede{% else %}acik{% endif %}">
+                        {{ 'Alış' if f.fatura_tipi=='alis' else 'Satış' }}
+                    </span>
+                </td>
+                <td>{{ f.fatura_tarihi }}</td>
+                <td>{{ f.tedarikci.unvan if f.tedarikci else f.musteri_adi or '—' }}</td>
+                <td style="text-align:right;font-weight:600;">{{ "%.2f"|format(f.genel_toplam) }} {{ f.para_birimi }}</td>
+                <td>
+                    <span class="status-badge {% if f.durum=='odendi' %}acik{% elif f.durum=='iptal' %}iptal{% elif f.durum=='kesildi' %}devam{% else %}beklemede{% endif %}">
+                        {{ f.durum|capitalize }}
+                    </span>
+                </td>
+                <td>
+                    <a href="{{ url_for('fatura.fatura_detay', id=f.id) }}" class="btn btn-ghost btn-sm">Detay</a>
+                    <a href="{{ url_for('export.pdf_fatura', fatura_id=f.id) }}" class="btn btn-ghost btn-sm">PDF</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--color-muted);">
+                Fatura bulunamadı.
+                {% if not request.args %}<a href="{{ url_for('fatura.fatura_ekle', tip='alis') }}">İlk faturayı oluştur →</a>{% endif %}
+            </td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- İrsaliyeler -->
+<div class="card" style="margin-top:16px;">
+    <div class="card-header">
+        <h3 class="card-title">İrsaliyeler</h3>
+        <div style="display:flex;gap:8px;">
+            <a href="{{ url_for('fatura.irsaliye_ekle', tip='cikis') }}" class="btn btn-primary btn-sm">+ İrsaliye</a>
+        </div>
+    </div>
+    <div class="table-container" style="box-shadow:none;">
+        <table class="data-table">
+            <thead><tr><th>İrsaliye No</th><th>Tür</th><th>Tarih</th><th>Durum</th><th></th></tr></thead>
+            <tbody>
+            {% for i in irsaliyeler or [] %}
+            <tr>
+                <td><strong>{{ i.irsaliye_no }}</strong></td>
+                <td>{{ i.irsaliye_tipi }}</td>
+                <td>{{ i.irsaliye_tarihi }}</td>
+                <td><span class="status-badge {% if i.durum=='tamamlandi' %}acik{% else %}beklemede{% endif %}">{{ i.durum }}</span></td>
+                <td><a href="{{ url_for('fatura.irsaliye_detay', id=i.id) }}" class="btn btn-ghost btn-sm">Detay</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--color-muted);">İrsaliye bulunamadı.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

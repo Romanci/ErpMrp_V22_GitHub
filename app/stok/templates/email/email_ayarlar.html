@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}E-posta Ayarları{% endblock %}
+{% block page_title %}E-posta Ayarları{% endblock %}
+{% block content %}
+<div class="grid grid-2" style="gap:20px;">
+
+    <!-- SMTP Ayarları -->
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-envelope-open-text"></i> SMTP Ayarları</h3></div>
+        <div style="padding:20px;">
+            <form method="POST">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding:10px;background:{% if ayarlar.get('smtp_aktif')=='1' %}rgba(34,197,94,0.08){% else %}rgba(239,68,68,0.08){% endif %};border-radius:6px;">
+                    <input type="checkbox" name="smtp_aktif" id="smtp_aktif" value="1" {% if ayarlar.get('smtp_aktif')=='1' %}checked{% endif %} style="width:16px;height:16px;">
+                    <label for="smtp_aktif" style="font-weight:600;cursor:pointer;">E-posta servisi aktif</label>
+                    <span class="status-badge {% if ayarlar.get('smtp_aktif')=='1' %}acik{% else %}iptal{% endif %}" style="margin-left:auto;">
+                        {% if ayarlar.get('smtp_aktif')=='1' %}Aktif{% else %}Pasif{% endif %}
+                    </span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">SMTP Sunucu *</label>
+                    <input type="text" name="smtp_host" class="form-input" value="{{ ayarlar.get('smtp_host','') }}" placeholder="smtp.gmail.com">
+                    <small style="color:var(--gri);font-size:11px;">Gmail: smtp.gmail.com | Outlook: smtp-mail.outlook.com | Yandex: smtp.yandex.com</small>
+                </div>
+
+                <div class="grid grid-2" style="gap:12px;">
+                    <div class="form-group">
+                        <label class="form-label">Port</label>
+                        <input type="number" name="smtp_port" class="form-input" value="{{ ayarlar.get('smtp_port','587') }}" placeholder="587">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Şifreleme</label>
+                        <select name="smtp_tls" class="form-select">
+                            <option value="1" {% if ayarlar.get('smtp_tls','1')=='1' %}selected{% endif %}>TLS (Port 587) — Önerilen</option>
+                            <option value="0" {% if ayarlar.get('smtp_tls','1')=='0' %}selected{% endif %}>SSL (Port 465)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Kullanıcı Adı (E-posta)</label>
+                    <input type="email" name="smtp_kullanici" class="form-input" value="{{ ayarlar.get('smtp_kullanici','') }}" placeholder="firma@gmail.com">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Şifre / Uygulama Şifresi</label>
+                    <input type="password" name="smtp_sifre" class="form-input" value="{{ ayarlar.get('smtp_sifre','') }}" autocomplete="new-password">
+                    <small style="color:var(--gri);font-size:11px;">Gmail için "Uygulama Şifresi" kullanın (2FA açık olmalı)</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Gönderen Görünen Ad/E-posta</label>
+                    <input type="text" name="smtp_gonderen" class="form-input" value="{{ ayarlar.get('smtp_gonderen','') }}" placeholder="firma@domain.com (boş bırakılırsa kullanıcı adı kullanılır)">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Bildirim E-postası</label>
+                    <input type="email" name="bildirim_email" class="form-input" value="{{ ayarlar.get('bildirim_email','') }}" placeholder="yonetici@firma.com">
+                    <small style="color:var(--gri);font-size:11px;">Kritik stok, bakım uyarıları bu adrese gönderilir</small>
+                </div>
+
+                <div style="display:flex;gap:8px;margin-top:8px;">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Kaydet</button>
+                    <button type="button" class="btn btn-ghost" onclick="emailTest()"><i class="fas fa-paper-plane"></i> Test Gönder</button>
+                </div>
+            </form>
+
+            <!-- Test formu -->
+            <div id="test-panel" style="display:none;margin-top:16px;padding:12px;background:var(--gri-acik);border-radius:6px;">
+                <div class="form-group" style="margin-bottom:8px;">
+                    <label class="form-label">Test Alıcı</label>
+                    <input type="email" id="test-alici" class="form-input" placeholder="test@example.com">
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="emailTestGonder()"><i class="fas fa-paper-plane"></i> Gönder</button>
+                <span id="test-sonuc" style="font-size:13px;margin-left:10px;"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bildirim Tetikleyici -->
+    <div style="margin-bottom:16px;">
+        <div class="card" style="border-left:4px solid var(--color-red);">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-bell"></i> Kritik Stok E-posta Bildirimi</h3>
+            </div>
+            <div style="padding:16px;">
+                <p style="font-size:13px;color:#374151;margin:0 0 12px;">
+                    Şu an kritik seviyedeki ürünlerin listesini <strong>{{ ayarlar.get('bildirim_email') or 'Tanımsız' }}</strong> adresine gönder.
+                </p>
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <div class="form-group" style="margin:0;flex:1;min-width:200px;">
+                        <label class="form-label" style="font-size:11px;">Bildirim Alıcısı</label>
+                        <form method="POST" action="{{ url_for('email.email_ayarlar') }}" style="display:flex;gap:8px;">
+                            <input type="hidden" name="smtp_aktif" value="{{ ayarlar.get('smtp_aktif','0') }}">
+                            <input type="hidden" name="smtp_host" value="{{ ayarlar.get('smtp_host','') }}">
+                            <input type="hidden" name="smtp_port" value="{{ ayarlar.get('smtp_port','587') }}">
+                            <input type="hidden" name="smtp_kullanici" value="{{ ayarlar.get('smtp_kullanici','') }}">
+                            <input type="hidden" name="smtp_sifre" value="{{ ayarlar.get('smtp_sifre','') }}">
+                            <input type="hidden" name="smtp_gonderen" value="{{ ayarlar.get('smtp_gonderen','') }}">
+                            <input type="hidden" name="smtp_tls" value="{{ ayarlar.get('smtp_tls','1') }}">
+                            <input type="email" name="bildirim_email" class="form-input"
+                                   value="{{ ayarlar.get('bildirim_email','') }}"
+                                   placeholder="bildirim@firma.com" style="flex:1;">
+                            <button type="submit" class="btn btn-ghost btn-sm">Kaydet</button>
+                        </form>
+                    </div>
+                    <button class="btn btn-primary btn-sm" style="background:var(--color-red);border:none;margin-top:20px;"
+                            onclick="kritikStokGonder(this)">
+                        <i class="fas fa-paper-plane"></i> Şimdi Gönder
+                    </button>
+                </div>
+                <div id="bildirim-sonuc" style="display:none;margin-top:10px;padding:8px 12px;border-radius:6px;font-size:13px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kılavuz + Log -->
+    <div>
+        <div class="card" style="margin-bottom:16px;">
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-info-circle"></i> Gmail Kurulum Kılavuzu</h3></div>
+            <div style="padding:16px;font-size:13px;line-height:1.8;color:#374151;">
+                <ol style="margin:0 0 0 16px;padding:0;">
+                    <li>Google hesabınızda <strong>2 Adımlı Doğrulama</strong>'yı açın</li>
+                    <li><a href="https://myaccount.google.com/apppasswords" target="_blank" style="color:var(--mavi);">myaccount.google.com/apppasswords</a> adresine gidin</li>
+                    <li>"Uygulama şifresi" oluşturun → "Posta" seçin</li>
+                    <li>Oluşan 16 haneli şifreyi buraya yapıştırın</li>
+                    <li>SMTP: <code>smtp.gmail.com</code> | Port: <code>587</code> | TLS: <code>Evet</code></li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-list"></i> Son Gönderimler</h3></div>
+            <div class="table-container">
+                <table class="data-table">
+                    <thead><tr><th>Alıcı</th><th>Konu</th><th>Durum</th><th>Tarih</th></tr></thead>
+                    <tbody>
+                    {% for log in loglar %}
+                    <tr>
+                        <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ log.alici }}</td>
+                        <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ log.konu }}</td>
+                        <td><span class="status-badge {% if 'gonderildi' in log.durum %}acik{% else %}iptal{% endif %}">{{ log.durum }}</span></td>
+                        <td style="white-space:nowrap;font-size:11px;">{{ log.tarih }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4" style="text-align:center;color:var(--gri);padding:20px;">Henüz e-posta gönderilmedi</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function kritikStokGonder(btn) {
+    const sonuc = document.getElementById('bildirim-sonuc');
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gönderiliyor...';
+    sonuc.style.display = 'none';
+    fetch('/api/bildirim-email-gonder', {method:'POST'})
+    .then(r => r.json())
+    .then(d => {
+        sonuc.style.display = 'block';
+        sonuc.style.background = d.ok ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)';
+        sonuc.style.color = d.ok ? '#15803d' : '#dc2626';
+        sonuc.style.border = `1px solid ${d.ok ? '#86efac' : '#fca5a5'}`;
+        sonuc.innerHTML = (d.ok ? '✓ ' : '✗ ') + d.mesaj;
+        btn.disabled = false;
+        btn.innerHTML = original;
+    })
+    .catch(() => {
+        sonuc.style.display = 'block';
+        sonuc.textContent = '✗ Bağlantı hatası';
+        btn.disabled = false;
+        btn.innerHTML = original;
+    });
+}
+function emailTest() {
+    const panel = document.getElementById('test-panel');
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+function emailTestGonder() {
+    const alici = document.getElementById('test-alici').value;
+    const sonuc = document.getElementById('test-sonuc');
+    if (!alici) { sonuc.textContent = 'Alıcı gerekli'; return; }
+    sonuc.textContent = 'Gönderiliyor...';
+    sonuc.style.color = '#64748b';
+    fetch('/api/email-test', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({alici})
+    })
+    .then(r => r.json())
+    .then(d => {
+        sonuc.textContent = d.mesaj;
+        sonuc.style.color = d.basarili ? '#15803d' : '#dc2626';
+    })
+    .catch(() => { sonuc.textContent = 'Bağlantı hatası'; sonuc.style.color = '#dc2626'; });
+}
+</script>
+{% endblock %}

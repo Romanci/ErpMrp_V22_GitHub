@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ sube.sube_adi }}{% endblock %}
+{% block page_title %}{{ sube.sube_adi }}{% endblock %}
+{% block content %}
+<div style="display:flex;gap:8px;margin-bottom:16px;">
+    <a href="{{ url_for('sube.sube_form', id=sube.id) }}" class="btn btn-primary"><i class="fas fa-edit"></i> Düzenle</a>
+    <a href="{{ url_for('sube.sube_liste') }}" class="btn btn-ghost"><i class="fas fa-arrow-left"></i> Geri</a>
+</div>
+<div class="grid grid-2" style="gap:16px;">
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Şube Bilgileri</h3></div>
+        <div style="padding:16px;">
+            <table style="width:100%;font-size:13px;border-collapse:collapse;">
+                {% for label, val in [('Şube Kodu', sube.sube_kodu),('Şehir', sube.sehir),('Telefon',sube.telefon),('E-posta',sube.email),('Müdür',sube.mudur),('Adres',sube.adres),('Kayıt',sube.olusturma_tarihi)] %}
+                <tr style="border-bottom:1px solid var(--gri-kenar);">
+                    <td style="padding:8px 0;color:var(--gri);width:120px;">{{ label }}</td>
+                    <td style="padding:8px 0;font-weight:500;">{{ val or '—' }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Depolar</h3></div>
+        <div style="padding:16px;">
+            {% for d in sube.depolar if d.aktif %}
+            <div style="padding:8px 0;border-bottom:1px solid var(--gri-kenar);font-size:13px;">
+                <i class="fas fa-warehouse" style="color:var(--sari);margin-right:6px;"></i>{{ d.depo_adi }}
+                <span style="color:var(--gri);font-size:11px;margin-left:4px;">{{ d.depo_kodu }}</span>
+            </div>
+            {% else %}<p style="color:var(--gri);font-size:13px;">Bu şubede depo yok</p>{% endfor %}
+        </div>
+    </div>
+    <div class="card" style="grid-column:1/-1;">
+        <div class="card-header"><h3 class="card-title">Personel</h3></div>
+        <div class="table-container">
+            <table class="data-table">
+                <thead><tr><th>Ad Soyad</th><th>Pozisyon</th><th>Departman</th><th>Telefon</th></tr></thead>
+                <tbody>
+                {% for p in sube.personeller if p.aktif %}
+                <tr>
+                    <td>{{ p.ad }} {{ p.soyad }}</td>
+                    <td>{{ p.pozisyon or '—' }}</td>
+                    <td>{{ p.departman or '—' }}</td>
+                    <td>{{ p.telefon or '—' }}</td>
+                </tr>
+                {% else %}<tr><td colspan="4" style="text-align:center;color:var(--gri);">Bu şubede personel yok</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

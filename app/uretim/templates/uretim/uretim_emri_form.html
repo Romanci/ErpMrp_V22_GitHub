@@ -1,0 +1,66 @@
+﻿<!-- Uretim emri olusturma formu -->
+{% extends "base.html" %}
+
+{% block title %}Yeni Uretim Emri - ERP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Yeni Uretim Emri</h1>
+    <a href="{{ url_for('uretim.uretim_emri_liste') }}" class="btn btn-secondary">Listeye Don</a>
+</div>
+
+<form method="POST" class="form-container">
+    <div class="form-row">
+        <div class="form-group">
+            <label for="emir_no">Emir No *</label>
+            <input type="text" id="emir_no" name="emir_no" required>
+        </div>
+        <div class="form-group">
+            <label for="urun_id">Urun *</label>
+            <select id="urun_id" name="urun_id" required>
+                <option value="">Seciniz</option>
+                {% for urun in urunler %}
+                <option value="{{ urun.id }}">{{ urun.stok_kodu }} - {{ urun.urun_adi }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label for="miktar">Miktar *</label>
+            <input type="number" step="0.01" id="miktar" name="miktar" required>
+        </div>
+        <div class="form-group">
+            <label for="oncelik">Oncelik</label>
+            <select id="oncelik" name="oncelik">
+                <option value="dusuk">Dusuk</option>
+                <option value="normal" selected>Normal</option>
+                <option value="yuksek">Yuksek</option>
+                <option value="acil">Acil</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label for="planlanan_baslangic">Planlanan Baslangic</label>
+            <input class="datepicker" type="text" id="planlanan_baslangic" name="planlanan_baslangic" placeholder="GG.AA.YYYY">
+        </div>
+        <div class="form-group">
+            <label for="planlanan_bitis">Planlanan Bitis</label>
+            <input class="datepicker" type="text" id="planlanan_bitis" name="planlanan_bitis" placeholder="GG.AA.YYYY">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="aciklama">Aciklama</label>
+        <textarea id="aciklama" name="aciklama" rows="3"></textarea>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Olustur</button>
+        <a href="{{ url_for('uretim.uretim_emri_liste') }}" class="btn btn-secondary">Iptal</a>
+    </div>
+</form>
+{% endblock %}

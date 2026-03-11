@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Kapasite Planlama{% endblock %}
+{% block page_title %}Kapasite Planlama{% endblock %}
+{% block content %}
+
+<div class="stats-grid">
+    <div class="stat-card uretim">
+        <div class="stat-icon"><i class="fas fa-industry"></i></div>
+        <div class="stat-value">{{ tezgah_verileri | length }}</div>
+        <div class="stat-label">Aktif Tezgah</div>
+    </div>
+    <div class="stat-card satin-alma">
+        <div class="stat-icon"><i class="fas fa-tasks"></i></div>
+        <div class="stat-value">{{ aktif_operasyon }}</div>
+        <div class="stat-label">Bekleyen Operasyon</div>
+        <span class="stat-change">Tüm tezgahlarda</span>
+    </div>
+    <div class="stat-card stok">
+        <div class="stat-icon"><i class="fas fa-clock"></i></div>
+        <div class="stat-value">{{ toplam_is_saati }}</div>
+        <div class="stat-label">Toplam İş Saati</div>
+        <span class="stat-change">Planlanan</span>
+    </div>
+    <div class="stat-card {% if asiri_yuklu > 0 %}kritik{% else %}stok{% endif %}">
+        <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="stat-value">{{ asiri_yuklu }}</div>
+        <div class="stat-label">Aşırı Yüklü Tezgah</div>
+        <span class="stat-change {% if asiri_yuklu > 0 %}negative{% endif %}">%90 üzeri</span>
+    </div>
+</div>
+
+<!-- Tezgah Kapasite Durumu -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Tezgah Kapasiteleri</h3>
+        <div style="font-size:12px;color:var(--color-muted);">
+            Beklemede: {{ bekleyen_emir }} emir &nbsp;|&nbsp; Devam: {{ devam_eden }} emir
+        </div>
+    </div>
+    <div class="table-container" style="box-shadow:none;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Tezgah</th><th>Kod</th><th>Tip</th>
+                    <th>Aktif Operasyon</th><th>Toplam Süre</th><th>İş Günü</th>
+                    <th>Haftalık Yük</th><th>Durum</th><th>Detay</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for v in tezgah_verileri | sort(attribute='yukluluk', reverse=True) %}
+            <tr>
+                <td><strong>{{ v.tezgah.tezgah_adi }}</strong></td>
+                <td><code>{{ v.tezgah.tezgah_kodu }}</code></td>
+                <td>{{ v.tezgah.tezgah_tipi or '-' }}</td>
+                <td style="text-align:center;">{{ v.operasyon_sayisi }}</td>
+                <td>{{ v.toplam_sure_saat }} saat</td>
+                <td>{{ v.kac_gun }} gün</td>
+                <td style="width:160px;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <div style="flex:1;background:#e5e7eb;border-radius:9999px;height:10px;">
+                            <div style="width:{{ v.yukluluk }}%;height:10px;border-radius:9999px;background:{% if v.durum == 'asiri' %}var(--color-red){% elif v.durum == 'yogun' %}var(--color-yellow){% else %}var(--color-green){% endif %};"></div>
+                        </div>
+                        <span style="font-size:12px;min-width:36px;">{{ v.yukluluk }}%</span>
+                    </div>
+                </td>
+                <td>
+                    <span class="status-badge {% if v.durum == 'asiri' %}iptal{% elif v.durum == 'yogun' %}beklemede{% else %}acik{% endif %}">
+                        {{ {'asiri':'Aşırı Yüklü','yogun':'Yoğun','normal':'Normal'}[v.durum] }}
+                    </span>
+                </td>
+                <td>
+                    <a href="{{ url_for('kapasite.tezgah_kapasite_detay', tezgah_id=v.tezgah.id) }}" class="btn btn-ghost btn-sm">Detay</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="9" style="text-align:center;padding:32px;color:var(--color-muted);">
+                Tezgah bulunamadı. <a href="{{ url_for('tezgah.tezgah_ekle') }}">Tezgah ekle →</a>
+            </td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Kapasite Grafigi -->
+<div class="card" style="margin-top:16px;">
+    <div class="card-header">
+        <h3 class="card-title">Kapasite Görselleştirme</h3>
+    </div>
+    <div style="padding:20px;">
+        {% for v in tezgah_verileri %}
+        <div style="margin-bottom:14px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px;">
+                <span><strong>{{ v.tezgah.tezgah_adi }}</strong></span>
+                <span style="color:var(--color-muted);">{{ v.toplam_sure_saat }}h / {{ v.operasyon_sayisi }} op.</span>
+            </div>
+            <div style="background:#e5e7eb;border-radius:9999px;height:20px;position:relative;overflow:hidden;">
+                <div style="width:{{ v.yukluluk }}%;height:100%;background:{% if v.durum == 'asiri' %}var(--color-red){% elif v.durum == 'yogun' %}#f59e0b{% else %}var(--color-green){% endif %};border-radius:9999px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;transition:width 0.5s;">
+                    {% if v.yukluluk > 10 %}
+                    <span style="color:white;font-size:11px;font-weight:600;">{{ v.yukluluk }}%</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block title %}{{ proje.proje_no }}{% endblock %}
+{% block page_title %}{{ proje.proje_no }} — {{ proje.proje_adi }}{% endblock %}
+{% block content %}
+
+<!-- Üst Bilgi -->
+<div style="display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap;">
+    <div class="card" style="flex:1;min-width:200px;padding:16px;">
+        <div style="font-size:12px;color:#94a3b8;">MÜŞTERİ</div>
+        <div style="font-weight:600;margin-top:4px;">{{ proje.musteri_adi }}</div>
+    </div>
+    <div class="card" style="flex:1;min-width:200px;padding:16px;">
+        <div style="font-size:12px;color:#94a3b8;">AŞAMA</div>
+        <div style="margin-top:4px;">
+            <span style="background:{{ proje.asama_rengi }};color:white;
+                         padding:4px 12px;border-radius:12px;font-size:13px;">
+                {{ proje.asama_adi }}
+            </span>
+        </div>
+    </div>
+    <div class="card" style="flex:1;min-width:200px;padding:16px;">
+        <div style="font-size:12px;color:#94a3b8;">BÜTÇE</div>
+        <div style="font-weight:600;margin-top:4px;">
+            {{ '{:,.2f}'.format(proje.planlanan_maliyet) }} {{ proje.para_birimi }}
+        </div>
+        <div style="font-size:12px;color:#64748b;">
+            Gerçekleşen: {{ '{:,.2f}'.format(proje.gerceklesen_maliyet) }}
+            ({{ proje.butce_kullanim_yuzdesi }}%)
+        </div>
+        <div style="background:#e2e8f0;border-radius:4px;height:4px;margin-top:6px;">
+            {% set yuzde = proje.butce_kullanim_yuzdesi %}
+            <div style="width:{{ [yuzde,100]|min }}%;
+                        background:{% if yuzde > 90 %}#ef4444{% elif yuzde > 70 %}#f59e0b{% else %}#22c55e{% endif %};
+                        height:4px;border-radius:4px;"></div>
+        </div>
+    </div>
+    <div class="card" style="flex:1;min-width:200px;padding:16px;">
+        <div style="font-size:12px;color:#94a3b8;">TARİH</div>
+        <div style="font-size:13px;margin-top:4px;">
+            {{ proje.baslangic_tarihi or '—' }} → {{ proje.bitis_tarihi or '—' }}
+        </div>
+        {% if proje.teklif %}
+        <div style="font-size:12px;color:#64748b;margin-top:4px;">
+            Teklif: {{ proje.teklif.teklif_no }}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Aşama Güncelle + Aksiyonlar -->
+<div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+    <form method="POST" action="{{ url_for('proje.proje_asama_guncelle', id=proje.id) }}"
+          style="display:flex;gap:8px;align-items:center;">
+        <select name="asama" class="form-select" style="width:auto;">
+            {% for asama_key, asama_label in asamalar %}
+            <option value="{{ asama_key }}" {{ 'selected' if proje.asama == asama_key }}>
+                {{ asama_label }}
+            </option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">Aşamayı Güncelle</button>
+    </form>
+    <a href="{{ url_for('proje.proje_form', id=proje.id) }}" class="btn btn-ghost btn-sm">
+        <i class="fas fa-edit"></i> Düzenle
+    </a>
+    <a href="{{ url_for('proje.proje_dashboard') }}" class="btn btn-ghost btn-sm">← Geri</a>
+</div>
+
+<!-- Görevler -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">
+            Görevler
+            {% if proje.tamamlanmamis_gorev_sayisi > 0 %}
+            <span style="background:#f59e0b;color:white;padding:2px 8px;
+                         border-radius:10px;font-size:12px;margin-left:8px;">
+                {{ proje.tamamlanmamis_gorev_sayisi }} bekliyor
+            </span>
+            {% endif %}
+        </h3>
+    </div>
+
+    <!-- Görev Ekle Formu -->
+    <div style="padding:16px;border-bottom:1px solid #e2e8f0;background:#f8fafc;">
+        <form method="POST" action="{{ url_for('proje.gorev_ekle', proje_id=proje.id) }}">
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr auto;gap:8px;align-items:flex-end;">
+                <div>
+                    <label class="form-label" style="font-size:11px;">Görev *</label>
+                    <input type="text" name="baslik" class="form-input" style="font-size:12px;"
+                           placeholder="Görev açıklaması" required>
+                </div>
+                <div>
+                    <label class="form-label" style="font-size:11px;">Departman</label>
+                    <select name="departman" class="form-select" style="font-size:12px;">
+                        <option value="yonetim">Yönetim</option>
+                        <option value="uretim">Üretim</option>
+                        <option value="satin_alma">Satın Alma</option>
+                        <option value="depo">Depo</option>
+                        <option value="muhasebe">Muhasebe</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label" style="font-size:11px;">Atanan</label>
+                    <select name="atanan_id" class="form-select" style="font-size:12px;">
+                        <option value="">— Genel —</option>
+                        {% for k in kullanicilar %}
+                        <option value="{{ k.id }}">{{ k.ad }} {{ k.soyad }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label" style="font-size:11px;">Son Tarih</label>
+                    <input type="text" name="son_tarih" class="datepicker form-input"
+                           style="font-size:12px;" placeholder="GG.AA.YYYY">
+                </div>
+                <div>
+                    <label class="form-label" style="font-size:11px;">Öncelik</label>
+                    <select name="oncelik" class="form-select" style="font-size:12px;">
+                        <option value="normal">Normal</option>
+                        <option value="yuksek">Yüksek</option>
+                        <option value="kritik">Kritik</option>
+                        <option value="dusuk">Düşük</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Ekle</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Görev Listesi -->
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Görev</th>
+                <th>Departman</th>
+                <th>Atanan</th>
+                <th>Son Tarih</th>
+                <th>Öncelik</th>
+                <th>Durum</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for g in proje.gorevler|sort(attribute='durum') %}
+        <tr style="{{ 'opacity:0.5;' if g.durum == 'tamamlandi' }}">
+            <td>{{ g.baslik }}</td>
+            <td>
+                <span style="font-size:11px;background:#f1f5f9;padding:2px 6px;border-radius:4px;">
+                    {{ {'yonetim':'Yönetim','uretim':'Üretim','satin_alma':'Satın Alma',
+                        'depo':'Depo','muhasebe':'Muhasebe'}.get(g.departman, g.departman) }}
+                </span>
+            </td>
+            <td>{{ (g.atanan.ad + ' ' + g.atanan.soyad) if g.atanan else '—' }}</td>
+            <td>{{ g.son_tarih or '—' }}</td>
+            <td>
+                <span style="color:{{ g.oncelik_rengi }};font-weight:600;font-size:12px;">
+                    ● {{ {'dusuk':'Düşük','normal':'Normal','yuksek':'Yüksek','kritik':'KRİTİK'}.get(g.oncelik, g.oncelik) }}
+                </span>
+            </td>
+            <td>
+                <form method="POST" action="{{ url_for('proje.gorev_durum_guncelle', gorev_id=g.id) }}"
+                      style="display:inline;">
+                    <select name="durum" class="form-select" style="font-size:11px;padding:2px 4px;width:auto;"
+                            onchange="this.form.submit()">
+                        <option value="bekliyor"   {{ 'selected' if g.durum == 'bekliyor' }}>Bekliyor</option>
+                        <option value="devam"      {{ 'selected' if g.durum == 'devam' }}>Devam Ediyor</option>
+                        <option value="tamamlandi" {{ 'selected' if g.durum == 'tamamlandi' }}>✓ Tamamlandı</option>
+                        <option value="iptal"      {{ 'selected' if g.durum == 'iptal' }}>İptal</option>
+                    </select>
+                </form>
+            </td>
+            <td style="color:#94a3b8;font-size:11px;">
+                {{ g.tamamlanma_tarihi if g.durum == 'tamamlandi' else '' }}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:24px;">
+            Henüz görev eklenmemiş.
+        </td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

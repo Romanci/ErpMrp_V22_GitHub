@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}MRP - Malzeme İhtiyaç Planlaması{% endblock %}
+{% block page_title %}MRP Analizi{% endblock %}
+{% block extra_actions %}
+<a href="{{ url_for('export.excel_mrp') }}" class="btn btn-ghost btn-sm">
+    <i class="fas fa-file-excel"></i> Excel Export
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Ozet Kartlar -->
+<div class="stats-grid">
+    <div class="stat-card uretim">
+        <div class="stat-icon"><i class="fas fa-industry"></i></div>
+        <div class="stat-value">{{ aktif_emir_sayisi }}</div>
+        <div class="stat-label">Aktif Üretim Emri</div>
+        <span class="stat-change">Beklemede + Devam</span>
+    </div>
+    <div class="stat-card stok">
+        <div class="stat-icon"><i class="fas fa-boxes"></i></div>
+        <div class="stat-value">{{ toplam_malzeme }}</div>
+        <div class="stat-label">Toplam Malzeme</div>
+        <span class="stat-change">BOM'dan hesaplandi</span>
+    </div>
+    <div class="stat-card" style="border-left: 4px solid var(--color-green);">
+        <div class="stat-icon" style="background: var(--color-green);"><i class="fas fa-check-circle"></i></div>
+        <div class="stat-value" style="color: var(--color-green);">{{ tamam_malzeme }}</div>
+        <div class="stat-label">Stok Yeterli</div>
+        <span class="stat-change positive">Siparis gerekmez</span>
+    </div>
+    <div class="stat-card kritik">
+        <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="stat-value">{{ eksik_malzeme }}</div>
+        <div class="stat-label">Eksik Malzeme</div>
+        <span class="stat-change {% if eksik_malzeme > 0 %}negative{% endif %}">Siparis gerekli</span>
+    </div>
+</div>
+
+{% if aktif_emir_sayisi == 0 %}
+<div class="card">
+    <div style="text-align:center; padding: 48px; color: var(--color-muted);">
+        <i class="fas fa-info-circle" style="font-size: 3rem; margin-bottom: 16px; display:block;"></i>
+        <h3>Aktif Üretim Emri Yok</h3>
+        <p>MRP analizi için önce <a href="{{ url_for('uretim.uretim_emri_ekle') }}">üretim emri oluşturun</a>.</p>
+    </div>
+</div>
+{% elif sonuclar | length == 0 %}
+<div class="card">
+    <div style="text-align:center; padding: 48px; color: var(--color-muted);">
+        <i class="fas fa-exclamation-circle" style="font-size: 3rem; margin-bottom: 16px; display:block; color: var(--color-yellow);"></i>
+        <h3>BOM Tanımsız</h3>
+        <p>Üretim emirlerindeki ürünlere ait <a href="{{ url_for('bom.bom_liste') }}">ürün ağacı (BOM)</a> tanımlı değil.</p>
+    </div>
+</div>
+{% else %}
+
+<!-- Aksiyon Butonu -->
+{% if eksik_malzeme > 0 %}
+<div class="card" style="border-left: 4px solid var(--color-red); margin-bottom: 16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+            <strong style="color:var(--color-red);">
+                <i class="fas fa-exclamation-circle"></i> {{ eksik_malzeme }} malzeme eksik!
+            </strong>
+            <span style="color:var(--color-muted); margin-left:8px;">
+                Tedarikçi bazında otomatik satın alma siparişi oluşturulabilir.
+            </span>
+        </div>
+        <form method="post" action="{{ url_for('mrp.mrp_siparis_olustur') }}" 
+              onsubmit="return confirm('Eksik malzemeler için otomatik satın alma siparişleri oluşturulsun mu?')">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-cart-plus"></i> Otomatik Sipariş Oluştur
+            </button>
+        </form>
+    </div>
+</div>
+{% else %}
+<div class="card" style="border-left: 4px solid var(--color-green); margin-bottom: 16px;">
+    <strong style="color:var(--color-green);">
+        <i class="fas fa-check-circle"></i> Tüm malzemeler stokta mevcut! Üretim emirleri başlatılabilir.
+    </strong>
+</div>
+{% endif %}
+
+<!-- Malzeme Ihtiyac Tablosu -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Malzeme İhtiyaç Listesi</h3>
+        <span class="status-badge info">{{ sonuclar | length }} kalem</span>
+    </div>
+    <div class="table-container" style="box-shadow:none;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Malzeme</th>
+                    <th>Stok Kodu</th>
+                    <th>Birim</th>
+                    <th>İhtiyaç</th>
+                    <th>Mevcut Stok</th>
+                    <th>Eksik</th>
+                    <th>Karşılanma</th>
+                    <th>Varsayılan Tedarikçi</th>
+                    <th>İlgili Emirler</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in sonuclar %}
+                <tr {% if s.eksik > 0 %}style="background: rgba(239,68,68,0.04);"{% endif %}>
+                    <td><strong>{{ s.urun.urun_adi }}</strong></td>
+                    <td><code>{{ s.urun.stok_kodu }}</code></td>
+                    <td>{{ s.urun.birim }}</td>
+                    <td style="font-weight:600;">{{ s.ihtiyac_toplam }}</td>
+                    <td style="color: {% if s.mevcut_stok <= 0 %}var(--color-red){% elif s.mevcut_stok < s.ihtiyac_toplam %}var(--color-yellow){% else %}var(--color-green){% endif %}; font-weight:600;">
+                        {{ s.mevcut_stok }}
+                    </td>
+                    <td>
+                        {% if s.eksik > 0 %}
+                        <span style="color:var(--color-red); font-weight:700;">{{ s.eksik }}</span>
+                        {% else %}
+                        <span style="color:var(--color-green);">0</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <div style="flex:1; background:#e5e7eb; border-radius:9999px; height:8px;">
+                                <div style="width:{{ s.saglanabilir_oran }}%; background:{% if s.saglanabilir_oran >= 100 %}var(--color-green){% elif s.saglanabilir_oran >= 50 %}var(--color-yellow){% else %}var(--color-red){% endif %}; height:8px; border-radius:9999px;"></div>
+                            </div>
+                            <span style="min-width:36px; font-size:12px;">{{ s.saglanabilir_oran }}%</span>
+                        </div>
+                    </td>
+                    <td>
+                        {% if s.tedarikci %}
+                            <span class="status-badge acik">{{ s.tedarikci.unvan }}</span>
+                        {% else %}
+                            <span style="color:var(--color-muted); font-size:12px;">Tanımsız</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <details>
+                            <summary style="cursor:pointer; color:var(--color-primary); font-size:12px;">
+                                {{ s.emri_listesi | length }} emir
+                            </summary>
+                            <ul style="margin:4px 0 0 0; padding:0 0 0 16px; font-size:11px; color:var(--color-muted);">
+                                {% for e in s.emri_listesi %}
+                                <li>{{ e.emir_no }} — {{ e.urun_adi }} x{{ e.miktar }} ({{ e.gereken }} {{ s.urun.birim }})</li>
+                                {% endfor %}
+                            </ul>
+                        </details>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Aktif Uretim Emirleri Ozeti -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Analize Dahil Üretim Emirleri</h3>
+        <a href="{{ url_for('uretim.uretim_emri_liste') }}" class="btn btn-ghost btn-sm">Tümünü Gör</a>
+    </div>
+    <div class="table-container" style="box-shadow:none;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Emir No</th>
+                    <th>Ürün</th>
+                    <th>Miktar</th>
+                    <th>Durum</th>
+                    <th>Öncelik</th>
+                    <th>BOM</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emir in emirler %}
+                {% set bom = emir.urun.bomlar | selectattr('gecerli', 'equalto', 1) | list | first %}
+                <tr>
+                    <td><a href="{{ url_for('uretim.uretim_emri_detay', id=emir.id) }}">{{ emir.emir_no }}</a></td>
+                    <td>{{ emir.urun.urun_adi if emir.urun else '-' }}</td>
+                    <td>{{ emir.miktar }} {{ emir.urun.birim if emir.urun else '' }}</td>
+                    <td>
+                        <span class="status-badge {% if emir.durum == 'devam' %}devam{% elif emir.durum == 'beklemede' %}beklemede{% else %}{{ emir.durum }}{% endif %}">
+                            {{ emir.durum | capitalize }}
+                        </span>
+                    </td>
+                    <td>{{ emir.oncelik | capitalize }}</td>
+                    <td>
+                        {% if bom %}
+                        <span class="status-badge acik"><i class="fas fa-check"></i> v{{ bom.versiyon }}</span>
+                        {% else %}
+                        <span class="status-badge iptal"><i class="fas fa-times"></i> Yok</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" style="text-align:center;">Aktif üretim emri bulunamadı.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

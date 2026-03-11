@@ -1,0 +1,417 @@
+{% extends "base.html" %}
+{% block title %}{{ personel.tam_ad }}{% endblock %}
+{% block page_title %}{{ personel.tam_ad }}{% endblock %}
+{% block content %}
+
+<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+    <a href="{{ url_for('ik.personel_form', id=personel.id) }}" class="btn btn-primary"><i class="fas fa-edit"></i> Düzenle</a>
+    <a href="{{ url_for('ik.personel_liste') }}" class="btn btn-ghost"><i class="fas fa-arrow-left"></i> Listeye Dön</a>
+</div>
+
+<!-- Üst Bilgi Kartı -->
+<div class="card" style="margin-bottom:16px;">
+    <div style="padding:20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+        <div style="width:64px;height:64px;border-radius:50%;background:var(--sari);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#1a1a2e;flex-shrink:0;">
+            {{ personel.ad[0] }}{{ personel.soyad[0] }}
+        </div>
+        <div style="flex:1;">
+            <div style="font-size:1.2rem;font-weight:700;">{{ personel.tam_ad }}</div>
+            <div style="color:var(--gri);font-size:13px;">{{ personel.pozisyon or '' }} {% if personel.departman %}— {{ personel.departman }}{% endif %}</div>
+            <div style="font-size:12px;color:var(--gri);margin-top:4px;">Sicil: {{ personel.sicil_no }} | İşe Başlama: {{ personel.ise_baslama or '—' }} | Kıdem: {{ personel.kidem_yil }} yıl {% if personel.yas %}| Yaş: {{ personel.yas }}{% endif %}</div>
+        </div>
+        <!-- İzin özeti -->
+        <div style="display:flex;gap:12px;">
+            {% for renk, deger, etiket in [('#3b82f6', izin_hakki, 'İzin Hakkı'), ('#ef4444', kullanilan, 'Kullanılan'), ('#22c55e', kalan, 'Kalan')] %}
+            <div style="text-align:center;padding:10px 16px;background:var(--gri-acik);border-radius:8px;border-top:3px solid {{ renk }};">
+                <div style="font-size:1.4rem;font-weight:700;color:{{ renk }};">{{ deger }}</div>
+                <div style="font-size:11px;color:var(--gri);">{{ etiket }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Sekmeler -->
+<div style="display:flex;gap:4px;margin-bottom:16px;border-bottom:2px solid var(--gri-kenar);overflow-x:auto;">
+    {% for sid, sad in [('izin','İzinler'),('devamsizlik','Devamsızlık'),('zimmet','KKD/Zimmet'),('maas','Maaş'),('bilgi','Ek Bilgiler')] %}
+    <button type="button" onclick="sekmeGoster('{{ sid }}')" id="btn-{{ sid }}"
+        style="padding:8px 14px;border:none;background:none;font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--gri);white-space:nowrap;">
+        {{ sad }}
+        {% if sid=='izin' and bekleyen_izinler %}<span style="background:var(--kirmizi);color:white;font-size:10px;border-radius:10px;padding:1px 5px;margin-left:4px;">{{ bekleyen_izinler|length }}</span>{% endif %}
+    </button>
+    {% endfor %}
+</div>
+
+<!-- İZİNLER -->
+<div id="sekme-izin" class="sekme-icerik">
+    {% if bekleyen_izinler %}
+    <div class="card" style="margin-bottom:12px;border-left:4px solid var(--sari);">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-clock" style="color:var(--sari);"></i> Bekleyen Talepler</h3></div>
+        <div class="table-container">
+            <table class="data-table">
+                <thead><tr><th>Tür</th><th>Başlangıç</th><th>Bitiş</th><th>Gün</th><th>Açıklama</th><th>İşlem</th></tr></thead>
+                <tbody>
+                {% for iz in bekleyen_izinler %}
+                <tr>
+                    <td>{{ iz.izin_turu }}{% if iz.vefat_yakin %} ({{ iz.vefat_yakin }}){% endif %}</td>
+                    <td>{{ iz.baslangic }}</td><td>{{ iz.bitis }}</td><td>{{ iz.gun_sayisi }}</td>
+                    <td style="font-size:12px;">{{ iz.aciklama or '—' }}</td>
+                    <td style="display:flex;gap:4px;">
+                        <form method="POST" action="{{ url_for('ik.izin_onayla', izin_id=iz.id) }}" style="display:inline;">
+                            <button class="btn btn-ghost btn-sm" style="color:var(--yesil);" title="Onayla"><i class="fas fa-check"></i></button>
+                        </form>
+                        <form method="POST" action="{{ url_for('ik.izin_reddet', izin_id=iz.id) }}" style="display:inline;">
+                            <input type="hidden" name="red_nedeni" value="">
+                            <button class="btn btn-ghost btn-sm" style="color:var(--kirmizi);" title="Reddet"><i class="fas fa-times"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Yeni izin formu -->
+    <div class="card" style="margin-bottom:12px;">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-plus"></i> İzin Ekle</h3></div>
+        <form method="POST" action="{{ url_for('ik.izin_ekle', personel_id=personel.id) }}" style="padding:16px;">
+            <div class="grid grid-2" style="gap:10px;margin-bottom:10px;">
+                <div class="form-group">
+                    <label class="form-label">İzin Türü *</label>
+                    <select name="izin_turu" class="form-select" onchange="izinTuruDegisti(this.value)">
+                        {% for kod, ad in izin_turleri %}
+                        <option value="{{ kod }}">{{ ad }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Giriş Türü</label>
+                    <select name="talep_turu" class="form-select">
+                        <option value="talep">Talep (onay bekler)</option>
+                        <option value="direkt">Direkt Onaylı</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Başlangıç *</label>
+                    <input type="text" name="baslangic" class="datepicker form-input" placeholder="GG.AA.YYYY" id="izin-bas">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Bitiş *</label>
+                    <input type="text" name="bitis" class="datepicker form-input" placeholder="GG.AA.YYYY" id="izin-bit">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Gün Sayısı *</label>
+                    <input type="number" name="gun_sayisi" class="form-input" id="izin-gun" step="0.5" min="0.5">
+                </div>
+                <div class="form-group" id="vefat-alan" style="display:none;">
+                    <label class="form-label">Vefat Eden Yakın</label>
+                    <select name="vefat_yakin" class="form-select">
+                        {% for y in vefat_yakinlari %}
+                        <option value="{{ y }}">{{ y|capitalize }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group" id="hastalik-alan" style="display:none;">
+                    <label class="form-label">Rapor No</label>
+                    <input type="text" name="rapor_no" class="form-input" placeholder="Rapor numarası">
+                </div>
+                <div class="form-group" id="hastane-alan" style="display:none;">
+                    <label class="form-label">Hastane</label>
+                    <input type="text" name="rapor_hastane" class="form-input">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Açıklama</label>
+                <input type="text" name="aciklama" class="form-input">
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-save"></i> Kaydet</button>
+        </form>
+    </div>
+
+    <!-- İzin geçmişi -->
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">İzin Geçmişi</h3></div>
+        <div class="table-container">
+            <table class="data-table">
+                <thead><tr><th>Tür</th><th>Başlangıç</th><th>Bitiş</th><th>Gün</th><th>Durum</th><th>Onaylayan</th><th></th></tr></thead>
+                <tbody>
+                {% for iz in son_izinler %}
+                <tr>
+                    <td>{{ iz.izin_turu }}{% if iz.vefat_yakin %}<br><small style="color:var(--gri);">{{ iz.vefat_yakin }}</small>{% endif %}</td>
+                    <td>{{ iz.baslangic }}</td><td>{{ iz.bitis }}</td><td>{{ iz.gun_sayisi }}</td>
+                    <td><span class="status-badge {% if iz.durum=='onaylandi' %}acik{% elif iz.durum=='reddedildi' %}iptal{% else %}beklemede{% endif %}">{{ iz.durum }}</span></td>
+                    <td style="font-size:11px;">{{ iz.onay_tarihi or '—' }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('ik.izin_sil', izin_id=iz.id) }}" onsubmit="return confirm('İzin silinsin mi?')">
+                            <button class="btn btn-ghost btn-sm" style="color:var(--kirmizi);"><i class="fas fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" style="text-align:center;color:var(--gri);padding:16px;">Kayıt yok</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- DEVAMSIZLIK -->
+<div id="sekme-devamsizlik" class="sekme-icerik" style="display:none;">
+    <div class="card" style="margin-bottom:12px;">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-plus"></i> Devamsızlık Ekle</h3></div>
+        <form method="POST" action="{{ url_for('ik.devamsizlik_ekle', personel_id=personel.id) }}" style="padding:16px;">
+            <div class="grid grid-2" style="gap:10px;margin-bottom:10px;">
+                <div class="form-group">
+                    <label class="form-label">Tarih *</label>
+                    <input type="text" name="tarih" class="datepicker form-input" placeholder="GG.AA.YYYY" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tür *</label>
+                    <select name="tur" class="form-select">
+                        <option value="gelmedi">Gelmedi</option>
+                        <option value="gec_geldi">Geç Geldi</option>
+                        <option value="erken_ayrildi">Erken Ayrıldı</option>
+                        <option value="yarim_gun">Yarım Gün</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Süre (dakika)</label>
+                    <input type="number" name="sure_dakika" class="form-input" value="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Açıklama</label>
+                    <input type="text" name="aciklama" class="form-input">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-save"></i> Kaydet</button>
+        </form>
+    </div>
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Devamsızlık Geçmişi</h3></div>
+        <div class="table-container">
+            <table class="data-table">
+                <thead><tr><th>Tarih</th><th>Tür</th><th>Süre</th><th>Açıklama</th><th></th></tr></thead>
+                <tbody>
+                {% for d in devamsizliklar %}
+                <tr>
+                    <td>{{ d.tarih }}</td>
+                    <td>{{ d.tur.replace('_',' ')|title }}</td>
+                    <td>{% if d.sure_dakika %}{{ d.sure_dakika }} dk{% else %}—{% endif %}</td>
+                    <td style="font-size:12px;">{{ d.aciklama or '—' }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('ik.devamsizlik_sil', id=d.id) }}" onsubmit="return confirm('Silinsin mi?')">
+                            <button class="btn btn-ghost btn-sm" style="color:var(--kirmizi);"><i class="fas fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" style="text-align:center;color:var(--gri);padding:16px;">Kayıt yok</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- KKD / ZİMMET -->
+<div id="sekme-zimmet" class="sekme-icerik" style="display:none;">
+    <div class="card" style="margin-bottom:12px;">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-plus"></i> Zimmet Ver</h3></div>
+        <form method="POST" action="{{ url_for('ik.zimmet_ver', personel_id=personel.id) }}" style="padding:16px;">
+            <div class="grid grid-2" style="gap:10px;margin-bottom:10px;">
+                <div class="form-group">
+                    <label class="form-label">KKD / Kıyafet *</label>
+                    <select name="kkd_tanim_id" class="form-select" required>
+                        <option value="">— Seç —</option>
+                        {% set tanimlar = namespace(liste=[]) %}
+                        {% for z in zimmetler %}{% endfor %}
+                    </select>
+                    <script>
+                    fetch('/ik/api/kkd-tanimlar').then(r=>r.json()).then(d=>{
+                        const sel = document.querySelector('select[name="kkd_tanim_id"]');
+                        d.forEach(k => {
+                            const o = new Option(`${k.ad} (${k.tur})`, k.id);
+                            sel.add(o);
+                        });
+                    }).catch(()=>{});
+                    </script>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Beden/Numara</label>
+                    <input type="text" name="beden" class="form-input" value="{{ personel.ek_bilgi.ust_beden if personel.ek_bilgi else '' }}" placeholder="M, 42, L...">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Miktar</label>
+                    <input type="number" name="miktar" class="form-input" value="1" min="1" step="1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Veriliş Tarihi</label>
+                    <input type="text" name="verilis_tarihi" class="datepicker form-input" placeholder="GG.AA.YYYY">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-hand-holding"></i> Zimmet Ver</button>
+        </form>
+    </div>
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Zimmet Listesi</h3></div>
+        <div class="table-container">
+            <table class="data-table">
+                <thead><tr><th>KKD / Kıyafet</th><th>Miktar</th><th>Beden</th><th>Veriliş</th><th>Yenileme</th><th>Durum</th><th>İşlem</th></tr></thead>
+                <tbody>
+                {% for z in zimmetler %}
+                <tr style="{% if z.yenileme_gerekiyor %}background:rgba(245,197,24,0.05);{% endif %}">
+                    <td style="font-weight:500;">{{ z.kkd.ad if z.kkd else '?' }}
+                        {% if z.yenileme_gerekiyor %}<i class="fas fa-exclamation-circle" style="color:var(--sari);" title="Yenileme gerekiyor"></i>{% endif %}
+                    </td>
+                    <td>{{ z.miktar }}</td>
+                    <td>{{ z.beden or '—' }}</td>
+                    <td style="font-size:12px;">{{ z.verilis_tarihi }}</td>
+                    <td style="font-size:12px;">{{ z.yenileme_tarihi or '—' }}</td>
+                    <td>
+                        <span class="status-badge {% if z.durum=='aktif' %}acik{% elif z.durum=='iade_edildi' %}beklemede{% else %}iptal{% endif %}" style="font-size:10px;">
+                            {{ z.durum.replace('_',' ') }}
+                        </span>
+                    </td>
+                    <td style="display:flex;gap:4px;flex-wrap:wrap;">
+                        {% if z.durum == 'aktif' %}
+                        <form method="POST" action="{{ url_for('ik.zimmet_durum', id=z.id) }}" style="display:inline;">
+                            <input type="hidden" name="durum" value="iade_edildi">
+                            <button class="btn btn-ghost btn-sm" title="İade Al"><i class="fas fa-undo"></i></button>
+                        </form>
+                        <form method="POST" action="{{ url_for('ik.zimmet_yenile', id=z.id) }}" style="display:inline;" onsubmit="return confirm('Yeni zimmet verilsin mi?')">
+                            <input type="hidden" name="eski_durum" value="kirik">
+                            <button class="btn btn-ghost btn-sm" style="color:var(--sari);" title="Yenile (Kırık/Bozuk)"><i class="fas fa-sync"></i></button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" style="text-align:center;color:var(--gri);padding:16px;">Zimmet kaydı yok</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- MAAŞ -->
+<div id="sekme-maas" class="sekme-icerik" style="display:none;">
+    <div class="card" style="margin-bottom:12px;">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-plus"></i> Maaş Ekle</h3></div>
+        <form method="POST" action="{{ url_for('ik.maas_ekle', personel_id=personel.id) }}" style="padding:16px;">
+            <div class="grid grid-2" style="gap:10px;margin-bottom:10px;">
+                <div class="form-group">
+                    <label class="form-label">Dönem (YYYY-AA) *</label>
+                    <input type="text" name="donem" class="form-input" placeholder="2025-01" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Brüt Maaş *</label>
+                    <input type="number" name="brut_maas" class="form-input" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Prim</label>
+                    <input type="number" name="prim" class="form-input" value="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Kesinti</label>
+                    <input type="number" name="kesinti" class="form-input" value="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Ödeme Tarihi</label>
+                    <input type="text" name="odeme_tarihi" class="datepicker form-input" placeholder="GG.AA.YYYY">
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:22px;">
+                    <input type="checkbox" name="odendi_mi" id="odendi_mi" value="1">
+                    <label for="odendi_mi" style="font-size:13px;cursor:pointer;">Ödendi</label>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-save"></i> Kaydet</button>
+        </form>
+    </div>
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Maaş Geçmişi</h3></div>
+        <div class="table-container">
+            <table class="data-table">
+                <thead><tr><th>Dönem</th><th>Brüt</th><th>Prim</th><th>Kesinti</th><th>Net</th><th>Ödeme</th><th>Durum</th></tr></thead>
+                <tbody>
+                {% for m in personel.maas_kayitlari|sort(attribute='donem', reverse=true) %}
+                <tr>
+                    <td style="font-weight:600;">{{ m.donem }}</td>
+                    <td>{{ m.brut_maas|round(2) }} TL</td>
+                    <td style="color:var(--yesil);">{{ m.prim }} TL</td>
+                    <td style="color:var(--kirmizi);">{{ m.kesinti }} TL</td>
+                    <td style="font-weight:700;">{{ m.net_maas|round(2) }} TL</td>
+                    <td style="font-size:12px;">{{ m.odeme_tarihi or '—' }}</td>
+                    <td><span class="status-badge {% if m.odendi_mi %}acik{% else %}beklemede{% endif %}">{% if m.odendi_mi %}Ödendi{% else %}Bekliyor{% endif %}</span></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" style="text-align:center;color:var(--gri);padding:16px;">Maaş kaydı yok</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- EK BİLGİLER -->
+<div id="sekme-bilgi" class="sekme-icerik" style="display:none;">
+{% set ek = personel.ek_bilgi %}
+<div class="grid grid-3" style="gap:16px;">
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-heartbeat"></i> Sağlık</h3></div>
+        <div style="padding:14px;">
+            {% for etiket, deger in [('Kan Grubu', ek.kan_grubu if ek else None),('Boy', (ek.boy|string + ' cm') if ek and ek.boy else None),('Kilo', (ek.kilo|string + ' kg') if ek and ek.kilo else None),('Kronik Hastalık', ek.kronik_hastalik if ek else None),('İlaç', ek.ilac_kullanimi if ek else None)] %}
+            <div style="padding:6px 0;border-bottom:1px solid var(--gri-kenar);font-size:13px;display:flex;justify-content:space-between;">
+                <span style="color:var(--gri);">{{ etiket }}</span>
+                <span style="font-weight:500;">{{ deger or '—' }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-tshirt"></i> Beden Ölçüleri</h3></div>
+        <div style="padding:14px;">
+            {% for etiket, deger in [('Üst Beden', ek.ust_beden if ek else None),('Alt Beden', ek.alt_beden if ek else None),('Ayak No', ek.ayak_numarasi if ek else None),('Baret', ek.baret_bedeni if ek else None)] %}
+            <div style="padding:6px 0;border-bottom:1px solid var(--gri-kenar);font-size:13px;display:flex;justify-content:space-between;">
+                <span style="color:var(--gri);">{{ etiket }}</span>
+                <span style="font-weight:500;">{{ deger or '—' }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-phone-alt" style="color:var(--kirmizi);"></i> Acil İletişim</h3></div>
+        <div style="padding:14px;">
+            {% for etiket, deger in [('Ad Soyad', ek.acil_ad if ek else None),('Telefon', ek.acil_tel if ek else None),('Yakınlık', ek.acil_yakinlik if ek else None)] %}
+            <div style="padding:6px 0;border-bottom:1px solid var(--gri-kenar);font-size:13px;display:flex;justify-content:space-between;">
+                <span style="color:var(--gri);">{{ etiket }}</span>
+                <span style="font-weight:500;">{{ deger or '—' }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+function sekmeGoster(id) {
+    document.querySelectorAll('.sekme-icerik').forEach(s => s.style.display='none');
+    document.querySelectorAll('[id^="btn-"]').forEach(b => {
+        b.style.borderBottomColor='transparent'; b.style.color='var(--gri)';
+    });
+    document.getElementById('sekme-'+id).style.display='block';
+    const btn = document.getElementById('btn-'+id);
+    if (btn) { btn.style.borderBottomColor='var(--sari)'; btn.style.color='var(--yazi)'; }
+}
+function izinTuruDegisti(v) {
+    document.getElementById('vefat-alan').style.display = v==='vefat' ? 'block' : 'none';
+    document.getElementById('hastalik-alan').style.display = v==='hastalik' ? 'block' : 'none';
+    document.getElementById('hastane-alan').style.display = v==='hastalik' ? 'block' : 'none';
+    if (v==='vefat') document.getElementById('izin-gun').value = 3;
+}
+sekmeGoster('izin');
+</script>
+{% endblock %}

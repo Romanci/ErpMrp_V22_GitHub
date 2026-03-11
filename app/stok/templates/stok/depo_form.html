@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Depo Düzenle' if depo else 'Yeni Depo' }}{% endblock %}
+{% block page_title %}{{ 'Depo Düzenle' if depo else 'Yeni Depo' }}{% endblock %}
+{% block content %}
+<div class="card" style="max-width:560px;">
+    <div class="card-header">
+        <h3 class="card-title">Depo Bilgileri</h3>
+        <a href="{{ url_for('depo.depo_liste') }}" class="btn btn-ghost btn-sm">← Geri</a>
+    </div>
+    <form method="POST" style="padding:24px;">
+
+        <div class="form-group">
+            <label class="form-label">Depo Kodu *</label>
+            <input type="text" name="depo_kodu" class="form-input"
+                   value="{{ depo.depo_kodu if depo else '' }}"
+                   placeholder="Ör: MRK-D1, DEP-01" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Depo Adı *</label>
+            <input type="text" name="depo_adi" class="form-input"
+                   value="{{ depo.depo_adi if depo else '' }}"
+                   placeholder="Ör: Merkez Ana Depo" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Bağlı Şube</label>
+            <select name="sube_id" class="form-select">
+                <option value="">— Şube seçilmedi —</option>
+                {% for s in subeler %}
+                <option value="{{ s.id }}"
+                    {{ 'selected' if depo and depo.sube_id == s.id }}>
+                    {{ s.sube_adi }}{% if s.merkez_mi %} ★ Merkez{% endif %}
+                </option>
+                {% endfor %}
+            </select>
+            {% if not subeler %}
+            <div style="font-size:12px;color:#f59e0b;margin-top:4px;">
+                ⚠ Henüz şube tanımlanmamış.
+                <a href="{{ url_for('sube.sube_form') }}" style="color:#3b82f6;">Şube ekle →</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Adres</label>
+            <textarea name="adres" class="form-input" rows="2">{{ depo.adres if depo else '' }}</textarea>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:8px;">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Kaydet
+            </button>
+            <a href="{{ url_for('depo.depo_liste') }}" class="btn btn-ghost">İptal</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Sertifikalar{% endblock %}
+{% block page_title %}Kalite Sertifikaları{% endblock %}
+{% block content %}
+<div style="display:flex;gap:8px;margin-bottom:12px;">
+    <a href="{{ url_for('kalite.sertifika_form') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Yeni Sertifika</a>
+</div>
+<div class="card">
+    <div class="table-container">
+        <table class="data-table">
+            <thead><tr><th>Sertifika No</th><th>Ad</th><th>Tür</th><th>Veren Kurum</th><th>Başlangıç</th><th>Bitiş</th><th>Durum</th><th></th></tr></thead>
+            <tbody>
+            {% for s in sertifikalar %}
+            <tr {% if s.suresi_doldu_mu %}style="background:rgba(239,68,68,0.05);"{% elif s.uyari_var_mi %}style="background:rgba(245,197,24,0.05);"{% endif %}>
+                <td style="font-family:monospace;font-size:12px;">{{ s.sertifika_no or '—' }}</td>
+                <td style="font-weight:500;">{{ s.ad }}</td>
+                <td><span class="status-badge acik">{{ s.tur or '—' }}</span></td>
+                <td style="font-size:12px;">{{ s.veren_kurum or '—' }}</td>
+                <td style="font-size:12px;">{{ s.baslangic or '—' }}</td>
+                <td style="font-size:12px;{% if s.suresi_doldu_mu %}color:var(--kirmizi);font-weight:700;{% elif s.uyari_var_mi %}color:var(--sari);font-weight:600;{% endif %}">
+                    {{ s.bitis or '—' }}
+                    {% if s.suresi_doldu_mu %} <i class="fas fa-exclamation-circle"></i>{% elif s.uyari_var_mi %} <i class="fas fa-clock"></i>{% endif %}
+                </td>
+                <td>
+                    {% if s.suresi_doldu_mu %}<span class="status-badge iptal">Süresi Doldu</span>
+                    {% elif s.uyari_var_mi %}<span class="status-badge beklemede">⚠ Yaklaşıyor</span>
+                    {% else %}<span class="status-badge acik">Geçerli</span>{% endif %}
+                </td>
+                <td><a href="{{ url_for('kalite.sertifika_form', id=s.id) }}" class="btn btn-ghost btn-sm"><i class="fas fa-edit"></i></a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" style="text-align:center;padding:24px;color:var(--gri);">Sertifika yok</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

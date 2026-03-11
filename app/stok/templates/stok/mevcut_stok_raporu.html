@@ -1,0 +1,46 @@
+<!-- Mevcut stok raporu -->
+{% extends "base.html" %}
+
+{% block title %}Mevcut Stok Raporu - ERP{% endblock %}
+
+{% block content %}
+{% block page_title %}Mevcut Stok Raporu{% endblock %}
+<div class="page-header">
+    <h1>Mevcut Stok Raporu</h1>
+    <div class="hizli-islem">
+        <a href="{{ url_for('rapor.kritik_stok_raporu') }}" class="btn btn-danger">Kritik Stoklar</a>
+        <a href="{{ url_for('rapor.skt_yaklasan_raporu') }}" class="btn btn-warning">SKT Yaklasanlar</a>
+    </div>
+</div>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Stok Kodu</th>
+            <th>Urun Adi</th>
+            <th>Birim</th>
+            <th>Toplam Giris</th>
+            <th>Toplam Cikis</th>
+            <th>Mevcut Stok</th>
+            <th>Min/Max</th>
+            <th>Durum</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for satir in stok_durumu %}
+        <tr class="{{ 'kritik-stok' if satir.durum == 'kritik' else '' }}">
+            <td>{{ satir.urun.stok_kodu }}</td>
+            <td>{{ satir.urun.urun_adi }}</td>
+            <td>{{ satir.urun.birim }}</td>
+            <td>{{ satir.giris }}</td>
+            <td>{{ satir.cikis }}</td>
+            <td><strong>{{ satir.mevcut }}</strong></td>
+            <td>{{ satir.urun.min_stok }} / {{ satir.urun.max_stok }}</td>
+            <td class="{{ 'hareket-cikis' if satir.durum == 'kritik' else 'hareket-giris' if satir.durum == 'fazla' else '' }}">
+                {{ satir.durum.upper() }}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

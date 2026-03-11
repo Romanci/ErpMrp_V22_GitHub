@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% block title %}Barkod Yönetimi{% endblock %}
+{% block page_title %}Barkod / QR Yönetimi{% endblock %}
+{% block content %}
+
+<div class="grid grid-2" style="gap:20px;">
+
+    <!-- Barkod Okuyucu -->
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-barcode"></i> Barkod Okuyucu</h3></div>
+        <div style="padding:20px;">
+            <p style="font-size:13px;color:var(--gri);margin-bottom:12px;">Barkod okuyucu veya klavyeyle barkod/stok kodu girin:</p>
+            <div style="display:flex;gap:8px;">
+                <input type="text" id="barkod-input" class="form-input" placeholder="Barkod veya stok kodu..." autofocus autocomplete="off" style="flex:1;">
+                <button class="btn btn-primary" onclick="barkodAra()"><i class="fas fa-search"></i></button>
+            </div>
+            <p style="font-size:11px;color:var(--gri);margin-top:6px;">Barkod okuyucu bağlıysa direkt okutabilirsiniz — Enter ile arar</p>
+
+            <!-- Sonuç -->
+            <div id="barkod-sonuc" style="margin-top:16px;display:none;">
+                <div style="background:var(--gri-acik);border-radius:8px;padding:16px;">
+                    <div style="display:flex;align-items:flex-start;gap:16px;">
+                        <div id="sonuc-qr" style="flex-shrink:0;"></div>
+                        <div style="flex:1;">
+                            <div id="sonuc-ad" style="font-size:1.1rem;font-weight:700;color:#1e293b;margin-bottom:6px;"></div>
+                            <div id="sonuc-kod" style="font-size:12px;color:var(--gri);margin-bottom:8px;"></div>
+                            <div class="grid grid-2" style="gap:8px;">
+                                <div style="background:white;border-radius:6px;padding:8px;text-align:center;">
+                                    <div id="sonuc-stok" style="font-size:1.2rem;font-weight:700;"></div>
+                                    <div style="font-size:11px;color:var(--gri);">Mevcut Stok</div>
+                                </div>
+                                <div style="background:white;border-radius:6px;padding:8px;text-align:center;">
+                                    <div id="sonuc-fiyat" style="font-size:1.2rem;font-weight:700;color:var(--yesil);"></div>
+                                    <div style="font-size:11px;color:var(--gri);">Satış Fiyatı</div>
+                                </div>
+                            </div>
+                            <a id="sonuc-link" href="#" class="btn btn-ghost btn-sm" style="margin-top:8px;"><i class="fas fa-external-link-alt"></i> Ürün Kartına Git</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="barkod-hata" style="display:none;margin-top:12px;" class="alert alert-danger"></div>
+        </div>
+    </div>
+
+    <!-- Barkod Üret -->
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-qrcode"></i> Barkod Üret</h3></div>
+        <div style="padding:20px;">
+            <div class="form-group">
+                <label class="form-label">Ürün Seç</label>
+                <select id="urun-sec" class="form-select" onchange="barkodUret()">
+                    <option value="">— Ürün seçin —</option>
+                    {% for u in urunler %}
+                    <option value="{{ u.id }}">{{ u.stok_kodu }} — {{ u.urun_adi }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div id="barkod-sonuc-panel" style="display:none;text-align:center;padding:12px;">
+                <div style="margin-bottom:12px;">
+                    <div style="font-size:11px;color:var(--gri);margin-bottom:4px;">BARKOD</div>
+                    <img id="barkod-img" src="" alt="Barkod" style="max-width:100%;border:1px solid var(--gri-kenar);border-radius:4px;">
+                </div>
+                <div>
+                    <div style="font-size:11px;color:var(--gri);margin-bottom:4px;">QR KOD</div>
+                    <img id="qr-img" src="" alt="QR" style="width:120px;border:1px solid var(--gri-kenar);border-radius:4px;">
+                </div>
+                <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;">
+                    <button class="btn btn-primary btn-sm" onclick="yazdir()"><i class="fas fa-print"></i> Yazdır</button>
+                    <button class="btn btn-ghost btn-sm" onclick="etiketSayfasi()"><i class="fas fa-tag"></i> Etiket Sayfası</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Etiket listesi -->
+<div class="card" style="margin-top:20px;">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-tags"></i> Toplu Etiket Yazdırma</h3>
+        <div style="display:flex;gap:8px;align-items:center;">
+            <span style="font-size:12px;color:var(--gri);">Adet:</span>
+            <input type="number" id="etiket-adet" value="1" min="1" max="20" style="width:60px;padding:4px;border:1px solid var(--gri-kenar);border-radius:4px;font-size:13px;">
+            <button class="btn btn-primary btn-sm" onclick="topluEtiket()"><i class="fas fa-print"></i> Seçilileri Yazdır</button>
+        </div>
+    </div>
+    <div style="padding:4px 0;max-height:320px;overflow-y:auto;">
+        <table class="data-table">
+            <thead><tr>
+                <th style="width:36px;"><input type="checkbox" id="tumunu-sec" onchange="tumunuSec(this)"></th>
+                <th>Stok Kodu</th><th>Ürün Adı</th><th>Barkod</th><th>İşlem</th>
+            </tr></thead>
+            <tbody>
+            {% for u in urunler %}
+            <tr>
+                <td><input type="checkbox" class="urun-check" value="{{ u.id }}"></td>
+                <td style="font-weight:600;">{{ u.stok_kodu }}</td>
+                <td>{{ u.urun_adi }}</td>
+                <td style="font-size:12px;color:var(--gri);">{{ u.barkod or u.stok_kodu }}</td>
+                <td>
+                    <button class="btn btn-ghost btn-sm" onclick="tekEtiket({{ u.id }})">
+                        <i class="fas fa-barcode"></i>
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+let _aktifUrunId = null;
+
+// Barkod arama
+document.getElementById('barkod-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') barkodAra();
+});
+
+function barkodAra() {
+    const q = document.getElementById('barkod-input').value.trim();
+    if (!q) return;
+    document.getElementById('barkod-sonuc').style.display = 'none';
+    document.getElementById('barkod-hata').style.display = 'none';
+
+    fetch('/api/barkod-ara?q=' + encodeURIComponent(q))
+        .then(r => r.json())
+        .then(d => {
+            if (!d.bulundu) {
+                document.getElementById('barkod-hata').textContent = d.mesaj;
+                document.getElementById('barkod-hata').style.display = 'block';
+                return;
+            }
+            const u = d.urun;
+            document.getElementById('sonuc-ad').textContent = u.urun_adi;
+            document.getElementById('sonuc-kod').textContent = u.stok_kodu + (u.barkod ? ' | ' + u.barkod : '');
+            document.getElementById('sonuc-stok').textContent = u.mevcut_stok + ' ' + u.birim;
+            document.getElementById('sonuc-stok').style.color = u.mevcut_stok <= u.min_stok ? 'var(--kirmizi)' : 'var(--yesil)';
+            document.getElementById('sonuc-fiyat').textContent = u.satis_fiyati ? u.satis_fiyati.toFixed(2) + ' ₺' : '—';
+            document.getElementById('sonuc-link').href = u.url;
+            // QR göster
+            fetch('/api/barkod/' + u.id)
+                .then(r => r.json())
+                .then(bd => {
+                    if (bd.qr_img) {
+                        document.getElementById('sonuc-qr').innerHTML = '<img src="data:image/png;base64,' + bd.qr_img + '" style="width:80px;border-radius:4px;">';
+                    }
+                });
+            document.getElementById('barkod-sonuc').style.display = 'block';
+        });
+    document.getElementById('barkod-input').value = '';
+}
+
+// Barkod üret
+function barkodUret() {
+    const id = document.getElementById('urun-sec').value;
+    const panel = document.getElementById('barkod-sonuc-panel');
+    if (!id) { panel.style.display = 'none'; return; }
+    _aktifUrunId = id;
+    fetch('/api/barkod/' + id)
+        .then(r => r.json())
+        .then(d => {
+            if (d.barkod_img) document.getElementById('barkod-img').src = 'data:image/png;base64,' + d.barkod_img;
+            if (d.qr_img) document.getElementById('qr-img').src = 'data:image/png;base64,' + d.qr_img;
+            panel.style.display = 'block';
+        });
+}
+
+function yazdir() {
+    window.print();
+}
+
+function etiketSayfasi() {
+    if (_aktifUrunId) window.open('/stok/barkod/etiket?id=' + _aktifUrunId + '&adet=1', '_blank');
+}
+
+function tekEtiket(id) {
+    window.open('/stok/barkod/etiket?id=' + id + '&adet=1', '_blank');
+}
+
+function tumunuSec(cb) {
+    document.querySelectorAll('.urun-check').forEach(c => c.checked = cb.checked);
+}
+
+function topluEtiket() {
+    const ids = [...document.querySelectorAll('.urun-check:checked')].map(c => c.value);
+    if (!ids.length) { alert('Ürün seçin'); return; }
+    const adet = document.getElementById('etiket-adet').value;
+    const params = ids.map(id => 'id=' + id).join('&') + '&adet=' + adet;
+    window.open('/stok/barkod/etiket?' + params, '_blank');
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Devam Raporu{% endblock %}
+{% block page_title %}Aylık Devam Raporu{% endblock %}
+{% block content %}
+
+<!-- Filtreler -->
+<div class="card" style="padding:16px;margin-bottom:16px;">
+    <form method="GET" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+        <div>
+            <label class="form-label" style="font-size:11px;">Yıl</label>
+            <select name="yil" class="form-select" style="width:100px;">
+                {% for y in range(2024, 2028) %}
+                <option value="{{ y }}" {{ 'selected' if yil == y }}>{{ y }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="form-label" style="font-size:11px;">Ay</label>
+            <select name="ay" class="form-select" style="width:120px;">
+                {% for m, madi in [(1,'Ocak'),(2,'Şubat'),(3,'Mart'),(4,'Nisan'),
+                    (5,'Mayıs'),(6,'Haziran'),(7,'Temmuz'),(8,'Ağustos'),
+                    (9,'Eylül'),(10,'Ekim'),(11,'Kasım'),(12,'Aralık')] %}
+                <option value="{{ m }}" {{ 'selected' if ay == m }}>{{ madi }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="form-label" style="font-size:11px;">Departman</label>
+            <select name="departman" class="form-select" style="width:150px;">
+                <option value="">Tümü</option>
+                {% for d in departmanlar %}
+                <option value="{{ d }}" {{ 'selected' if secili_dep == d }}>{{ d }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Getir</button>
+        <a href="{{ url_for('vardiya.devam_listesi') }}" class="btn btn-ghost btn-sm" style="margin-left:auto;">
+            ← Günlük Giriş
+        </a>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">{{ ay_adi }} {{ yil }} — Devam Özeti ({{ gun_sayisi }} iş günü)</h3>
+        <a href="#" onclick="window.print()" class="btn btn-ghost btn-sm">
+            <i class="fas fa-print"></i> Yazdır
+        </a>
+    </div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Personel</th>
+                <th>Departman</th>
+                <th style="color:#22c55e;">Geldi</th>
+                <th style="color:#ef4444;">Gelmedi</th>
+                <th style="color:#f59e0b;">Geç</th>
+                <th style="color:#f97316;">Erken Çıktı</th>
+                <th style="color:#3b82f6;">İzinli</th>
+                <th style="color:#94a3b8;">Kayıtsız</th>
+                <th>Devam %</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for o in ozet %}
+        {% set devam_yuzde = ((o.geldi / gun_sayisi) * 100) | round(0) | int if gun_sayisi > 0 else 0 %}
+        <tr>
+            <td><strong>{{ o.personel.ad }} {{ o.personel.soyad }}</strong></td>
+            <td><span style="font-size:12px;background:#f1f5f9;padding:2px 6px;border-radius:4px;">
+                {{ o.personel.departman or '—' }}</span></td>
+            <td style="color:#22c55e;font-weight:600;text-align:center;">{{ o.geldi }}</td>
+            <td style="color:#ef4444;font-weight:600;text-align:center;">
+                {{ o.devamsiz if o.devamsiz > 0 else '—' }}</td>
+            <td style="color:#f59e0b;text-align:center;">
+                {{ o.gec if o.gec > 0 else '—' }}</td>
+            <td style="color:#f97316;text-align:center;">
+                {{ o.erken if o.erken > 0 else '—' }}</td>
+            <td style="color:#3b82f6;text-align:center;">
+                {{ o.izinli if o.izinli > 0 else '—' }}</td>
+            <td style="color:#94a3b8;text-align:center;">
+                {{ o.kayitsiz if o.kayitsiz > 0 else '—' }}</td>
+            <td>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <div style="flex:1;background:#e2e8f0;border-radius:4px;height:6px;min-width:60px;">
+                        <div style="width:{{ devam_yuzde }}%;
+                            background:{% if devam_yuzde >= 90 %}#22c55e{% elif devam_yuzde >= 75 %}#f59e0b{% else %}#ef4444{% endif %};
+                            height:6px;border-radius:4px;"></div>
+                    </div>
+                    <span style="font-size:12px;font-weight:600;">%{{ devam_yuzde }}</span>
+                </div>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="9" style="text-align:center;color:#94a3b8;padding:32px;">
+            Kayıt bulunamadı.
+        </td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

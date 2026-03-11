@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% block title %}{% if personel.id %}{{ personel.tam_ad }} - Düzenle{% else %}Yeni Personel{% endif %}{% endblock %}
+{% block page_title %}{% if personel.id %}{{ personel.tam_ad }} — Düzenle{% else %}Yeni Personel{% endif %}{% endblock %}
+{% block content %}
+<form method="POST">
+
+<!-- Sekmeler -->
+<div style="display:flex;gap:4px;margin-bottom:16px;border-bottom:2px solid var(--gri-kenar);">
+    {% for sekme_id, sekme_ad in [('temel','Temel Bilgiler'),('saglik','Sağlık & Ölçüler'),('iletisim','İletişim')] %}
+    <button type="button" class="sekme-btn {% if loop.first %}aktif{% endif %}"
+        onclick="sekmeGoster('{{ sekme_id }}')" id="btn-{{ sekme_id }}"
+        style="padding:8px 16px;border:none;background:none;font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--gri);">
+        {{ sekme_ad }}
+    </button>
+    {% endfor %}
+</div>
+
+<!-- Temel Bilgiler -->
+<div id="sekme-temel" class="sekme-icerik">
+<div class="grid grid-2" style="gap:16px;">
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-id-card"></i> Kimlik Bilgileri</h3></div>
+        <div style="padding:16px;">
+            <div class="grid grid-2" style="gap:10px;">
+                <div class="form-group">
+                    <label class="form-label">Sicil No *</label>
+                    <input type="text" name="sicil_no" class="form-input" value="{{ personel.sicil_no or '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">TC Kimlik</label>
+                    <input type="text" name="tc_kimlik" class="form-input" value="{{ personel.tc_kimlik or '' }}" maxlength="11">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Ad *</label>
+                    <input type="text" name="ad" class="form-input" value="{{ personel.ad or '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Soyad *</label>
+                    <input type="text" name="soyad" class="form-input" value="{{ personel.soyad or '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Doğum Tarihi</label>
+                    <input type="text" name="dogum_tarihi" class="datepicker form-input" value="{{ personel.dogum_tarihi or '' }}" placeholder="GG.AA.YYYY">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Cinsiyet</label>
+                    <select name="cinsiyet" class="form-select">
+                        <option value="">— Seç —</option>
+                        <option value="erkek" {% if personel.cinsiyet=='erkek' %}selected{% endif %}>Erkek</option>
+                        <option value="kadin" {% if personel.cinsiyet=='kadin' %}selected{% endif %}>Kadın</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-briefcase"></i> İş Bilgileri</h3></div>
+        <div style="padding:16px;">
+            <div class="grid grid-2" style="gap:10px;">
+                <div class="form-group">
+                    <label class="form-label">Departman</label>
+                    <input type="text" name="departman" class="form-input" value="{{ personel.departman or '' }}" list="departman-list">
+                    <datalist id="departman-list">
+                        {% for d in ['Üretim','Yönetim','Muhasebe','Satış','Depo','Bakım','İK'] %}
+                        <option value="{{ d }}">
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Pozisyon</label>
+                    <input type="text" name="pozisyon" class="form-input" value="{{ personel.pozisyon or '' }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">İşe Başlama</label>
+                    <input type="text" name="ise_baslama" class="datepicker form-input" value="{{ personel.ise_baslama or '' }}" placeholder="GG.AA.YYYY">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Çalışma Türü</label>
+                    <select name="calisma_turu" class="form-select">
+                        <option value="tam_zamanli" {% if personel.calisma_turu=='tam_zamanli' %}selected{% endif %}>Tam Zamanlı</option>
+                        <option value="yari_zamanli" {% if personel.calisma_turu=='yari_zamanli' %}selected{% endif %}>Yarı Zamanlı</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Maaş (TL)</label>
+                    <input type="number" name="maas" class="form-input" value="{{ personel.maas or '' }}" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Şube</label>
+                    <select name="sube_id" class="form-select">
+                        <option value="">— Seç —</option>
+                        {% for s in subeler %}
+                        <option value="{{ s.id }}" {% if personel.sube_id==s.id %}selected{% endif %}>{{ s.sube_adi }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Sağlık & Ölçüler -->
+<div id="sekme-saglik" class="sekme-icerik" style="display:none;">
+{% set ek = personel.ek_bilgi %}
+<div class="grid grid-2" style="gap:16px;">
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-heartbeat"></i> Sağlık Bilgileri</h3></div>
+        <div style="padding:16px;">
+            <div class="grid grid-2" style="gap:10px;">
+                <div class="form-group">
+                    <label class="form-label">Kan Grubu</label>
+                    <select name="kan_grubu" class="form-select">
+                        <option value="">— Seç —</option>
+                        {% for kg in ['A+','A-','B+','B-','AB+','AB-','0+','0-'] %}
+                        <option value="{{ kg }}" {% if ek and ek.kan_grubu==kg %}selected{% endif %}>{{ kg }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Boy (cm)</label>
+                    <input type="number" name="boy" class="form-input" value="{{ ek.boy if ek and ek.boy else '' }}" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Kilo (kg)</label>
+                    <input type="number" name="kilo" class="form-input" value="{{ ek.kilo if ek and ek.kilo else '' }}" step="0.1">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Kronik Hastalık</label>
+                <textarea name="kronik_hastalik" class="form-input" rows="2">{{ ek.kronik_hastalik if ek else '' }}</textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Kullandığı İlaçlar</label>
+                <textarea name="ilac_kullanimi" class="form-input" rows="2">{{ ek.ilac_kullanimi if ek else '' }}</textarea>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-tshirt"></i> Beden Ölçüleri (KKD)</h3></div>
+        <div style="padding:16px;">
+            <div class="grid grid-2" style="gap:10px;">
+                <div class="form-group">
+                    <label class="form-label">Üst Beden</label>
+                    <select name="ust_beden" class="form-select">
+                        <option value="">— Seç —</option>
+                        {% for b in ['XS','S','M','L','XL','XXL','XXXL'] %}
+                        <option value="{{ b }}" {% if ek and ek.ust_beden==b %}selected{% endif %}>{{ b }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Alt Beden</label>
+                    <select name="alt_beden" class="form-select">
+                        <option value="">— Seç —</option>
+                        {% for b in ['XS','S','M','L','XL','XXL','XXXL'] %}
+                        <option value="{{ b }}" {% if ek and ek.alt_beden==b %}selected{% endif %}>{{ b }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Ayak Numarası</label>
+                    <input type="text" name="ayak_numarasi" class="form-input" value="{{ ek.ayak_numarasi if ek else '' }}" placeholder="42">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Baret Bedeni</label>
+                    <select name="baret_bedeni" class="form-select">
+                        <option value="">— Seç —</option>
+                        {% for b in ['S','M','L','XL'] %}
+                        <option value="{{ b }}" {% if ek and ek.baret_bedeni==b %}selected{% endif %}>{{ b }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- İletişim & Acil -->
+<div id="sekme-iletisim" class="sekme-icerik" style="display:none;">
+{% set ek = personel.ek_bilgi %}
+<div class="grid grid-2" style="gap:16px;">
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-phone"></i> İletişim</h3></div>
+        <div style="padding:16px;">
+            <div class="form-group">
+                <label class="form-label">Telefon</label>
+                <input type="text" name="telefon" class="form-input" value="{{ personel.telefon or '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">E-posta</label>
+                <input type="email" name="email" class="form-input" value="{{ personel.email or '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Adres</label>
+                <textarea name="adres" class="form-input" rows="3">{{ personel.adres or '' }}</textarea>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-phone-alt" style="color:var(--kirmizi);"></i> Acil İletişim</h3></div>
+        <div style="padding:16px;">
+            <div class="form-group">
+                <label class="form-label">Ad Soyad</label>
+                <input type="text" name="acil_ad" class="form-input" value="{{ ek.acil_ad if ek else '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Telefon</label>
+                <input type="text" name="acil_tel" class="form-input" value="{{ ek.acil_tel if ek else '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Yakınlık</label>
+                <input type="text" name="acil_yakinlik" class="form-input" value="{{ ek.acil_yakinlik if ek else '' }}" placeholder="Eş, anne, baba...">
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<div style="display:flex;gap:8px;margin-top:12px;">
+    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Kaydet</button>
+    <a href="{{ url_for('ik.personel_liste') }}" class="btn btn-ghost">İptal</a>
+</div>
+</form>
+
+<script>
+function sekmeGoster(id) {
+    document.querySelectorAll('.sekme-icerik').forEach(s => s.style.display='none');
+    document.querySelectorAll('.sekme-btn').forEach(b => {
+        b.style.borderBottomColor='transparent'; b.style.color='var(--gri)';
+    });
+    document.getElementById('sekme-'+id).style.display='block';
+    const btn = document.getElementById('btn-'+id);
+    btn.style.borderBottomColor='var(--sari)'; btn.style.color='var(--yazi)';
+}
+sekmeGoster('temel');
+</script>
+{% endblock %}

@@ -1,0 +1,45 @@
+﻿<!-- Tedarikci listesi -->
+{% extends "base.html" %}
+
+{% block title %}Tedarikciler - ERP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Tedarikciler</h1>
+    <a href="{{ url_for('tedarikci.tedarikci_ekle') }}" class="btn btn-primary">Yeni Tedarikci</a>
+</div>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Kod</th>
+            <th>Unvan</th>
+            <th>Yetkili</th>
+            <th>Telefon</th>
+            <th>Email</th>
+            <th>Para Birimi</th>
+            <th>Kayit Tarihi</th>
+            <th>Islemler</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for tedarikci in tedarikciler %}
+        <tr>
+            <td>{{ tedarikci.tedarikci_kodu }}</td>
+            <td>{{ tedarikci.unvan }}</td>
+            <td>{{ tedarikci.yetkili_adi or '-' }}</td>
+            <td>{{ tedarikci.telefon or '-' }}</td>
+            <td>{{ tedarikci.email or '-' }}</td>
+            <td>{{ tedarikci.para_birimi }}</td>
+            <td>{{ tedarikci.olusturma_tarihi or '-' }}</td>
+            <td>
+                <a href="{{ url_for('tedarikci.tedarikci_duzenle', id=tedarikci.id) }}" class="btn btn-sm">Duzenle</a>
+                <form action="{{ url_for('tedarikci.tedarikci_sil', id=tedarikci.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Silmek istediginize emin misiniz?')">
+                    <button type="submit" class="btn btn-sm btn-danger">Sil</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

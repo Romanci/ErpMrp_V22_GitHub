@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Proje Dashboard{% endblock %}
+{% block page_title %}Proje Yönetimi{% endblock %}
+{% block content %}
+
+<!-- İstatistik Kartları -->
+<div class="grid grid-4" style="margin-bottom:24px;">
+    <div class="stat-card" style="border-left:4px solid #3b82f6;">
+        <div class="stat-icon" style="background:#3b82f6;"><i class="fas fa-folder-open"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ projeler|length }}</div>
+            <div class="stat-label">Toplam Proje</div>
+        </div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid #f59e0b;">
+        <div class="stat-icon" style="background:#f59e0b;"><i class="fas fa-clock"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ aktif|length }}</div>
+            <div class="stat-label">Aktif Proje</div>
+        </div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid #8b5cf6;">
+        <div class="stat-icon" style="background:#8b5cf6;"><i class="fas fa-industry"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ asama_sayilari.get('uretim', 0) }}</div>
+            <div class="stat-label">Üretimde</div>
+        </div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid #22c55e;">
+        <div class="stat-icon" style="background:#22c55e;"><i class="fas fa-check-circle"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ asama_sayilari.get('kapandi', 0) }}</div>
+            <div class="stat-label">Tamamlanan</div>
+        </div>
+    </div>
+</div>
+
+<!-- Aşama Süzgeci + Yeni Proje -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Aktif Projeler</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            {% for asama_key, asama_label in asamalar %}
+            {% if asama_key not in ('kapandi','iptal') %}
+            <a href="{{ url_for('proje.proje_liste') }}?asama={{ asama_key }}"
+               class="btn btn-ghost btn-sm"
+               style="border-left:3px solid {{ asama_renk[asama_key] }};">
+                {{ asama_label }}
+                <span style="background:{{ asama_renk[asama_key] }};color:white;
+                             border-radius:10px;padding:1px 6px;font-size:11px;margin-left:4px;">
+                    {{ asama_sayilari.get(asama_key, 0) }}
+                </span>
+            </a>
+            {% endif %}
+            {% endfor %}
+            <a href="{{ url_for('proje.proje_form') }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus"></i> Yeni Proje
+            </a>
+        </div>
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Proje No</th>
+                <th>Proje Adı</th>
+                <th>Müşteri</th>
+                <th>Aşama</th>
+                <th>Başlangıç</th>
+                <th>Bitiş</th>
+                <th>Bütçe</th>
+                <th>Gerçekleşen</th>
+                <th>Görevler</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for p in aktif %}
+        <tr>
+            <td><strong>{{ p.proje_no }}</strong></td>
+            <td>{{ p.proje_adi }}</td>
+            <td>{{ p.musteri_adi }}</td>
+            <td>
+                <span style="background:{{ p.asama_rengi }};color:white;
+                             padding:3px 10px;border-radius:12px;font-size:12px;">
+                    {{ p.asama_adi }}
+                </span>
+            </td>
+            <td>{{ p.baslangic_tarihi or '—' }}</td>
+            <td>{{ p.bitis_tarihi or '—' }}</td>
+            <td>{{ '{:,.2f}'.format(p.planlanan_maliyet) }} {{ p.para_birimi }}</td>
+            <td>
+                {% set yuzde = p.butce_kullanim_yuzdesi %}
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <div style="flex:1;background:#e2e8f0;border-radius:4px;height:6px;">
+                        <div style="width:{{ [yuzde,100]|min }}%;background:
+                            {% if yuzde > 90 %}#ef4444{% elif yuzde > 70 %}#f59e0b{% else %}#22c55e{% endif %};
+                            height:6px;border-radius:4px;"></div>
+                    </div>
+                    <span style="font-size:11px;white-space:nowrap;">
+                        {{ '{:,.0f}'.format(p.gerceklesen_maliyet) }} ({{ yuzde }}%)
+                    </span>
+                </div>
+            </td>
+            <td>
+                {% if p.tamamlanmamis_gorev_sayisi > 0 %}
+                <span style="background:#fef3c7;color:#92400e;padding:2px 8px;
+                             border-radius:10px;font-size:12px;">
+                    {{ p.tamamlanmamis_gorev_sayisi }} bekliyor
+                </span>
+                {% else %}
+                <span style="color:#94a3b8;font-size:12px;">—</span>
+                {% endif %}
+            </td>
+            <td>
+                <a href="{{ url_for('proje.proje_detay', id=p.id) }}"
+                   class="btn btn-ghost btn-sm">Detay</a>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="10" style="text-align:center;color:#94a3b8;padding:32px;">
+            Aktif proje bulunmuyor.
+            <a href="{{ url_for('proje.proje_form') }}">Yeni proje oluştur</a>
+        </td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

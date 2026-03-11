@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}CRM Dashboard{% endblock %}
+{% block page_title %}Müşteri & Teklif (CRM){% endblock %}
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card stok">
+        <div class="stat-icon"><i class="fas fa-building"></i></div>
+        <div class="stat-value">{{ musteri_sayisi }}</div>
+        <div class="stat-label">Aktif Müşteri</div>
+    </div>
+    <div class="stat-card satin-alma">
+        <div class="stat-icon"><i class="fas fa-file-invoice"></i></div>
+        <div class="stat-value">{{ teklif_sayisi }}</div>
+        <div class="stat-label">Toplam Teklif</div>
+    </div>
+    <div class="stat-card uretim">
+        <div class="stat-icon"><i class="fas fa-clock"></i></div>
+        <div class="stat-value" style="{% if bekleyen %}color:var(--sari);{% endif %}">{{ bekleyen }}</div>
+        <div class="stat-label">Bekleyen Teklif</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="stat-value" style="color:var(--yesil);">{{ kabul }}</div>
+        <div class="stat-label">Kabul Edilen</div>
+    </div>
+</div>
+<div class="grid grid-2" style="gap:16px;margin-top:16px;">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-file-invoice"></i> Son Teklifler</h3>
+            <a href="{{ url_for('crm.teklif_form') }}" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Yeni</a>
+        </div>
+        <div class="table-container">
+            <table class="data-table">
+                <thead><tr><th>No</th><th>Müşteri</th><th>Toplam</th><th>Durum</th></tr></thead>
+                <tbody>
+                {% for t in son_teklifler %}
+                <tr>
+                    <td><a href="{{ url_for('crm.teklif_detay', id=t.id) }}" style="font-family:monospace;font-size:11px;">{{ t.teklif_no }}</a></td>
+                    <td>{{ t.musteri.unvan if t.musteri else '?' }}</td>
+                    <td style="font-weight:600;">{{ "%.2f"|format(t.genel_toplam) }} {{ t.para_birimi }}</td>
+                    <td><span class="status-badge {% if t.durum=='kabul' %}acik{% elif t.durum in ('red','iptal') %}iptal{% elif t.durum=='gonderildi' %}beklemede{% endif %}">{{ t.durum }}</span></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" style="text-align:center;color:var(--gri);padding:16px;">Teklif yok</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-bell"></i> Hatırlatmalar</h3></div>
+        <div style="padding:12px;">
+            {% for h in hatirlatmalar %}
+            <div style="padding:8px;border-left:3px solid var(--sari);margin-bottom:8px;background:var(--gri-acik);border-radius:0 6px 6px 0;">
+                <div style="font-size:12px;font-weight:600;">{{ h.musteri.unvan if h.musteri else '?' }}</div>
+                <div style="font-size:11px;color:var(--gri);">{{ h.baslik }} — {{ h.hatirlatma_tarihi }}</div>
+                <form method="POST" action="{{ url_for('crm.takip_tamamla', id=h.id) }}" style="display:inline;">
+                    <button class="btn btn-ghost btn-sm" style="margin-top:4px;font-size:10px;">✓ Tamamla</button>
+                </form>
+            </div>
+            {% else %}
+            <div style="color:var(--gri);font-size:13px;padding:8px;">Bekleyen hatırlatma yok</div>
+            {% endfor %}
+        </div>
+        <div class="card-header" style="margin-top:8px;border-top:1px solid var(--gri-kenar);">
+            <h3 class="card-title" style="font-size:12px;"><i class="fas fa-link"></i> Hızlı Erişim</h3>
+        </div>
+        <div style="padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            {% for url, ikon, etiket in [
+                (url_for('crm.musteri_liste'),'fa-building','Müşteriler'),
+                (url_for('crm.musteri_form'),'fa-user-plus','Yeni Müşteri'),
+                (url_for('crm.teklif_liste'),'fa-list','Teklifler'),
+                (url_for('crm.teklif_form'),'fa-plus','Yeni Teklif'),
+            ] %}
+            <a href="{{ url }}" style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--gri-acik);border-radius:6px;text-decoration:none;color:inherit;font-size:12px;font-weight:500;">
+                <i class="fas {{ ikon }}" style="color:var(--sari);width:14px;text-align:center;"></i> {{ etiket }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

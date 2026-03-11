@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Arıza Kayıtları{% endblock %}
+{% block page_title %}Arıza Kayıtları{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Arızalar</h3>
+        <div style="display:flex;gap:8px;align-items:center;">
+            <select onchange="window.location='?durum='+this.value" class="form-select" style="width:auto;">
+                <option value="" {% if not durum_filtre %}selected{% endif %}>Tümü</option>
+                <option value="acik" {% if durum_filtre=='acik' %}selected{% endif %}>Açık</option>
+                <option value="incelemede" {% if durum_filtre=='incelemede' %}selected{% endif %}>İncelemede</option>
+                <option value="cozuldu" {% if durum_filtre=='cozuldu' %}selected{% endif %}>Çözüldü</option>
+            </select>
+            <a href="{{ url_for('bakim.ariza_ekle') }}" class="btn btn-primary btn-sm">+ Arıza Bildir</a>
+        </div>
+    </div>
+    <div class="table-container" style="box-shadow:none;">
+        <table class="data-table">
+            <thead>
+                <tr><th>#</th><th>Tezgah</th><th>Arıza</th><th>Öncelik</th><th>Durum</th><th>Tarih</th><th>Maliyet</th><th>İşlem</th></tr>
+            </thead>
+            <tbody>
+            {% for a in arizalar %}
+            <tr>
+                <td>{{ a.id }}</td>
+                <td>{{ a.tezgah.tezgah_adi if a.tezgah else '-' }}</td>
+                <td style="max-width:200px;">{{ a.ariza_aciklama }}</td>
+                <td><span class="status-badge {% if a.oncelik == 'kritik' %}iptal{% elif a.oncelik == 'yuksek' %}beklemede{% else %}acik{% endif %}">{{ a.oncelik }}</span></td>
+                <td><span class="status-badge {% if a.durum == 'acik' %}beklemede{% elif a.durum == 'cozuldu' %}acik{% else %}devam{% endif %}">{{ a.durum }}</span></td>
+                <td>{{ a.ariza_tarihi }}</td>
+                <td>{% if a.maliyet %}{{ '%.2f' | format(a.maliyet) }} TL{% else %}-{% endif %}</td>
+                <td>
+                    {% if a.durum != 'cozuldu' %}
+                    <details>
+                        <summary class="btn btn-ghost btn-sm" style="cursor:pointer;list-style:none;">Güncelle</summary>
+                        <form method="post" action="{{ url_for('bakim.ariza_durum', id=a.id) }}"
+                              style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:8px;padding:12px;margin-top:4px;min-width:220px;">
+                            <select name="durum" class="form-select" style="margin-bottom:6px;">
+                                <option value="incelemede" {% if a.durum=='incelemede' %}selected{% endif %}>İncelemede</option>
+                                <option value="cozuldu">Çözüldü</option>
+                                <option value="kapandi">Kapatıldı</option>
+                            </select>
+                            <input type="number" name="maliyet" step="0.01" class="form-input" placeholder="Maliyet TL" style="margin-bottom:6px;">
+                            <textarea name="tamir_aciklama" class="form-input" rows="2" placeholder="Yapılan işlem..."></textarea>
+                            <button type="submit" class="btn btn-primary btn-sm" style="margin-top:6px;width:100%;">Kaydet</button>
+                        </form>
+                    </details>
+                    {% else %}
+                    <span style="color:var(--yesil);font-size:12px;">✓ Çözüldü</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--color-muted);">Arıza kaydı bulunamadı</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

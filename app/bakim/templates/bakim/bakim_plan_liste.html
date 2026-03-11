@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Bakım Planları{% endblock %}
+{% block page_title %}Bakım Planları{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Periyodik Bakım Planları</h3>
+        <a href="{{ url_for('bakim.bakim_plan_ekle') }}" class="btn btn-primary btn-sm">+ Plan Ekle</a>
+    </div>
+    <div class="table-container" style="box-shadow:none;">
+        <table class="data-table">
+            <thead>
+                <tr><th>Bakım Adı</th><th>Tezgah</th><th>Tür</th><th>Periyot</th><th>Son Bakım</th><th>Sonraki</th><th>Durum</th><th>İşlem</th></tr>
+            </thead>
+            <tbody>
+            {% for plan in planlar %}
+            {% set bugun_str = '' %}
+            <tr>
+                <td><strong>{{ plan.bakim_adi }}</strong></td>
+                <td>{{ plan.tezgah.tezgah_adi if plan.tezgah else '-' }}</td>
+                <td>{{ plan.bakim_turu | capitalize }}</td>
+                <td>Her {{ plan.periyot_gun }} gün</td>
+                <td>{{ plan.son_bakim or '-' }}</td>
+                <td>{{ plan.sonraki_bakim or '-' }}</td>
+                <td>
+                    <span class="status-badge acik">Aktif</span>
+                </td>
+                <td>
+                    <details>
+                        <summary class="btn btn-ghost btn-sm" style="cursor:pointer;list-style:none;">Bakım Yaptım</summary>
+                        <form method="post" action="{{ url_for('bakim.bakim_kayit_ekle', plan_id=plan.id) }}"
+                              style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:8px;padding:12px;margin-top:4px;min-width:240px;">
+                            <input type="text" name="bakim_tarihi" class="datepicker form-input" placeholder="GG.AA.YYYY (bos=bugun)" style="margin-bottom:6px;">
+                            <input type="number" name="sure_dk" class="form-input" placeholder="Süre (dk)" style="margin-bottom:6px;">
+                            <input type="number" name="maliyet" step="0.01" class="form-input" placeholder="Maliyet TL" style="margin-bottom:6px;">
+                            <textarea name="yapilan_isler" class="form-input" rows="2" placeholder="Yapılan işler..."></textarea>
+                            <button type="submit" class="btn btn-primary btn-sm" style="margin-top:6px;width:100%;">Kaydet</button>
+                        </form>
+                    </details>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--color-muted);">
+                Bakım planı tanımlanmamış. <a href="{{ url_for('bakim.bakim_plan_ekle') }}">İlk planı ekle →</a>
+            </td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

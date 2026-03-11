@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Barkod Etiketleri</title>
+<style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: Arial, sans-serif; background: white; }
+    .etiket-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+        padding: 8px;
+    }
+    .etiket {
+        border: 1px dashed #ccc;
+        padding: 8px;
+        text-align: center;
+        border-radius: 4px;
+        page-break-inside: avoid;
+    }
+    .etiket-ad { font-size: 10px; font-weight: 700; margin-bottom: 4px; color: #1e293b; line-height: 1.2; }
+    .etiket-kod { font-size: 9px; color: #64748b; margin-bottom: 4px; }
+    .etiket img { max-width: 100%; height: auto; }
+    .yazdir-btn {
+        position: fixed; top: 10px; right: 10px;
+        background: #1a1a2e; color: #f5c518;
+        border: none; padding: 8px 16px; border-radius: 6px;
+        cursor: pointer; font-size: 13px; font-weight: 600;
+        display: flex; align-items: center; gap: 6px;
+    }
+    @media print {
+        .yazdir-btn { display: none !important; }
+        body { padding: 0; }
+        .etiket-grid { gap: 2px; padding: 4px; }
+    }
+</style>
+</head>
+<body>
+<button class="yazdir-btn" onclick="window.print()">🖨 Yazdır</button>
+<div class="etiket-grid">
+{% for e in etiketler %}
+<div class="etiket">
+    <div class="etiket-ad">{{ e.urun.urun_adi[:30] }}</div>
+    <div class="etiket-kod">{{ e.urun.stok_kodu }}</div>
+    {% if e.barkod_img %}
+    <img src="data:image/png;base64,{{ e.barkod_img }}" alt="{{ e.metin }}">
+    {% else %}
+    <div style="font-size:14px;font-weight:700;padding:8px;letter-spacing:2px;">{{ e.metin }}</div>
+    {% endif %}
+    <div style="font-size:9px;color:#94a3b8;margin-top:4px;">{{ e.metin }}</div>
+</div>
+{% endfor %}
+</div>
+</body>
+</html>

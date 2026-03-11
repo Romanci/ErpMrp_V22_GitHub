@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Tatil Takvimi{% endblock %}
+{% block page_title %}Tatil Takvimi{% endblock %}
+{% block content %}
+<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+    <a href="{{ url_for('ik.tatil_form') }}" class="btn btn-primary"><i class="fas fa-plus"></i> Tatil Ekle</a>
+    <form method="POST" action="{{ url_for('ik.resmi_tatil_yukle') }}" style="display:flex;gap:6px;">
+        <select name="yil" class="form-select" style="width:100px;">
+            {% for y in range(2024, 2028) %}
+            <option value="{{ y }}" {% if y == 2025 %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-ghost"><i class="fas fa-download"></i> Resmi Tatilleri Yükle</button>
+    </form>
+</div>
+<div class="card">
+    <div class="table-container">
+        <table class="data-table">
+            <thead><tr><th>Tarih</th><th>Bitiş</th><th>Tatil Adı</th><th>Tür</th><th>Tekrar</th><th>İşlem</th></tr></thead>
+            <tbody>
+            {% for t in tatiller %}
+            <tr>
+                <td style="font-weight:600;">{{ t.tarih }}</td>
+                <td style="font-size:12px;">{{ t.bitis_tarihi or '—' }}</td>
+                <td>{{ t.ad }}</td>
+                <td>
+                    <span class="status-badge {% if t.tur=='resmi' %}acik{% elif t.tur=='dini' %}beklemede{% else %}iptal{% endif %}">
+                        {{ t.tur }}
+                    </span>
+                </td>
+                <td>{% if t.yillik_tekrar %}<i class="fas fa-check" style="color:var(--yesil);"></i>{% else %}—{% endif %}</td>
+                <td style="display:flex;gap:4px;">
+                    <a href="{{ url_for('ik.tatil_form', id=t.id) }}" class="btn btn-ghost btn-sm"><i class="fas fa-edit"></i></a>
+                    <form method="POST" action="{{ url_for('ik.tatil_sil', id=t.id) }}" onsubmit="return confirm('Silinsin mi?')">
+                        <button class="btn btn-ghost btn-sm" style="color:var(--kirmizi);"><i class="fas fa-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" style="text-align:center;padding:20px;color:var(--gri);">Tatil kaydı yok. "Resmi Tatilleri Yükle" ile 2025 resmi tatillerini ekleyebilirsiniz.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

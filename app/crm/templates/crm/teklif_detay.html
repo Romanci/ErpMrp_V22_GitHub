@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}{{ teklif.teklif_no }}{% endblock %}
+{% block page_title %}Teklif: {{ teklif.teklif_no }}{% endblock %}
+{% block content %}
+<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+    <a href="{{ url_for('crm.teklif_form', id=teklif.id) }}" class="btn btn-primary"><i class="fas fa-edit"></i> Düzenle</a>
+    {% for d,a,cls in [('gonderildi','Gönderildi Olarak İşaretle','ghost'),('kabul','Kabul Et','primary'),('red','Reddet','danger')] %}
+    {% if teklif.durum not in (d,'iptal') %}
+    <form method="POST" action="{{ url_for('crm.teklif_durum', id=teklif.id) }}" style="display:inline;">
+        <input type="hidden" name="durum" value="{{ d }}">
+        <button class="btn btn-{{ cls }} btn-sm">{{ a }}</button>
+    </form>
+    {% endif %}
+    {% endfor %}
+    <a href="{{ url_for('crm.teklif_liste') }}" class="btn btn-ghost"><i class="fas fa-arrow-left"></i> Liste</a>
+</div>
+<!-- Başlık Bilgi Kartı -->
+<div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
+    <div class="card" style="flex:1;min-width:260px;">
+        <div style="padding:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <div>
+                    <div style="font-size:20px;font-weight:700;font-family:monospace;">{{ teklif.teklif_no }}</div>
+                    <div style="color:var(--gri);font-size:12px;">{{ teklif.tarih }} — {{ teklif.baslik or '' }}</div>
+                </div>
+                <span class="status-badge {% if teklif.durum=='kabul' %}acik{% elif teklif.durum in ('red','iptal') %}iptal{% elif teklif.durum=='gonderildi' %}beklemede{% endif %}" style="font-size:13px;padding:6px 12px;">{{ teklif.durum|title }}</span>
+            </div>
+            {% for e,d in [('Müşteri',teklif.musteri.unvan if teklif.musteri else '?'),('Geçerlilik',teklif.gecerlilik or '—'),('Para Birimi',teklif.para_birimi),('KDV Oranı','%'+teklif.kdv_orani|string)] %}
+            <div style="padding:4px 0;border-bottom:1px solid var(--gri-kenar);font-size:13px;display:flex;justify-content:space-between;">
+                <span style="color:var(--gri);">{{ e }}</span><span style="font-weight:500;">{{ d }}</span>
+            </div>
+            {% endfor %}
+            {% if teklif.notlar %}<div style="margin-top:8px;font-size:12px;color:var(--gri);">{{ teklif.notlar }}</div>{% endif %}
+        </div>
+    </div>
+    <!-- Tutar özeti -->
+    <div class="card" style="min-width:200px;">
+        <div style="padding:20px;text-align:center;">
+            <div style="font-size:12px;color:var(--gri);margin-bottom:4px;">Ara Toplam</div>
+            <div style="font-size:18px;font-weight:600;">{{ "%.2f"|format(teklif.toplam_tutar) }} {{ teklif.para_birimi }}</div>
+            <div style="font-size:12px;color:var(--gri);margin:8px 0 2px;">KDV (%{{ teklif.kdv_orani|int }})</div>
+            <div style="font-size:15px;">{{ "%.2f"|format(teklif.kdv_tutari) }} {{ teklif.para_birimi }}</div>
+            <div style="margin-top:12px;padding-top:12px;border-top:2px solid var(--sari);">
+                <div style="font-size:12px;color:var(--gri);">GENEL TOPLAM</div>
+                <div style="font-size:24px;font-weight:800;color:var(--sari);">{{ "%.2f"|format(teklif.genel_toplam) }}</div>
+                <div style="font-size:13px;color:var(--gri);">{{ teklif.para_birimi }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Satırlar -->
+<div class="card">
+    <div class="card-header"><h3 class="card-title"><i class="fas fa-list"></i> Teklif Kalemleri</h3></div>
+    <div class="table-container">
+        <table class="data-table">
+            <thead><tr><th>#</th><th>Tanım</th><th>Birim</th><th style="text-align:right">Miktar</th><th style="text-align:right">Birim Fiyat</th><th style="text-align:right">İskonto</th><th style="text-align:right">Toplam</th></tr></thead>
+            <tbody>
+            {% for s in teklif.satirlar|sort(attribute='sira') %}
+            <tr>
+                <td style="color:var(--gri);">{{ s.sira }}</td>
+                <td style="font-weight:500;">{{ s.tanim }}</td>
+                <td>{{ s.birim }}</td>
+                <td style="text-align:right;">{{ s.miktar }}</td>
+                <td style="text-align:right;">{{ "%.2f"|format(s.birim_fiyat) }}</td>
+                <td style="text-align:right;{% if s.iskonto %}color:var(--kirmizi);{% endif %}">%{{ s.iskonto }}</td>
+                <td style="text-align:right;font-weight:600;">{{ "%.2f"|format(s.toplam) }} {{ teklif.para_birimi }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" style="text-align:center;color:var(--gri);padding:16px;">Kalem yok</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

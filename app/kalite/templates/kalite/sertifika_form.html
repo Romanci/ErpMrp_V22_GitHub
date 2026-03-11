@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Sertifika{% endblock %}
+{% block page_title %}{% if sertifika.id %}Sertifika Düzenle{% else %}Yeni Sertifika{% endif %}{% endblock %}
+{% block content %}
+<form method="POST">
+<div class="card" style="max-width:700px;">
+    <div class="card-header"><h3 class="card-title"><i class="fas fa-certificate"></i> Sertifika Bilgileri</h3></div>
+    <div style="padding:16px;">
+        <div class="grid grid-2" style="gap:10px;">
+            <div class="form-group">
+                <label class="form-label">Sertifika Adı *</label>
+                <input type="text" name="ad" class="form-input" value="{{ sertifika.ad or '' }}" required placeholder="ISO 9001:2015">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tür</label>
+                <input type="text" name="tur" class="form-input" value="{{ sertifika.tur or '' }}" placeholder="ISO, CE, TSE, vb.">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Sertifika No</label>
+                <input type="text" name="sertifika_no" class="form-input" value="{{ sertifika.sertifika_no or '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Veren Kurum</label>
+                <input type="text" name="veren_kurum" class="form-input" value="{{ sertifika.veren_kurum or '' }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Başlangıç Tarihi</label>
+                <input type="text" name="baslangic" class="datepicker form-input" value="{{ sertifika.baslangic or '' }}" placeholder="GG.AA.YYYY">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Bitiş Tarihi</label>
+                <input type="text" name="bitis" class="datepicker form-input" value="{{ sertifika.bitis or '' }}" placeholder="GG.AA.YYYY">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Notlar</label>
+            <textarea name="notlar" class="form-input" rows="3">{{ sertifika.notlar or '' }}</textarea>
+        </div>
+    </div>
+</div>
+<div style="display:flex;gap:8px;margin-top:10px;">
+    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Kaydet</button>
+    <a href="{{ url_for('kalite.sertifika_liste') }}" class="btn btn-ghost">İptal</a>
+</div>
+</form>
+{% endblock %}

@@ -1,0 +1,44 @@
+<!-- Sayim listesi -->
+{% extends "base.html" %}
+
+{% block title %}Sayim Islemleri - ERP{% endblock %}
+
+{% block content %}
+{% block page_title %}Sayim Islemleri{% endblock %}
+<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><a href="{{ url_for('sayim.sayim_baslat') }}" class="btn btn-primary">Yeni Sayim</a></div>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Depo</th>
+            <th>Sayim Tarihi</th>
+            <th>Durum</th>
+            <th>Fark Sayisi</th>
+            <th>Islemler</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for sayim in sayimlar %}
+        <tr>
+            <td>{{ sayim.id }}</td>
+            <td>{{ sayim.depo.depo_adi if sayim.depo else '-' }}</td>
+            <td>{{ sayim.sayim_tarihi }}</td>
+            <td>{{ 'Kapali' if sayim.durum == 'kapali' else 'Acik' }}</td>
+            <td>{{ sayim.duzeltmeler|length }}</td>
+            <td>
+                <a href="{{ url_for('sayim.sayim_detay', id=sayim.id) }}" class="btn btn-sm">Detay</a>
+                {% if sayim.durum == 'acik' %}
+                <form action="{{ url_for('sayim.sayim_kapat', id=sayim.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Sayimi kapatmak istediginize emin misiniz? Farklar stoga islenecek.')">
+                    <button type="submit" class="btn btn-sm btn-warning">Kapat</button>
+                </form>
+                <form action="{{ url_for('sayim.sayim_sil', id=sayim.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Silmek istediginize emin misiniz?')">
+                    <button type="submit" class="btn btn-sm btn-danger">Sil</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

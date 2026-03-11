@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Görev Listesi{% endblock %}
+{% block page_title %}Görev Listesi{% endblock %}
+{% block content %}
+
+<!-- Departman Süzgeci -->
+<div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+    <a href="{{ url_for('proje.gorev_listesi') }}"
+       class="btn btn-sm {{ 'btn-primary' if not secili_departman else 'btn-ghost' }}">
+       {% if admin_mi %}Tüm Departmanlar{% else %}Tümü{% endif %}
+    </a>
+    {% for dep_key, dep_label in [('yonetim','Yönetim'),('uretim','Üretim'),
+        ('satin_alma','Satın Alma'),('depo','Depo'),('muhasebe','Muhasebe')] %}
+    <a href="{{ url_for('proje.gorev_listesi') }}?departman={{ dep_key }}"
+       class="btn btn-sm {{ 'btn-primary' if secili_departman == dep_key else 'btn-ghost' }}">
+        {{ dep_label }}
+    </a>
+    {% endfor %}
+</div>
+
+<!-- Bekleyen Görevler -->
+{% set bekleyenler = gorevler|selectattr('durum','ne','tamamlandi')|list %}
+{% set tamamlananlar = gorevler|selectattr('durum','equalto','tamamlandi')|list %}
+
+<div class="card" style="margin-bottom:16px;">
+    <div class="card-header">
+        <h3 class="card-title">
+            Tamamlanmamış Görevler
+            <span style="background:#ef4444;color:white;padding:2px 8px;
+                         border-radius:10px;font-size:12px;margin-left:8px;">
+                {{ bekleyenler|length }}
+            </span>
+        </h3>
+    </div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Proje</th><th>Görev</th><th>Departman</th>
+                <th>Atanan</th><th>Son Tarih</th><th>Öncelik</th><th>Durum</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for g in bekleyenler|sort(attribute='son_tarih') %}
+        <tr>
+            <td>
+                <a href="{{ url_for('proje.proje_detay', id=g.proje_id) }}"
+                   style="font-weight:600;color:#3b82f6;">
+                    {{ g.proje.proje_no }}
+                </a>
+                <div style="font-size:11px;color:#94a3b8;">{{ g.proje.proje_adi }}</div>
+            </td>
+            <td>{{ g.baslik }}</td>
+            <td>
+                <span style="font-size:11px;background:#f1f5f9;padding:2px 6px;border-radius:4px;">
+                    {{ {'yonetim':'Yönetim','uretim':'Üretim','satin_alma':'Satın Alma',
+                        'depo':'Depo','muhasebe':'Muhasebe'}.get(g.departman, g.departman) }}
+                </span>
+            </td>
+            <td>{{ (g.atanan.ad + ' ' + g.atanan.soyad) if g.atanan else '—' }}</td>
+            <td>
+                {% if g.son_tarih %}
+                <span style="color:{% if g.son_tarih < now().strftime('%d.%m.%Y') %}#ef4444{% else %}inherit{% endif %};">
+                    {{ g.son_tarih }}
+                    {% if g.son_tarih < now().strftime('%d.%m.%Y') %}⚠️{% endif %}
+                </span>
+                {% else %}—{% endif %}
+            </td>
+            <td>
+                <span style="color:{{ g.oncelik_rengi }};font-weight:600;font-size:12px;">
+                    ● {{ {'dusuk':'Düşük','normal':'Normal','yuksek':'Yüksek','kritik':'KRİTİK'}.get(g.oncelik,'') }}
+                </span>
+            </td>
+            <td>
+                <form method="POST"
+                      action="{{ url_for('proje.gorev_durum_guncelle', gorev_id=g.id) }}"
+                      style="display:inline;">
+                    <select name="durum" class="form-select"
+                            style="font-size:11px;padding:2px 4px;width:auto;"
+                            onchange="this.form.submit()">
+                        <option value="bekliyor"   {{ 'selected' if g.durum=='bekliyor' }}>Bekliyor</option>
+                        <option value="devam"      {{ 'selected' if g.durum=='devam' }}>Devam Ediyor</option>
+                        <option value="tamamlandi" {{ 'selected' if g.durum=='tamamlandi' }}>✓ Tamamlandı</option>
+                    </select>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:24px;">
+            Tamamlanmamış görev yok 🎉
+        </td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Tamamlananlar -->
+{% if tamamlananlar %}
+<details>
+    <summary style="cursor:pointer;padding:12px;color:#64748b;font-size:14px;">
+        ✓ Tamamlanan Görevler ({{ tamamlananlar|length }})
+    </summary>
+    <div class="card" style="margin-top:8px;">
+        <table class="data-table">
+            <thead>
+                <tr><th>Proje</th><th>Görev</th><th>Departman</th>
+                    <th>Atanan</th><th>Tamamlanma</th></tr>
+            </thead>
+            <tbody>
+            {% for g in tamamlananlar %}
+            <tr style="opacity:0.6;">
+                <td><strong>{{ g.proje.proje_no }}</strong></td>
+                <td>{{ g.baslik }}</td>
+                <td>{{ g.departman }}</td>
+                <td>{{ (g.atanan.ad + ' ' + g.atanan.soyad) if g.atanan else '—' }}</td>
+                <td>{{ g.tamamlanma_tarihi or '—' }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</details>
+{% endif %}
+{% endblock %}
